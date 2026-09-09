@@ -4,10 +4,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { ClipboardList } from 'lucide-react';
 import { apiGet } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
-import { Badge } from '@/components/ui/legacy-badge';
-import { Card } from '@/components/ui/legacy-card';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Skeleton } from '@/components/ui/page-skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { ShadcnBadgeVariant } from '@/lib/ui-badge';
 
 type Milestone = {
   id: string;
@@ -23,10 +24,10 @@ type Goal = {
   description: string | null;
 };
 
-function milestoneVariant(status: string) {
-  if (status === 'done') return 'green';
-  if (status === 'in_progress') return 'blue';
-  return 'default';
+function milestoneVariant(status: string): ShadcnBadgeVariant {
+  if (status === 'done') return 'default';
+  if (status === 'in_progress') return 'secondary';
+  return 'outline';
 }
 
 function formatStatus(status: string) {
@@ -62,8 +63,8 @@ export function PlanTab({ dealId }: { dealId: string }) {
   if (loading) {
     return (
       <div>
-        <Skeleton style={{ height: 40, marginBottom: 16 }} />
-        <Skeleton style={{ height: 160 }} />
+        <Skeleton className="mb-4 h-10" />
+        <Skeleton className="h-40" />
       </div>
     );
   }

@@ -2,18 +2,41 @@
 
 **Audit date:** 2026-09-09  
 **Canonical reference:** [`design-system.md`](design-system.md) §2  
-**Status:** ✅ Installed 43 shadcn primitives; major pages migrated (2026-09-09)
+**Status:** ✅ Complete — all pages migrated; legacy UI components removed (2026-09-09)
 
 ## Summary
 
 | Metric | Count |
 |--------|------:|
-| Current custom `components/ui/` files | **15** |
-| shadcn components in design-system §2 | **44** |
-| Custom → shadcn replacements | **11** |
-| Domain wrappers to keep | **4** |
+| shadcn primitives installed | **43** |
+| Custom `components/ui/` domain wrappers kept | **8** |
+| Legacy components removed | **7** |
 
-## Priority tiers
+### Removed legacy files
+
+- `Modal.tsx` → `dialog.tsx`
+- `SearchInput.tsx` → `input.tsx` + search icon
+- `ToggleGroup.tsx` (PascalCase) → `toggle-group.tsx`
+- `legacy-button.tsx` → `button.tsx`
+- `legacy-card.tsx` → `card.tsx`
+- `legacy-badge.tsx` → `badge.tsx` + `lib/ui-badge.ts`
+- `name-avatar.tsx` → `user-avatar.tsx`
+
+### Domain wrappers kept
+
+`EmptyState`, `PageHeader`, `PageSkeleton`, `Toast`, `KpiCard`, `DealKanbanCard`, `LinkButton`, `user-avatar`
+
+## Migrated pages (batch 2)
+
+| Area | Files |
+|------|-------|
+| Accounts | `accounts/page.tsx`, `accounts/[accountId]/page.tsx` |
+| Insights | `insights/page.tsx` (Tabs, ToggleGroup, Checkbox) |
+| Onboarding | `onboarding/page.tsx` (Input, Select, Progress, Badge) |
+| Deal tabs | All 12 tab panels under `components/deals/tabs/` |
+| Misc | `projects/page.tsx`, `auth/callback/page.tsx`, `PerformanceDashboard.tsx` |
+
+## Priority tiers (reference)
 
 | Tier | New installs | Cumulative |
 |------|-------------:|-----------:|
@@ -34,5 +57,3 @@
 
 ### P3 — Marketing
 `navigation-menu`, `drawer`, `aspect-ratio`, `carousel`, `radio-group`, `accordion`
-
-See full page mappings and migration notes in the explore agent audit (conversation 2026-09-09).

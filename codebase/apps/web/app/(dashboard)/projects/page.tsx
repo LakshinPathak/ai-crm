@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { FolderKanban } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Button } from '@/components/ui/legacy-button';
+import { Button } from '@/components/ui/button';
 
 export default function ProjectsPage() {
   return (

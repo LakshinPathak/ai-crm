@@ -4,11 +4,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { FolderKanban } from 'lucide-react';
 import { apiGet, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
-import { Badge } from '@/components/ui/legacy-badge';
-import { Button } from '@/components/ui/legacy-button';
-import { Card } from '@/components/ui/legacy-card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Skeleton } from '@/components/ui/page-skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/Toast';
 
 type ProjectStatus = 'planning' | 'active' | 'completed' | 'on_hold';
@@ -69,8 +69,8 @@ export function ProjectsTab({ dealId }: { dealId: string }) {
   if (loading) {
     return (
       <div>
-        <Skeleton style={{ height: 40, marginBottom: 16 }} />
-        <Skeleton style={{ height: 160 }} />
+        <Skeleton className="mb-4 h-10" />
+        <Skeleton className="h-40" />
       </div>
     );
   }

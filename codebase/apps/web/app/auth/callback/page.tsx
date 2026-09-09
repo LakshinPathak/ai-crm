@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { apiGet } from '@/lib/api-client';
 import { exchangeAuthCode, getToken, setToken } from '@/lib/auth';
 import type { MeResponse, OnboardingStatus } from '@/lib/types';
-import { Button } from '@/components/ui/legacy-button';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 
 async function routeAfterAuth(router: ReturnType<typeof useRouter>) {
@@ -85,16 +86,15 @@ function AuthCallbackInner() {
             <p style={{ color: 'var(--muted)', fontSize: 14 }}>
               Dev fallback — paste access token from POST /api/v1/auth/dev-login
             </p>
-            <textarea
-              className="ui-input"
+            <Textarea
               value={manualToken}
               onChange={(e) => setManualToken(e.target.value)}
               rows={4}
-              style={{ marginTop: 8, fontFamily: 'monospace', fontSize: 12 }}
+              className="mt-2 font-mono text-xs"
               placeholder="eyJhbG..."
             />
-            {error && <p style={{ color: 'var(--red)', fontSize: 13 }}>{error}</p>}
-            <Button onClick={saveManualToken} style={{ marginTop: 12, width: '100%' }}>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button onClick={saveManualToken} className="mt-3 w-full">
               Save token
             </Button>
           </div>

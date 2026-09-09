@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { ExternalLink, FolderOpen, Trash2 } from 'lucide-react';
 import { apiDelete, apiGet, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
-import { Button } from '@/components/ui/legacy-button';
-import { Card } from '@/components/ui/legacy-card';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Skeleton } from '@/components/ui/page-skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/Toast';
 
 type DealFile = {
@@ -76,8 +76,8 @@ export function FileCenterTab({ dealId }: { dealId: string }) {
   if (loading) {
     return (
       <div>
-        <Skeleton style={{ height: 88, marginBottom: 16 }} />
-        <Skeleton style={{ height: 160 }} />
+        <Skeleton className="mb-4 h-[88px]" />
+        <Skeleton className="h-40" />
       </div>
     );
   }
@@ -135,7 +135,9 @@ export function FileCenterTab({ dealId }: { dealId: string }) {
                   </td>
                   <td>{new Date(f.createdAt).toLocaleString()}</td>
                   <td>
-                    <Button variant="ghost" size="sm" icon={<Trash2 size={14} />} onClick={() => deleteFile(f.id)} />
+                    <Button variant="ghost" size="icon-sm" onClick={() => deleteFile(f.id)}>
+                      <Trash2 size={14} />
+                    </Button>
                   </td>
                 </tr>
               ))}

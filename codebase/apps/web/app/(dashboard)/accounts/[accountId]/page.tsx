@@ -8,11 +8,13 @@ import { apiDelete, apiGet, apiPatch } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import type { CompanyDeal, CompanyDetail, CompanyDetailResponse } from '@/lib/types';
 import { formatMoney, sentimentLabel } from '@/lib/format';
+import { legacyBadgeVariant } from '@/lib/ui-badge';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Button } from '@/components/ui/legacy-button';
-import { Avatar } from '@/components/ui/name-avatar';
-import { Badge } from '@/components/ui/legacy-badge';
-import { Card } from '@/components/ui/legacy-card';
+import { Button } from '@/components/ui/button';
+import { UserAvatar } from '@/components/ui/user-avatar';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageSkeleton } from '@/components/ui/page-skeleton';
 import { useToast } from '@/components/ui/Toast';
@@ -100,8 +102,12 @@ export default function AccountDetailPage() {
   if (error) {
     return (
       <div>
-        <Link href="/accounts"><Button variant="ghost" size="sm" icon={<ArrowLeft size={16} />} /></Link>
-        <p style={{ color: 'var(--red)', marginTop: '1rem' }}>{error}</p>
+        <Link href="/accounts">
+          <Button variant="ghost" size="icon-sm">
+            <ArrowLeft size={16} />
+          </Button>
+        </Link>
+        <p className="mt-4 text-destructive">{error}</p>
       </div>
     );
   }
@@ -113,53 +119,53 @@ export default function AccountDetailPage() {
 
   return (
     <div>
-      <div className="ui-page-header" style={{ marginBottom: '1.5rem' }}>
+      <div className="ui-page-header mb-6">
         <div className="ui-page-header__left">
-          <Link href="/accounts"><Button variant="ghost" size="sm" icon={<ArrowLeft size={16} />} /></Link>
-          <Avatar name={company.name} size="md" />
+          <Link href="/accounts">
+            <Button variant="ghost" size="icon-sm">
+              <ArrowLeft size={16} />
+            </Button>
+          </Link>
+          <UserAvatar name={company.name} size="md" />
           <div>
             {editing ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <input
-                  className="ui-input"
+              <div className="flex flex-col gap-2">
+                <Input
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   placeholder="Company name"
-                  style={{ width: 280 }}
+                  className="w-[280px]"
                 />
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <input
-                    className="ui-input"
+                <div className="flex flex-wrap gap-2">
+                  <Input
                     value={editDomain}
                     onChange={(e) => setEditDomain(e.target.value)}
                     placeholder="Domain"
-                    style={{ width: 160 }}
+                    className="w-40"
                   />
-                  <input
-                    className="ui-input"
+                  <Input
                     value={editIndustry}
                     onChange={(e) => setEditIndustry(e.target.value)}
                     placeholder="Industry"
-                    style={{ width: 160 }}
+                    className="w-40"
                   />
-                  <input
-                    className="ui-input"
+                  <Input
                     type="number"
                     min={0}
                     value={editEmployeeCount}
                     onChange={(e) => setEditEmployeeCount(e.target.value)}
                     placeholder="Employees"
-                    style={{ width: 100 }}
+                    className="w-24"
                   />
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div className="flex gap-2">
                   <Button size="sm" onClick={saveCompany}>Save</Button>
                   <Button variant="ghost" size="sm" onClick={cancelEdit}>Cancel</Button>
                 </div>
               </div>
             ) : (
               <>
-                <h1 className="ui-page-header__title" style={{ fontSize: '1.25rem' }}>{company.name}</h1>
+                <h1 className="ui-page-header__title text-xl">{company.name}</h1>
                 <p className="ui-page-header__subtitle">
                   {[company.domain, company.industry].filter(Boolean).join(' · ') || 'Account details'}
                 </p>
@@ -167,26 +173,28 @@ export default function AccountDetailPage() {
             )}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div className="flex items-center gap-2">
           {!editing && (
             <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>Edit</Button>
           )}
-          <Button variant="danger" size="sm" icon={<Trash2 size={14} />} onClick={deleteCompany} />
+          <Button variant="destructive" size="icon-sm" onClick={deleteCompany}>
+            <Trash2 size={14} />
+          </Button>
         </div>
       </div>
 
-      <div className="grid-3" style={{ marginBottom: '1.5rem' }}>
-        <Card>
-          <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>Open deals</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{openDeals.length}</div>
+      <div className="mb-6 grid grid-cols-3 gap-4">
+        <Card className="p-4">
+          <div className="mb-1 text-xs text-muted-foreground">Open deals</div>
+          <div className="text-2xl font-bold">{openDeals.length}</div>
         </Card>
-        <Card>
-          <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>Pipeline value</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{formatMoney(totalAmount)}</div>
+        <Card className="p-4">
+          <div className="mb-1 text-xs text-muted-foreground">Pipeline value</div>
+          <div className="text-2xl font-bold">{formatMoney(totalAmount)}</div>
         </Card>
-        <Card>
-          <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>Employees</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{company.employeeCount ?? '—'}</div>
+        <Card className="p-4">
+          <div className="mb-1 text-xs text-muted-foreground">Employees</div>
+          <div className="text-2xl font-bold">{company.employeeCount ?? '—'}</div>
         </Card>
       </div>
 
@@ -195,7 +203,7 @@ export default function AccountDetailPage() {
       {deals.length === 0 ? (
         <EmptyState title="No deals linked" description="Deals associated with this account will appear here." />
       ) : (
-        <Card padding={false}>
+        <Card className="overflow-hidden p-0">
           <table className="ui-table">
             <thead>
               <tr>
@@ -210,18 +218,24 @@ export default function AccountDetailPage() {
               {deals.map((deal) => (
                 <tr key={deal.id}>
                   <td>
-                    <Link href={`/deals/${deal.id}`} className="cell-title" style={{ color: 'var(--text)' }}>
+                    <Link href={`/deals/${deal.id}`} className="cell-title text-foreground">
                       {deal.title}
                     </Link>
                   </td>
                   <td>{formatMoney(deal.amount)}</td>
                   <td>{deal.winProbability}%</td>
-                  <td><Badge variant={deal.sentiment}>{sentimentLabel(deal.sentiment)}</Badge></td>
                   <td>
-                    <Badge variant={deal.status === 'open' ? 'enabled' : 'default'}>{deal.status}</Badge>
-                    {deal.isHot && <Badge variant="hot">Hot</Badge>}
+                    <Badge variant={legacyBadgeVariant(deal.sentiment)}>
+                      {sentimentLabel(deal.sentiment)}
+                    </Badge>
+                  </td>
+                  <td>
+                    <Badge variant={legacyBadgeVariant(deal.status === 'open' ? 'enabled' : 'default')}>
+                      {deal.status}
+                    </Badge>
+                    {deal.isHot && <Badge variant="destructive">Hot</Badge>}
                     {deal.blockerCount > 0 && (
-                      <Badge variant="blocker">{deal.blockerCount} blockers</Badge>
+                      <Badge variant="destructive">{deal.blockerCount} blockers</Badge>
                     )}
                   </td>
                 </tr>

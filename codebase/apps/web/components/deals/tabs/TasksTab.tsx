@@ -4,11 +4,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { CheckSquare, Trash2 } from 'lucide-react';
 import { apiDelete, apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
-import { Badge } from '@/components/ui/legacy-badge';
-import { Button } from '@/components/ui/legacy-button';
-import { Card } from '@/components/ui/legacy-card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Skeleton } from '@/components/ui/page-skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/Toast';
 
 type Task = { id: string; title: string; status: string };
@@ -72,8 +72,8 @@ export function TasksTab({ dealId }: { dealId: string }) {
   if (loading) {
     return (
       <div>
-        <Skeleton style={{ height: 40, marginBottom: 16 }} />
-        <Skeleton style={{ height: 160 }} />
+        <Skeleton className="mb-4 h-10" />
+        <Skeleton className="h-40" />
       </div>
     );
   }
@@ -106,7 +106,9 @@ export function TasksTab({ dealId }: { dealId: string }) {
               />
               <span style={{ flex: 1, textDecoration: t.status === 'done' ? 'line-through' : 'none' }}>{t.title}</span>
               <Badge variant="default">{t.status}</Badge>
-              <Button variant="ghost" size="sm" icon={<Trash2 size={14} />} onClick={() => deleteTask(t.id)} />
+              <Button variant="ghost" size="icon-sm" onClick={() => deleteTask(t.id)}>
+                <Trash2 size={14} />
+              </Button>
             </div>
           ))}
         </Card>

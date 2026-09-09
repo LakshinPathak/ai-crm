@@ -4,12 +4,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { Package } from 'lucide-react';
 import { apiGet, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
-import { Badge } from '@/components/ui/legacy-badge';
-import { Button } from '@/components/ui/legacy-button';
-import { Card } from '@/components/ui/legacy-card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Skeleton } from '@/components/ui/page-skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/Toast';
+import type { ShadcnBadgeVariant } from '@/lib/ui-badge';
 
 type ProductRequestStatus = 'open' | 'submitted' | 'in_progress' | 'done';
 type ProductRequestPriority = 'low' | 'medium' | 'high';
@@ -23,17 +24,17 @@ type ProductRequest = {
   createdAt: string;
 };
 
-function statusVariant(status: ProductRequestStatus) {
-  if (status === 'done') return 'green';
-  if (status === 'in_progress') return 'blue';
-  if (status === 'submitted') return 'yellow';
-  return 'default';
+function statusVariant(status: ProductRequestStatus): ShadcnBadgeVariant {
+  if (status === 'done') return 'default';
+  if (status === 'in_progress') return 'secondary';
+  if (status === 'submitted') return 'outline';
+  return 'secondary';
 }
 
-function priorityVariant(priority: ProductRequestPriority) {
-  if (priority === 'high') return 'red';
-  if (priority === 'medium') return 'yellow';
-  return 'default';
+function priorityVariant(priority: ProductRequestPriority): ShadcnBadgeVariant {
+  if (priority === 'high') return 'destructive';
+  if (priority === 'medium') return 'outline';
+  return 'secondary';
 }
 
 function formatLabel(value: string) {
@@ -90,8 +91,8 @@ export function ProductRequestsTab({ dealId }: { dealId: string }) {
   if (loading) {
     return (
       <div>
-        <Skeleton style={{ height: 88, marginBottom: 16 }} />
-        <Skeleton style={{ height: 160 }} />
+        <Skeleton className="mb-4 h-[88px]" />
+        <Skeleton className="h-40" />
       </div>
     );
   }

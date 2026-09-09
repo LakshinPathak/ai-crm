@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { Calendar } from 'lucide-react';
 import { apiGet } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
-import { Badge } from '@/components/ui/legacy-badge';
-import { Card } from '@/components/ui/legacy-card';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Skeleton } from '@/components/ui/page-skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type DealEvent = {
   id: string;
@@ -57,8 +57,8 @@ export function EventsTab({ dealId }: { dealId: string }) {
   if (loading) {
     return (
       <div>
-        <Skeleton style={{ height: 88, marginBottom: 16 }} />
-        <Skeleton style={{ height: 120 }} />
+        <Skeleton className="mb-4 h-[88px]" />
+        <Skeleton className="h-30" />
       </div>
     );
   }

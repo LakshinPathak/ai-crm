@@ -4,12 +4,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { UserPlus } from 'lucide-react';
 import { apiGet, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
-import { Badge } from '@/components/ui/legacy-badge';
-import { Button } from '@/components/ui/legacy-button';
-import { Card } from '@/components/ui/legacy-card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Skeleton } from '@/components/ui/page-skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/Toast';
+import type { ShadcnBadgeVariant } from '@/lib/ui-badge';
 
 type TeamRequest = {
   id: string;
@@ -20,11 +21,11 @@ type TeamRequest = {
   createdAt: string;
 };
 
-function statusVariant(status: string) {
-  if (status === 'completed') return 'green';
-  if (status === 'in_progress') return 'blue';
-  if (status === 'cancelled') return 'default';
-  return 'yellow';
+function statusVariant(status: string): ShadcnBadgeVariant {
+  if (status === 'completed') return 'default';
+  if (status === 'in_progress') return 'secondary';
+  if (status === 'cancelled') return 'outline';
+  return 'outline';
 }
 
 function formatStatus(status: string) {
@@ -81,8 +82,8 @@ export function TeamRequestsTab({ dealId }: { dealId: string }) {
   if (loading) {
     return (
       <div>
-        <Skeleton style={{ height: 88, marginBottom: 16 }} />
-        <Skeleton style={{ height: 160 }} />
+        <Skeleton className="mb-4 h-[88px]" />
+        <Skeleton className="h-40" />
       </div>
     );
   }

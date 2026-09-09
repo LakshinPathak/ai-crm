@@ -1,18 +1,18 @@
-export function Skeleton({ className = '', style }: { className?: string; style?: React.CSSProperties }) {
-  return <div className={`ui-skeleton ${className}`} style={style} />;
-}
+import { Skeleton } from '@/components/ui/skeleton';
+
+export { Skeleton };
 
 export function PageSkeleton() {
   return (
-    <div className="ui-page-skeleton">
-      <Skeleton style={{ height: 32, width: 200, marginBottom: 8 }} />
-      <Skeleton style={{ height: 16, width: 140, marginBottom: 24 }} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
-        <Skeleton style={{ height: 100 }} />
-        <Skeleton style={{ height: 100 }} />
-        <Skeleton style={{ height: 100 }} />
+    <div className="space-y-6">
+      <Skeleton className="h-8 w-52" />
+      <Skeleton className="h-4 w-36" />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Skeleton className="h-24" />
+        <Skeleton className="h-24" />
+        <Skeleton className="h-24" />
       </div>
-      <Skeleton style={{ height: 280 }} />
+      <Skeleton className="h-72 w-full" />
     </div>
   );
 }

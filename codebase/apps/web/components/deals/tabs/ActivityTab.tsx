@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { Activity } from 'lucide-react';
 import { apiGet } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
-import { Card } from '@/components/ui/legacy-card';
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Skeleton } from '@/components/ui/page-skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type ActivityItem = {
   id: string;
@@ -57,8 +57,8 @@ export function ActivityTab({ dealId }: { dealId: string }) {
   if (loading) {
     return (
       <div>
-        <Skeleton style={{ height: 40, marginBottom: 16 }} />
-        <Skeleton style={{ height: 200 }} />
+        <Skeleton className="mb-4 h-10" />
+        <Skeleton className="h-50" />
       </div>
     );
   }

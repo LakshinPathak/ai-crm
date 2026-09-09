@@ -3,8 +3,17 @@
 import { useEffect, useState } from 'react';
 import { apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/legacy-button';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/Toast';
 
 export function CreateAccountModal({
@@ -55,53 +64,59 @@ export function CreateAccountModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="New account" description="Add a company to your CRM">
-      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <label>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)' }}>Company name</span>
-          <input
-            className="ui-input"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            style={{ marginTop: 4 }}
-          />
-        </label>
-        <label>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)' }}>Domain</span>
-          <input
-            className="ui-input"
-            value={domain}
-            onChange={(e) => setDomain(e.target.value)}
-            placeholder="example.com"
-            style={{ marginTop: 4 }}
-          />
-        </label>
-        <label>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)' }}>Industry</span>
-          <input
-            className="ui-input"
-            value={industry}
-            onChange={(e) => setIndustry(e.target.value)}
-            style={{ marginTop: 4 }}
-          />
-        </label>
-        <label>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)' }}>Employees</span>
-          <input
-            className="ui-input"
-            type="number"
-            min={0}
-            value={employeeCount}
-            onChange={(e) => setEmployeeCount(e.target.value)}
-            style={{ marginTop: 4 }}
-          />
-        </label>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
-          <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button type="submit" disabled={loading}>{loading ? 'Creating…' : 'Create account'}</Button>
-        </div>
-      </form>
-    </Modal>
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>New account</DialogTitle>
+          <DialogDescription>Add a company to your CRM.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="account-name">Company name</Label>
+            <Input
+              id="account-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="account-domain">Domain</Label>
+            <Input
+              id="account-domain"
+              value={domain}
+              onChange={(e) => setDomain(e.target.value)}
+              placeholder="example.com"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="account-industry">Industry</Label>
+            <Input
+              id="account-industry"
+              value={industry}
+              onChange={(e) => setIndustry(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="account-employees">Employees</Label>
+            <Input
+              id="account-employees"
+              type="number"
+              min={0}
+              value={employeeCount}
+              onChange={(e) => setEmployeeCount(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Creating…' : 'Create account'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

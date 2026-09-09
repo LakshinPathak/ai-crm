@@ -11,10 +11,10 @@ import {
 import { apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { formatMoney, fitScore, sentimentLabel } from '@/lib/format';
-import { Badge } from '@/components/ui/legacy-badge';
-import { Button } from '@/components/ui/legacy-button';
-import { Card } from '@/components/ui/legacy-card';
-import { Skeleton } from '@/components/ui/page-skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/Toast';
 
 type DealHeader = {
@@ -124,9 +124,9 @@ export function OverviewTab({
     return (
       <>
         <div className="ui-metrics" style={{ marginBottom: 16 }}>
-          {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} style={{ height: 72 }} />)}
+          {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-[72px]" />)}
         </div>
-        <Skeleton style={{ height: 280 }} />
+        <Skeleton className="h-[280px]" />
       </>
     );
   }
@@ -170,7 +170,8 @@ export function OverviewTab({
         <div className="ui-ai-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <h3 style={{ margin: 0 }}>AI Deal Summary {streaming && <span className="live">Refreshing</span>}</h3>
-            <Button size="sm" icon={<RefreshCw size={14} />} onClick={refreshMeddpicc} disabled={streaming}>
+            <Button size="sm" onClick={refreshMeddpicc} disabled={streaming}>
+              <RefreshCw size={14} />
               {streaming ? 'Refreshing…' : 'Refresh'}
             </Button>
           </div>
@@ -205,7 +206,7 @@ export function OverviewTab({
           <h3 style={{ margin: '0 0 1rem', fontSize: '0.9375rem', fontWeight: 700 }}>MEDDPICC Breakdown</h3>
           <div className="grid-2">
             {Object.entries(meddpicc).map(([key, letter]) => (
-              <Card key={key} hover>
+              <Card key={key} className="transition-shadow hover:shadow-md">
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                   <strong>{key} — {letter.label}</strong>
                   <Badge variant="default">{Math.round(letter.confidence * 100)}%</Badge>

@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { StickyNote, Trash2 } from 'lucide-react';
 import { apiDelete, apiGet, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
-import { Button } from '@/components/ui/legacy-button';
-import { Card } from '@/components/ui/legacy-card';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Skeleton } from '@/components/ui/page-skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/Toast';
 
 type Note = { id: string; body: string; createdAt: string };
@@ -58,8 +58,8 @@ export function NotesTab({ dealId }: { dealId: string }) {
   if (loading) {
     return (
       <div>
-        <Skeleton style={{ height: 88, marginBottom: 16 }} />
-        <Skeleton style={{ height: 120 }} />
+        <Skeleton className="mb-4 h-[88px]" />
+        <Skeleton className="h-30" />
       </div>
     );
   }
@@ -87,7 +87,9 @@ export function NotesTab({ dealId }: { dealId: string }) {
           <Card key={n.id} style={{ marginBottom: '0.65rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
               <p style={{ margin: '0 0 0.35rem', lineHeight: 1.6, flex: 1 }}>{n.body}</p>
-              <Button variant="ghost" size="sm" icon={<Trash2 size={14} />} onClick={() => deleteNote(n.id)} />
+              <Button variant="ghost" size="icon-sm" onClick={() => deleteNote(n.id)}>
+                <Trash2 size={14} />
+              </Button>
             </div>
             <small style={{ color: 'var(--muted-light)' }}>{new Date(n.createdAt).toLocaleString()}</small>
           </Card>

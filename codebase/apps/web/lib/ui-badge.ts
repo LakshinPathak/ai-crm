@@ -26,3 +26,25 @@ export function integrationStatusBadge(status: string): ShadcnBadgeVariant | nul
   if (status === 'warning') return 'outline';
   return 'outline';
 }
+
+/** Maps legacy CSS badge variant names to shadcn variants. */
+export function legacyBadgeVariant(variant: string): ShadcnBadgeVariant {
+  const map: Record<string, ShadcnBadgeVariant> = {
+    default: 'secondary',
+    green: 'default',
+    enabled: 'default',
+    blue: 'secondary',
+    teal: 'secondary',
+    yellow: 'outline',
+    warning: 'outline',
+    red: 'destructive',
+    hot: 'destructive',
+    blocker: 'destructive',
+    risk: 'destructive',
+    process: 'secondary',
+    signals: 'outline',
+    reporting: 'outline',
+    coming_soon: 'outline',
+  };
+  return map[variant] ?? 'secondary';
+}

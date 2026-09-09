@@ -2,17 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Building2, Plus } from 'lucide-react';
+import { Building2, Plus, Search } from 'lucide-react';
 import { apiGet } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import type { CompaniesListResponse, CompanySummary } from '@/lib/types';
 import { CreateAccountModal } from '@/components/CreateAccountModal';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { SearchInput } from '@/components/ui/SearchInput';
-import { Button } from '@/components/ui/legacy-button';
-import { Card } from '@/components/ui/legacy-card';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Avatar } from '@/components/ui/name-avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { PageSkeleton } from '@/components/ui/page-skeleton';
 
 export default function AccountsPage() {
@@ -50,7 +50,7 @@ export default function AccountsPage() {
   }, [companies, search]);
 
   if (!loaded) return <PageSkeleton />;
-  if (error) return <p style={{ color: 'var(--red)' }}>{error}</p>;
+  if (error) return <p className="text-destructive">{error}</p>;
 
   return (
     <div>
@@ -58,12 +58,21 @@ export default function AccountsPage() {
         title="Accounts"
         subtitle={`${companies.length} compan${companies.length === 1 ? 'y' : 'ies'}`}
         actions={
-          <>
-            <SearchInput value={search} onChange={setSearch} placeholder="Search accounts…" />
-            <Button size="sm" icon={<Plus size={14} />} onClick={() => setShowCreate(true)}>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search accounts…"
+                className="w-44 pl-8"
+              />
+            </div>
+            <Button size="sm" onClick={() => setShowCreate(true)}>
+              <Plus size={14} />
               New account
             </Button>
-          </>
+          </div>
         }
       />
 
@@ -74,7 +83,7 @@ export default function AccountsPage() {
           description={search ? 'Try a different search term.' : 'Create an account or sync companies from your CRM.'}
         />
       ) : (
-        <Card padding={false}>
+        <Card className="overflow-hidden p-0">
           <table className="ui-table">
             <thead>
               <tr>
@@ -87,9 +96,9 @@ export default function AccountsPage() {
               {filtered.map((company) => (
                 <tr key={company.id}>
                   <td>
-                    <Link href={`/accounts/${company.id}`} className="cell-title" style={{ color: 'var(--text)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Avatar name={company.name} size="xs" />
+                    <Link href={`/accounts/${company.id}`} className="cell-title text-foreground">
+                      <div className="flex items-center gap-2">
+                        <UserAvatar name={company.name} size="xs" />
                         {company.name}
                       </div>
                     </Link>

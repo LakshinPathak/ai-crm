@@ -3,8 +3,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { IntegrationLogo, type IntegrationId } from '@/components/brand/IntegrationLogo';
-import { Badge } from '@/components/ui/legacy-badge';
-import { Button } from '@/components/ui/legacy-button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { legacyBadgeVariant } from '@/lib/ui-badge';
 import { useToast } from '@/components/ui/Toast';
 import { apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { getToken, setToken } from '@/lib/auth';
@@ -398,17 +409,14 @@ export default function OnboardingPage() {
           <h1>Create your workspace</h1>
           <p className="subtitle">Set up your team before connecting a CRM.</p>
           <form onSubmit={createWorkspace}>
-            <label htmlFor="name" style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)' }}>
-              Workspace name
-            </label>
-            <input
+            <Label htmlFor="name">Workspace name</Label>
+            <Input
               id="name"
-              className="ui-input"
               value={workspaceName}
               onChange={(e) => setWorkspaceName(e.target.value)}
               required
               minLength={2}
-              style={{ marginTop: 8, marginBottom: 16, width: '100%' }}
+              className="mt-2 mb-4 w-full"
             />
             {error && <p style={{ color: 'var(--red)', fontSize: 14 }}>{error}</p>}
             <Button type="submit" disabled={loading} style={{ width: '100%' }}>
@@ -486,11 +494,11 @@ export default function OnboardingPage() {
               </div>
               {connected && connectResult ? (
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <Badge variant="enabled">Connected</Badge>
+                  <Badge variant={legacyBadgeVariant('enabled')}>Connected</Badge>
                   {connectResult.mode === 'live' ? (
-                    <Badge variant="green">Live mode</Badge>
+                    <Badge variant={legacyBadgeVariant('green')}>Live mode</Badge>
                   ) : (
-                    <Badge variant="warning">Demo mode</Badge>
+                    <Badge variant={legacyBadgeVariant('warning')}>Demo mode</Badge>
                   )}
                 </div>
               ) : (
@@ -515,21 +523,18 @@ export default function OnboardingPage() {
         {step === 3 && !skippedCrm && (
           <div>
             {pipelines.length > 1 && (
-              <div style={{ marginBottom: '1rem' }}>
-                <label htmlFor="pipeline" style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)' }}>
-                  Pipeline
-                </label>
-                <select
-                  id="pipeline"
-                  className="ui-input"
-                  value={pipelineId}
-                  onChange={(e) => handlePipelineChange(e.target.value)}
-                  style={{ marginTop: 6, width: '100%' }}
-                >
-                  {pipelines.map((p) => (
-                    <option key={p.externalId} value={p.externalId}>{p.name}</option>
-                  ))}
-                </select>
+              <div className="mb-4">
+                <Label htmlFor="pipeline">Pipeline</Label>
+                <Select value={pipelineId} onValueChange={handlePipelineChange}>
+                  <SelectTrigger id="pipeline" className="mt-1.5 w-full">
+                    <SelectValue placeholder="Select pipeline" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pipelines.map((p) => (
+                      <SelectItem key={p.externalId} value={p.externalId}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
             <p style={{ color: 'var(--muted)', fontSize: 14, marginTop: 0 }}>
@@ -632,9 +637,7 @@ export default function OnboardingPage() {
                     : `Importing deals from ${providerMeta?.name ?? provider}…`}
                 </p>
                 <div className="onboarding-progress">
-                  <div className="onboarding-progress__bar">
-                    <div className="onboarding-progress__fill" style={{ width: `${progressPct}%` }} />
-                  </div>
+                  <Progress value={progressPct} className="h-2" />
                   <div className="onboarding-progress__label">
                     <span>
                       {importProgress.status === 'failed'

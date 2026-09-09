@@ -5,7 +5,7 @@ import { ChangeBadge } from './ChangeBadge';
 import { Sparkline } from './Sparkline';
 import { ActivityStackedBar } from './ActivityStackedBar';
 import { KpiCard } from '@/components/ui/KpiCard';
-import { Avatar } from '@/components/ui/name-avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 
 type Metric = { value: number; changePct: number };
 
@@ -119,7 +119,7 @@ export function PerformanceDashboard({
                   <tr key={u.id}>
                     <td>
                       <div className="analytics-user-cell">
-                        <Avatar name={u.name} size="sm" />
+                        <UserAvatar name={u.name} size="sm" />
                         <div>
                           <div className="analytics-user-name">{u.name}</div>
                           {!compact && <div className="analytics-user-email">{u.email}</div>}

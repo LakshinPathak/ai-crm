@@ -1,17 +1,21 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { Download } from 'lucide-react';
 import { apiGet } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PageSkeleton } from '@/components/ui/page-skeleton';
-import { Button } from '@/components/ui/legacy-button';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { PerformanceDashboard, type PerformanceData } from '@/components/analytics/PerformanceDashboard';
 import { ActivityDashboard, type ActivityData } from '@/components/analytics/ActivityDashboard';
 import { FunnelDashboard, type FunnelData } from '@/components/analytics/FunnelDashboard';
 import { LossDashboard, type LossData } from '@/components/analytics/LossDashboard';
 import { UsersInsightsDashboard, type UsersInsightsData } from '@/components/analytics/UsersInsightsDashboard';
-import { Download } from 'lucide-react';
 
 type MainTab = 'performance' | 'activity' | 'funnel' | 'loss' | 'users';
 
@@ -95,8 +99,8 @@ export default function InsightsPage() {
     return (
       <div className="analytics-page">
         <PageHeader title="Insights" subtitle="Pipeline, activity, funnel & loss analytics" />
-        <p style={{ color: 'var(--red)' }}>{loadError}</p>
-        <Button size="sm" onClick={loadCore} style={{ marginTop: 12 }}>Retry</Button>
+        <p className="text-destructive">{loadError}</p>
+        <Button size="sm" onClick={loadCore} className="mt-3">Retry</Button>
       </div>
     );
   }
@@ -119,14 +123,6 @@ export default function InsightsPage() {
     setTabError(null);
   }
 
-  const tabs: { id: MainTab; label: string }[] = [
-    { id: 'performance', label: 'Performance' },
-    { id: 'activity', label: 'Activity' },
-    { id: 'funnel', label: 'Funnel' },
-    { id: 'loss', label: 'Loss' },
-    { id: 'users', label: 'Users' },
-  ];
-
   return (
     <div className="analytics-page">
       <PageHeader
@@ -134,90 +130,101 @@ export default function InsightsPage() {
         subtitle="Pipeline, activity, funnel & loss analytics"
         actions={
           mainTab === 'performance' ? (
-            <Button size="sm" variant="soft" onClick={exportCsv}>
-              <Download size={14} style={{ marginRight: 6 }} />
+            <Button size="sm" variant="secondary" onClick={exportCsv}>
+              <Download size={14} />
               Export
             </Button>
           ) : undefined
         }
       />
 
-      <div className="analytics-main-tabs">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            className={`analytics-main-tab ${mainTab === tab.id ? 'analytics-main-tab--active' : ''}`}
-            onClick={() => selectTab(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <Tabs value={mainTab} onValueChange={(v) => selectTab(v as MainTab)} className="mt-4">
+        <TabsList>
+          <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
+          <TabsTrigger value="funnel">Funnel</TabsTrigger>
+          <TabsTrigger value="loss">Loss</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
+        </TabsList>
 
-      {mainTab === 'performance' && (
-        <>
-          <div className="analytics-toolbar">
-            <div className="analytics-segmented">
-              <button type="button" className={perfView === 'users' ? 'active' : ''} onClick={() => setPerfView('users')}>Users</button>
-              <button type="button" className={perfView === 'teams' ? 'active' : ''} onClick={() => setPerfView('teams')}>Teams</button>
+        <TabsContent value="performance" className="mt-4">
+          <div className="analytics-toolbar mb-4 flex flex-wrap items-center gap-4">
+            <ToggleGroup
+              type="single"
+              value={perfView}
+              onValueChange={(v) => v && setPerfView(v as 'users' | 'teams')}
+              variant="outline"
+              size="sm"
+            >
+              <ToggleGroupItem value="users">Users</ToggleGroupItem>
+              <ToggleGroupItem value="teams">Teams</ToggleGroupItem>
+            </ToggleGroup>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="compare-org-perf"
+                checked={compareOrg}
+                onCheckedChange={(checked) => setCompareOrg(checked === true)}
+              />
+              <Label htmlFor="compare-org-perf" className="text-sm font-normal">
+                Comparisons vs org average
+              </Label>
             </div>
-            <label className="analytics-checkbox">
-              <input type="checkbox" checked={compareOrg} onChange={(e) => setCompareOrg(e.target.checked)} />
-              Comparisons vs org average
-            </label>
           </div>
           <PerformanceDashboard data={performance} view={perfView} compareOrg={compareOrg} />
-        </>
-      )}
+        </TabsContent>
 
-      {mainTab === 'activity' && (
-        <div className="analytics-split">
-          <div className="analytics-split__users">
-            <PerformanceDashboard data={performance} view="users" compareOrg={compareOrg} compact />
+        <TabsContent value="activity" className="mt-4">
+          <div className="analytics-split">
+            <div className="analytics-split__users">
+              <PerformanceDashboard data={performance} view="users" compareOrg={compareOrg} compact />
+            </div>
+            <div className="analytics-split__charts">
+              <ActivityDashboard data={activity} onGranularityChange={setGranularity} />
+            </div>
           </div>
-          <div className="analytics-split__charts">
-            <ActivityDashboard data={activity} onGranularityChange={setGranularity} />
-          </div>
-        </div>
-      )}
+        </TabsContent>
 
-      {mainTab === 'funnel' && (
-        tabLoading && !funnel ? <PageSkeleton /> : tabError ? (
-          <div>
-            <p style={{ color: 'var(--red)' }}>{tabError}</p>
-            <Button size="sm" onClick={() => loadTabData('funnel')} style={{ marginTop: 12 }}>Retry</Button>
-          </div>
-        ) : funnel ? <FunnelDashboard data={funnel} /> : null
-      )}
+        <TabsContent value="funnel" className="mt-4">
+          {tabLoading && !funnel ? <PageSkeleton /> : tabError ? (
+            <div>
+              <p className="text-destructive">{tabError}</p>
+              <Button size="sm" onClick={() => loadTabData('funnel')} className="mt-3">Retry</Button>
+            </div>
+          ) : funnel ? <FunnelDashboard data={funnel} /> : null}
+        </TabsContent>
 
-      {mainTab === 'loss' && (
-        tabLoading && !loss ? <PageSkeleton /> : tabError ? (
-          <div>
-            <p style={{ color: 'var(--red)' }}>{tabError}</p>
-            <Button size="sm" onClick={() => loadTabData('loss')} style={{ marginTop: 12 }}>Retry</Button>
-          </div>
-        ) : loss ? <LossDashboard data={loss} /> : null
-      )}
+        <TabsContent value="loss" className="mt-4">
+          {tabLoading && !loss ? <PageSkeleton /> : tabError ? (
+            <div>
+              <p className="text-destructive">{tabError}</p>
+              <Button size="sm" onClick={() => loadTabData('loss')} className="mt-3">Retry</Button>
+            </div>
+          ) : loss ? <LossDashboard data={loss} /> : null}
+        </TabsContent>
 
-      {mainTab === 'users' && (
-        <>
-          <div className="analytics-toolbar">
-            <label className="analytics-checkbox">
-              <input type="checkbox" checked={compareOrg} onChange={(e) => setCompareOrg(e.target.checked)} />
-              Comparisons vs org average
-            </label>
+        <TabsContent value="users" className="mt-4">
+          <div className="analytics-toolbar mb-4">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="compare-org-users"
+                checked={compareOrg}
+                onCheckedChange={(checked) => setCompareOrg(checked === true)}
+              />
+              <Label htmlFor="compare-org-users" className="text-sm font-normal">
+                Comparisons vs org average
+              </Label>
+            </div>
           </div>
           {tabLoading && !usersInsights ? <PageSkeleton /> : tabError ? (
             <div>
-              <p style={{ color: 'var(--red)' }}>{tabError}</p>
-              <Button size="sm" onClick={() => loadTabData('users')} style={{ marginTop: 12 }}>Retry</Button>
+              <p className="text-destructive">{tabError}</p>
+              <Button size="sm" onClick={() => loadTabData('users')} className="mt-3">Retry</Button>
             </div>
           ) : usersInsights ? (
             <UsersInsightsDashboard data={usersInsights} compareOrg={compareOrg} />
           ) : null}
-        </>
-      )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

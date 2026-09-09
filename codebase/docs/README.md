@@ -95,7 +95,7 @@ Everything lives under `codebase/docs/` — there is no separate `artifacts/plan
 | 2 | Public API = `apps/api` :4000 | `stack.md` |
 | 3 | All modules in single Express process | `architecture.md` |
 | 4 | MongoDB single database | `database.md` |
-| 5 | MongoDB `background_jobs` for async workers | `architecture.md` |
+| 5 | MongoDB `background_jobs` for async workers | `architecture.md`, `../TECH_STACK.md` |
 | 6 | JWT auth on protected routes | `architecture.md` |
 | 7 | Full product: 12 deal tabs, 10 agents | `prd.md` |
 | 8 | Local dev = `pnpm dev` | `stack.md` |

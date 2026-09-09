@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { apiGet } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { sentimentLabel } from '@/lib/format';
-import { Card } from '@/components/ui/legacy-card';
-import { Skeleton } from '@/components/ui/page-skeleton';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type DealHeaderInsights = {
   winProbability: number;
@@ -99,7 +99,7 @@ export function InsightsTab({
     return (
       <div className="ui-metrics">
         {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} style={{ height: 72 }} />
+          <Skeleton key={i} className="h-[72px]" />
         ))}
       </div>
     );
