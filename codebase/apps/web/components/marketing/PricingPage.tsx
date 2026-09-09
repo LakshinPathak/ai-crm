@@ -1,17 +1,11 @@
 import { Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FeatureIcon } from '@/components/marketing/FeatureIcon';
 import { MarketingCta } from '@/components/marketing/MarketingCta';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
 import { PricingWizard } from '@/components/marketing/PricingWizard';
-import { TrustSection } from '@/components/marketing/TrustSection';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import {
-  PRICING_BULLETS,
-  PRICING_SECURITY,
-  PRICING_TESTIMONIALS,
-} from '@/lib/marketing-content';
+import { PRICING_BULLETS, PRICING_TESTIMONIALS } from '@/lib/marketing-content';
 
 export function PricingPage() {
   return (
@@ -64,30 +58,6 @@ export function PricingPage() {
           ))}
         </div>
       </section>
-
-      <section className="mkt-pricing-security bg-background px-6 py-16">
-        <div className="mkt-section-head">
-          <span className="mkt-eyebrow text-primary">Security</span>
-          <h2 className="text-foreground">Built for enterprise revenue teams</h2>
-        </div>
-        <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
-          {PRICING_SECURITY.map((item, i) => (
-            <Card key={item.title}>
-              <CardHeader>
-                <FeatureIcon
-                  name={(['shield', 'key', 'lock'] as const)[i]}
-                  size={22}
-                  color="var(--primary)"
-                />
-                <CardTitle className="text-base">{item.title}</CardTitle>
-                <CardDescription>{item.description}</CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <TrustSection />
 
       <MarketingCta
         title="Get your custom pricing now."

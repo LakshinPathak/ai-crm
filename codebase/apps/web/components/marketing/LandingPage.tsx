@@ -11,7 +11,6 @@ import { MarketingCta } from '@/components/marketing/MarketingCta';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
 import { ModulesTabs } from '@/components/marketing/ModulesTabs';
 import { TestimonialCarousel } from '@/components/marketing/TestimonialCarousel';
-import { TrustSection } from '@/components/marketing/TrustSection';
 import { ScrollReveal } from '@/components/marketing/animations/ScrollReveal';
 import { FeatureIcon } from '@/components/marketing/FeatureIcon';
 import { INTEGRATIONS, MVP_FEATURES } from '@/lib/marketing-content';
@@ -21,7 +20,6 @@ const LANDING_NAV = [
   { href: '#modules', label: 'Solutions' },
   { href: '#integrations', label: 'Integrations' },
   { href: '/pricing', label: 'Pricing', isRoute: true },
-  { href: '#security', label: 'Security' },
 ];
 
 export function LandingPage() {
@@ -103,8 +101,6 @@ export function LandingPage() {
         </ScrollReveal>
         <IntegrationsTabs />
       </section>
-
-      <TrustSection />
 
       <MarketingCta
         title="Connect your CRM this week. See cited deal context by Friday."

@@ -188,48 +188,6 @@ export const INTEGRATIONS: Record<string, { id: IntegrationId; name: string }[]>
   ],
 } as const;
 
-export const TRUST_BADGES = [
-  { label: 'SOC 2 Type II', icon: 'shield' },
-  { label: 'GDPR', icon: 'badge' },
-  { label: 'AES-256 at rest', icon: 'lock' },
-  { label: 'TLS 1.3 in transit', icon: 'fingerprint' },
-  { label: 'SSO / SAML', icon: 'key' },
-] as const;
-
-export const TRUST_BADGES_VERIFIED = [
-  { label: 'AES-256 at rest', icon: 'lock' },
-  { label: 'TLS 1.3 in transit', icon: 'fingerprint' },
-  { label: 'SSO / SAML', icon: 'key' },
-] as const;
-
-export const TRUST_BADGES_ROADMAP = [
-  { label: 'SOC 2 Type II (in progress)', icon: 'shield' },
-  { label: 'GDPR (in progress)', icon: 'badge' },
-] as const;
-
-export const TRUST_FAQ = [
-  {
-    question: 'Do you replace our CRM?',
-    answer:
-      'No. AI CRM is a context layer that sits alongside HubSpot, Salesforce, Pipedrive, or Zoho. Your CRM stays the system of record — we unify Gong, Slack, calendar, and docs into one deal record.',
-  },
-  {
-    question: 'Can AI write to Salesforce or HubSpot?',
-    answer:
-      'Only after a human approves the change in your approval queue. Read-first sync is the default; every write is gated.',
-  },
-  {
-    question: 'How do you prevent AI hallucinations?',
-    answer:
-      'Summaries include inline citations to Gong moments, Slack messages, and CRM fields. We target 95% citation coverage — every claim links to a source.',
-  },
-  {
-    question: 'How long does setup take?',
-    answer:
-      'Most teams connect their CRM via OAuth in under 10 minutes. Stage mapping and user matching are guided in onboarding.',
-  },
-] as const;
-
 export const HERO_TESTIMONIAL = {
   quote: 'MEDDPICC summaries with sources changed our QBR conversations.',
   name: 'Elena Ruiz',
@@ -270,7 +228,7 @@ export const CRM_LOGO_IDS: IntegrationId[] = ['hubspot', 'salesforce', 'pipedriv
 export const PRICING_BULLETS = [
   'Custom pricing scaled to your team',
   'Onboarding, CRM migration, and connector setup included',
-  'Enterprise security — SOC 2 & GDPR (roadmap)',
+  'Human approval before any CRM write',
 ] as const;
 
 export const PRICING_WIZARD = {
@@ -307,12 +265,6 @@ export const PRICING_TESTIMONIALS = [
 ] as const;
 
 export const LANDING_TESTIMONIALS = PRICING_TESTIMONIALS.slice(0, 4);
-
-export const PRICING_SECURITY = [
-  { title: 'Enterprise-grade compliance', description: 'SOC 2 Type II and GDPR on the roadmap with audit-friendly controls.' },
-  { title: 'Granular access controls', description: 'SSO, SAML, and role-based permissions scoped to teams and deals.' },
-  { title: 'End-to-end encryption', description: 'AES-256 at rest and TLS 1.3 in transit for customer data.' },
-] as const;
 
 export const PRODUCT_SECTIONS = [
   {

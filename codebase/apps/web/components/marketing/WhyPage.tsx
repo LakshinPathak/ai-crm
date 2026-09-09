@@ -3,7 +3,6 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/ca
 import { FeatureIcon } from '@/components/marketing/FeatureIcon';
 import { MarketingCta } from '@/components/marketing/MarketingCta';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
-import { TrustSection } from '@/components/marketing/TrustSection';
 import { WHY_VALUE_PROPS } from '@/lib/marketing-content';
 
 export function WhyPage() {
@@ -45,8 +44,6 @@ export function WhyPage() {
           ))}
         </div>
       </section>
-
-      <TrustSection />
 
       <MarketingCta
         title="Ready to see pricing for your team?"
