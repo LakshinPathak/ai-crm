@@ -1,10 +1,15 @@
 import { IntegrationLogo } from '@/components/brand/IntegrationLogo';
+import { Badge } from '@/components/ui/badge';
 import { Sparkles, TrendingUp, CheckCircle2 } from 'lucide-react';
 
 /** Product UI mockup — hero centerpiece */
 export function HeroVisual() {
   return (
-    <div className="hero-visual" aria-hidden>
+    <div
+      className="hero-visual"
+      role="img"
+      aria-label="Deal workspace showing MEDDPICC summary with citations from Gong, Slack, and HubSpot"
+    >
       <div className="hero-visual__glow" />
 
       <div className="hero-visual__float hero-visual__float--hubspot">
@@ -42,7 +47,7 @@ export function HeroVisual() {
                 <div className="hero-visual__deal-title">Acme Enterprise — Platform POC</div>
                 <div className="hero-visual__deal-meta">$285,000 · Discovery → Evaluation</div>
               </div>
-              <span className="hero-visual__deal-badge">At risk</span>
+              <Badge variant="destructive" className="text-[10px]">At risk</Badge>
             </div>
 
             <div className="hero-visual__grid">

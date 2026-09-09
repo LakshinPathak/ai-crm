@@ -35,6 +35,7 @@ export const BUILDING_BLOCKS = [
 export const MVP_FEATURES = [
   {
     title: 'Unified deal record',
+    badge: 'Most adopted',
     description:
       'One record per opportunity merging CRM, Slack, Gong, calendar, and docs — the context layer your CRM never had.',
     icon: 'layers',
@@ -42,6 +43,7 @@ export const MVP_FEATURES = [
   },
   {
     title: 'Cited AI summaries',
+    badge: 'SE favorite',
     description:
       'MEDDPICC and deal-health summaries with inline citations to Slack messages, transcript moments, and CRM fields.',
     icon: 'sparkles',
@@ -194,6 +196,59 @@ export const TRUST_BADGES = [
   { label: 'SSO / SAML', icon: 'key' },
 ] as const;
 
+export const TRUST_BADGES_VERIFIED = [
+  { label: 'AES-256 at rest', icon: 'lock' },
+  { label: 'TLS 1.3 in transit', icon: 'fingerprint' },
+  { label: 'SSO / SAML', icon: 'key' },
+] as const;
+
+export const TRUST_BADGES_ROADMAP = [
+  { label: 'SOC 2 Type II (in progress)', icon: 'shield' },
+  { label: 'GDPR (in progress)', icon: 'badge' },
+] as const;
+
+export const TRUST_FAQ = [
+  {
+    question: 'Do you replace our CRM?',
+    answer:
+      'No. AI CRM is a context layer that sits alongside HubSpot, Salesforce, Pipedrive, or Zoho. Your CRM stays the system of record — we unify Gong, Slack, calendar, and docs into one deal record.',
+  },
+  {
+    question: 'Can AI write to Salesforce or HubSpot?',
+    answer:
+      'Only after a human approves the change in your approval queue. Read-first sync is the default; every write is gated.',
+  },
+  {
+    question: 'How do you prevent AI hallucinations?',
+    answer:
+      'Summaries include inline citations to Gong moments, Slack messages, and CRM fields. We target 95% citation coverage — every claim links to a source.',
+  },
+  {
+    question: 'How long does setup take?',
+    answer:
+      'Most teams connect their CRM via OAuth in under 10 minutes. Stage mapping and user matching are guided in onboarding.',
+  },
+] as const;
+
+export const HERO_TESTIMONIAL = {
+  quote: 'MEDDPICC summaries with sources changed our QBR conversations.',
+  name: 'Elena Ruiz',
+  title: 'Senior SE Manager',
+  rating: '4.8/5 on G2',
+} as const;
+
+export const STATS_FOOTNOTE =
+  '*Based on self-reported time savings from early access customers. Individual results vary.';
+
+export const MODULE_OUTCOMES: Record<string, string> = {
+  A: 'Cut POC planning time across your SE bench',
+  B: 'Brief every call with cited deal context in 60 seconds',
+  C: 'Catch stalled deals before leadership asks why',
+  D: 'Diagnose funnel bottlenecks by team and stage',
+  E: 'Roll up product gaps from live evals',
+  F: 'Replace email ping-pong on technical evals',
+};
+
 export const STATS = [
   { value: 23, suffix: '%', label: 'Shorter sales cycles', icon: 'chart' },
   { value: 4, suffix: 'hr', label: 'Saved per deal per week', icon: 'dashboard' },
@@ -250,6 +305,8 @@ export const PRICING_TESTIMONIALS = [
   { quote: 'Pipeline view with sentiment badges is what our CRM never gave us.', name: 'Tom Walsh', title: 'CRO' },
   { quote: 'Custom pricing matched our team size — no per-seat sticker shock.', name: 'Anika Patel', title: 'Sales Operations' },
 ] as const;
+
+export const LANDING_TESTIMONIALS = PRICING_TESTIMONIALS.slice(0, 4);
 
 export const PRICING_SECURITY = [
   { title: 'Enterprise-grade compliance', description: 'SOC 2 Type II and GDPR on the roadmap with audit-friendly controls.' },

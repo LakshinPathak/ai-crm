@@ -16,11 +16,11 @@ import {
 type NavLink = { href: string; label: string; isRoute?: boolean };
 
 const NAV_LINKS: NavLink[] = [
-  { href: '#features', label: 'Product' },
+  { href: '#platform', label: 'Platform' },
   { href: '#modules', label: 'Solutions' },
   { href: '#integrations', label: 'Integrations' },
   { href: '/pricing', label: 'Pricing', isRoute: true },
-  { href: '#mvp', label: 'MVP' },
+  { href: '#security', label: 'Security' },
 ];
 
 export function MobileNav() {
@@ -59,12 +59,17 @@ export function MobileNav() {
           <DrawerFooter className="gap-2">
             <DrawerClose asChild>
               <Button variant="outline" asChild>
+                <Link href="/pricing#quote">Book demo</Link>
+              </Button>
+            </DrawerClose>
+            <DrawerClose asChild>
+              <Button variant="outline" asChild>
                 <Link href="/sign-in">Sign in</Link>
               </Button>
             </DrawerClose>
             <DrawerClose asChild>
               <Button asChild>
-                <Link href="/sign-in">Start free</Link>
+                <Link href="/sign-up">Start free</Link>
               </Button>
             </DrawerClose>
           </DrawerFooter>
