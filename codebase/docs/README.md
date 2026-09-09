@@ -34,6 +34,7 @@ Everything lives under `codebase/docs/` — there is no separate `artifacts/plan
 | 3 | [`architecture.md`](architecture.md) | Module boundaries, deployment |
 | 4 | [`competitive-opine.md`](competitive-opine.md) | Opine benchmark |
 | 5 | [`wbs.md`](wbs.md) | 24–32 week delivery plan |
+| 6 | [`r6-roadmap.md`](r6-roadmap.md) | Next batch (R6) — 5 workstreams |
 
 ### Path B — Backend (API, data)
 
@@ -75,6 +76,7 @@ Everything lives under `codebase/docs/` — there is no separate `artifacts/plan
 | [`chat-channels.md`](chat-channels.md) | Chat Channels | Slack/Teams |
 | [`design-system.md`](design-system.md) | Design System | shadcn/ui |
 | [`wbs.md`](wbs.md) | Work Breakdown | Delivery plan |
+| [`r6-roadmap.md`](r6-roadmap.md) | R6 Roadmap | Next 5 workstreams (Gong RAG, chat OAuth, NL builder, CRM sync, QA) |
 | [`staff-review.md`](staff-review.md) | Staff Review | Technical audit |
 | [`landing-page.md`](landing-page.md) | Landing Page | Marketing |
 | [`branding-guidelines.md`](branding-guidelines.md) | Branding | Visual identity |
@@ -106,6 +108,7 @@ Everything lives under `codebase/docs/` — there is no separate `artifacts/plan
 
 | Date | Change |
 |------|--------|
+| 2026-09-09 | v3.2 — added `r6-roadmap.md`; WBS v2.2 after R5 |
 | 2026-09-09 | v3.1 — consolidated docs; removed duplicate `artifacts/planning/` |
 | 2026-09-09 | v3.0 — monolith-only; removed microservices docs and gateway |
 | 2026-09-09 | v2.0 — microservices architecture (superseded) |

@@ -1,11 +1,11 @@
 # Work Breakdown Structure (WBS)
 # AI-Native Presales CRM
 
-**Version:** 2.1  
+**Version:** 2.2  
 **Stack:** Next.js 15 + shadcn/ui (web) · Express API · MongoDB only (no Redis)  
 **Duration:** 16 weeks (revised after staff review — 12 weeks was ~2× optimistic)  
 **Team assumption:** 1–2 full-stack engineers + AI-assisted development ("vibe coding")  
-**See:** `staff-review.md`, `crm-connectors.md`, `../TECH_STACK.md`, `../GETTING_STARTED.md`
+**See:** `staff-review.md`, `crm-connectors.md`, `r6-roadmap.md`, `../TECH_STACK.md`, `../GETTING_STARTED.md`
 
 ---
 
@@ -13,20 +13,28 @@
 
 | Area | Done | Notes |
 |------|------|-------|
-| **1.0 Foundation** | ~85% | Monorepo, API, web, shadcn/ui (43 primitives), MongoDB job queue, demo seed |
-| **2.0 Core CRM** | ~90% | Kanban, list, CRUD, 12 deal tabs, accounts, home dashboard |
-| **3.0 Deal Intelligence** | ~75% | MEDDPICC API + SSE, citations, AI scoring; full RAG ingest pending |
-| **4.0 Agents** | ~90% | 10 executors, runs API, approvals, `/agents/new` wizard |
-| **5.0 Integrations** | ~75% | HubSpot OAuth/sync, Gong HMAC + ingest, CRM webhook path |
-| **6.0 Insights** | ~70% | Funnel, loss, users tabs + APIs |
-| **7.0 Settings** | ~85% | Members, integrations, sales-process, workspace |
-| **8.0 QA / DevOps** | ~65% | typecheck + smoke + Playwright E2E (5 tests) + GitHub Actions CI |
-| **9.0 Marketing** | ~60% | Landing, pricing wizard, product pages; blog/about pending |
-| **UI (shadcn)** | ~75% | Shell, home, deals, agents, settings, marketing migrated |
+| **1.0 Foundation** | ~88% | Monorepo, JWT auth, shadcn/ui (43 primitives), MongoDB job queue, demo seed, CI |
+| **2.0 Core CRM** | ~92% | Kanban, list, CRUD, 12 deal tabs, accounts, home, projects/requests lists |
+| **3.0 Deal Intelligence** | ~78% | MEDDPICC API + SSE, citations; Artifact model; **RAG chunking → R6** |
+| **4.0 Agents** | ~92% | 10 executors, runs, approvals, `/agents/new` wizard; **NL builder → R6** |
+| **5.0 Integrations** | ~78% | HubSpot OAuth, Gong HMAC + artifact ingest, CRM webhook path; **Teams/GChat → R6** |
+| **6.0 Insights** | ~72% | Funnel, loss, users tabs + APIs |
+| **7.0 Settings** | ~88% | Members, integrations (branded logos), sales-process, workspace |
+| **8.0 QA / DevOps** | ~68% | typecheck + smoke + Playwright E2E (5 tests) + GitHub Actions CI; **E2E in CI → R6** |
+| **9.0 Marketing** | ~72% | Landing animations, pricing, product, why; **blog/about → R6** |
+| **UI (shadcn)** | ~95% | 29/29 routes migrated; see `shadcn-ui-plan.md` |
 
-**Recent completions:** Redis removed → MongoDB `background_jobs`; shadcn/ui rollout; modular monolith only (microservices removed).
+### Release history
 
-**Remaining P0:** Full Gong transcript fetch + RAG chunking, OAuth Teams/GChat/Calendar, NL agent builder.
+| Release | Commit area | Highlights |
+|---------|-------------|------------|
+| **R4** | Core product | Deal tabs, accounts, insights, marketing pages |
+| **R5** | P0 batch | Agent builder, Gong ingest, CRM webhooks, E2E, CI, calls page |
+| **R6** | *planned* | See [`r6-roadmap.md`](r6-roadmap.md) — 5 parallel workstreams |
+
+**Recent completions (R5):** `/agents/new` wizard · Gong HMAC + `Artifact` ingest · `POST /webhooks/crm/:connectionId` · Playwright E2E · GitHub Actions CI · `/calls` page · JWT dev login · marketing color system.
+
+**Next batch (R6):** [`r6-roadmap.md`](r6-roadmap.md) — Gong transcript + RAG · Teams/GChat/Calendar OAuth · NL agent builder · CRM incremental sync queue · E2E in CI + blog/about.
 
 **Playwright E2E (local):** With `pnpm dev` running (API :4000 + web :3000) and MongoDB up:
 
@@ -75,7 +83,7 @@ Uses `POST /api/v1/auth/dev-login` for auth (no Google OAuth). Tests live in `ap
 | 1.9 | Configure MongoDB background job workers in api | 1 | 1.2b | ✅ `background_jobs` collection |
 | 1.10 | Configure Sentry + env management | 0.5 | 1.2 | `.env.example` for web + api |
 | 1.11 | MongoDB seed script (demo data) | 2 | 1.3 | 30 deals, 15 companies, 7 stages |
-| 1.12 | CI pipeline (lint, typecheck, test) | 1 | 1.1 | GitHub Actions |
+| 1.12 | CI pipeline (lint, typecheck, test) | 1 | 1.1 | ✅ GitHub Actions (R5); E2E in CI → R6 |
 | 1.13 | Atlas Vector Search index on chunks | 0.5 | 1.3 | RAG ready |
 
 **Subtotal: ~12 days**
@@ -152,11 +160,11 @@ Uses `POST /api/v1/auth/dev-login` for auth (no Google OAuth). Tests live in `ap
 | 4.4 | `GET/POST /api/agents` CRUD | 2 | 4.1 | Agent management API |
 | 4.5 | Agent list table UI | 1 | 4.3 | Agent table |
 | 4.6 | Template modal ("Start from template") | 2 | 4.2 | Template picker |
-| 4.7 | Agent wizard Step 1: Basics | 1 | 4.4 | Basics form |
-| 4.8 | Agent wizard Step 2: Trigger (schedule/event/manual/webhook) | 2 | 4.4 | Trigger config |
-| 4.9 | Agent wizard Step 3: Prompt | 1 | 4.4 | Prompt editor |
-| 4.10 | Agent wizard Step 4: Tools & Skills | 2 | 4.4 | Tool toggles |
-| 4.11 | Agent wizard Step 5: Review + test | 1 | 4.7–4.10 | Review step |
+| 4.7 | Agent wizard Step 1: Basics | 1 | 4.4 | ✅ `/agents/new` |
+| 4.8 | Agent wizard Step 2: Trigger (schedule/event/manual/webhook) | 2 | 4.4 | ✅ `/agents/new` |
+| 4.9 | Agent wizard Step 3: Prompt | 1 | 4.4 | ✅ `/agents/new` |
+| 4.10 | Agent wizard Step 4: Tools & Skills | 2 | 4.4 | ✅ `/agents/new` |
+| 4.11 | Agent wizard Step 5: Review + test | 1 | 4.7–4.10 | ✅ `/agents/new` |
 | 4.12 | Scheduler worker (cron → enqueue runs) | 2 | 1.9, 4.1 | Daily schedules |
 | 4.13 | Event trigger router (MongoDB queue) | 2 | 1.9 | `activity.ingested` routing |
 | 4.14 | Agent execution engine (tool loop) | 3 | 4.1 | Core runtime |
@@ -198,7 +206,7 @@ Uses `POST /api/v1/auth/dev-login` for auth (no Google OAuth). Tests live in `ap
 | 5.7 | Pipedrive pipeline picker + webhooks | 2 | 5.6 | Multi-pipeline |
 | 5.8 | CRM write-back (via approval) | 3 | 5.4, 4.17 | All connectors |
 | 5.8 | Gong OAuth + connect flow | 2 | 5.1 | Gong adapter |
-| 5.9 | Gong transcript ingest + webhook | 3 | 5.8 | Call artifacts |
+| 5.9 | Gong transcript ingest + webhook | 3 | 5.8 | 🟡 Artifact ingest (R5); transcript+RAG → R6 |
 | **5.10** | **`ChatConnector` interface + registry + `ChatDeliveryService`** | **3** | **5.1** | **`packages/integrations/chat/core`** |
 | 5.11 | Slack adapter (OAuth, post, webhook parse) | 2 | 5.10 | `chat/slack` |
 | 5.12 | `user_chat_preferences` + identity links schema | 1 | 5.10 | Migration |
@@ -273,7 +281,7 @@ Uses `POST /api/v1/auth/dev-login` for auth (no Google OAuth). Tests live in `ap
 |--------|------|-------------|------|-------------|
 | 8.1 | Unit tests: scoring, classification rules | 3 | 2.19, 5.14 | Test suite |
 | 8.2 | Integration tests: API routes | 4 | 2.x, 3.x | API tests |
-| 8.3 | E2E tests: pipeline + deal detail (Playwright) | 4 | 2.6, 3.13 | E2E suite |
+| 8.3 | E2E tests: pipeline + deal detail (Playwright) | 4 | 2.6, 3.13 | 🟡 5 tests (R5); expand + CI → R6 |
 | 8.4 | E2E: agent flow (post-call → approval) | 2 | 4.21, 4.17 | Agent E2E |
 | 8.5 | Load test: deals board (50 deals/stage) | 1 | 2.2 | Performance baseline |
 | 8.6 | Staging environment setup (MongoDB Atlas + Vercel web + API host) | 1 | 1.2 | Staging deploy |
@@ -434,6 +442,22 @@ Uses `POST /api/v1/auth/dev-login` for auth (no Google OAuth). Tests live in `ap
 | 11.5 | E2E tests (Playwright) | R2 | — |
 
 **Timeline:** All product features ship in the modular monolith (`apps/api`).
+
+---
+
+## R6 roadmap (next batch)
+
+See **[`r6-roadmap.md`](r6-roadmap.md)** for full specs, acceptance criteria, and file lists.
+
+| WS | Workstream | WBS IDs | Priority |
+|----|------------|---------|----------|
+| WS-1 | Gong transcript fetch + RAG pipeline | 3.1, 3.3, 5.9, 1.13 | P0 |
+| WS-2 | Teams + Google Chat + Calendar OAuth | 5.17, 5.18, 5.20, 5.12c | P0 |
+| WS-3 | NL agent builder (`draft-from-nl`) | 4.28 | P1 |
+| WS-4 | CRM incremental sync queue | 5.0c, 5.5, 5.25 | P1 |
+| WS-5 | E2E in CI + blog/about + Sentry stub | 8.3, 8.4, 9.x, 1.10 | P1 |
+
+**Execute:** 5 parallel subagent forks → integrate → `pnpm typecheck && pnpm build && pnpm test:e2e`.
 
 ---
 
