@@ -82,14 +82,14 @@ export function TasksTab({ dealId }: { dealId: string }) {
 
   return (
     <>
-      <form onSubmit={addTask} className="mb-4 flex gap-2">
+      <form onSubmit={addTask} className="mb-4 flex flex-col gap-2 sm:flex-row">
         <Input
           placeholder="New task…"
           value={taskTitle}
           onChange={(e) => setTaskTitle(e.target.value)}
-          className="flex-1"
+          className="min-w-0 flex-1"
         />
-        <Button type="submit">Add</Button>
+        <Button type="submit" className="w-full sm:w-auto">Add</Button>
       </form>
       {tasks.length === 0 ? (
         <EmptyState
@@ -100,14 +100,14 @@ export function TasksTab({ dealId }: { dealId: string }) {
       ) : (
         <Card>
           {tasks.map((t) => (
-            <div key={t.id} className="flex items-center gap-3 border-b px-4 py-3 last:border-0">
+            <div key={t.id} className="flex flex-wrap items-center gap-2 border-b px-4 py-3 last:border-0 sm:gap-3">
               <Checkbox
                 checked={t.status === 'done'}
                 onCheckedChange={() => toggleTask(t.id, t.status)}
               />
-              <span className={`flex-1 text-sm ${t.status === 'done' ? 'text-muted-foreground line-through' : ''}`}>{t.title}</span>
-              <Badge variant="default">{t.status}</Badge>
-              <Button variant="ghost" size="icon-sm" onClick={() => deleteTask(t.id)}>
+              <span className={`min-w-0 flex-1 text-sm ${t.status === 'done' ? 'text-muted-foreground line-through' : ''}`}>{t.title}</span>
+              <Badge variant="default" className="shrink-0">{t.status}</Badge>
+              <Button variant="ghost" size="icon-sm" className="shrink-0" onClick={() => deleteTask(t.id)}>
                 <Trash2 size={14} />
               </Button>
             </div>

@@ -228,7 +228,7 @@ export default function DealDetailPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
           {isOpen && !editing && (
             <>
               <Button
@@ -327,7 +327,7 @@ export default function DealDetailPage() {
         </DialogContent>
       </Dialog>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as DealTabId)} className="gap-4">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as DealTabId)} className="min-w-0 gap-4">
         <DealTabBar />
         <DealTabPanels dealId={dealId} tab={tab} header={header} stages={stages} />
       </Tabs>

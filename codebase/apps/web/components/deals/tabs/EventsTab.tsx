@@ -76,10 +76,10 @@ export function EventsTab({ dealId }: { dealId: string }) {
   return (
     <>
       {events.map((event) => (
-        <Card key={event.id} style={{ marginBottom: '0.65rem' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-            <p style={{ margin: '0 0 0.35rem', lineHeight: 1.6, flex: 1 }}>{event.title}</p>
-            <Badge variant="default">{event.type}</Badge>
+        <Card key={event.id} className="mb-2.5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <p className="mb-1.5 min-w-0 flex-1 leading-relaxed">{event.title}</p>
+            <Badge variant="default" className="shrink-0 self-start">{event.type}</Badge>
           </div>
           <small style={{ color: 'var(--muted-light)' }}>{formatEventRange(event.startAt, event.endAt)}</small>
           <small style={{ display: 'block', marginTop: 4, color: 'var(--muted-light)' }}>{event.source}</small>

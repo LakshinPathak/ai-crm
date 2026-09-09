@@ -29,7 +29,7 @@ export function DealTable({ deals }: { deals: DealCard[] }) {
   return (
     <Card className="py-0">
       <CardContent className="overflow-x-auto p-0">
-        <Table>
+        <Table className="min-w-[640px]">
           <TableHeader>
             <TableRow>
               <TableHead>Deal</TableHead>

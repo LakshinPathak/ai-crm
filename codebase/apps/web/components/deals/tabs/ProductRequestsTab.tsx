@@ -119,10 +119,10 @@ export function ProductRequestsTab({ dealId }: { dealId: string }) {
   return (
     <>
       <form onSubmit={addRequest} className="mb-4">
-        <div className="mb-2 grid grid-cols-2 gap-2">
+        <div className="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Input placeholder="Request title" value={title} onChange={(e) => setTitle(e.target.value)} required />
           <Select value={priority} onValueChange={(v) => setPriority(v as ProductRequestPriority)}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full sm:w-auto">
               <SelectValue placeholder="Priority" />
             </SelectTrigger>
             <SelectContent>
@@ -132,7 +132,7 @@ export function ProductRequestsTab({ dealId }: { dealId: string }) {
             </SelectContent>
           </Select>
           <Textarea
-            className="col-span-2"
+            className="sm:col-span-2"
             rows={2}
             placeholder="Description (optional)"
             value={description}
@@ -148,8 +148,8 @@ export function ProductRequestsTab({ dealId }: { dealId: string }) {
           description="Capture feature gaps and product feedback tied to this deal."
         />
       ) : (
-        <Card>
-          <table className="ui-table">
+        <Card className="overflow-x-auto">
+          <table className="ui-table min-w-[560px]">
             <thead>
               <tr>
                 <th>Request</th>

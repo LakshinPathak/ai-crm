@@ -92,7 +92,7 @@ export function ParticipantsTab({ dealId }: { dealId: string }) {
   return (
     <>
       <form onSubmit={addParticipant} className="mb-4">
-        <div className="mb-2 grid grid-cols-2 gap-2">
+        <div className="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} required />
           <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <Input placeholder="Role (e.g. Champion)" value={role} onChange={(e) => setRole(e.target.value)} />
@@ -107,8 +107,8 @@ export function ParticipantsTab({ dealId }: { dealId: string }) {
           description="Add stakeholders and their roles for this deal."
         />
       ) : (
-        <Card>
-          <table className="ui-table">
+        <Card className="overflow-x-auto">
+          <table className="ui-table min-w-[520px]">
             <thead>
               <tr>
                 <th>Name</th>

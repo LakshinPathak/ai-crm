@@ -84,9 +84,9 @@ export function NotesTab({ dealId }: { dealId: string }) {
         />
       ) : (
         notes.map((n) => (
-          <Card key={n.id} style={{ marginBottom: '0.65rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-              <p style={{ margin: '0 0 0.35rem', lineHeight: 1.6, flex: 1 }}>{n.body}</p>
+          <Card key={n.id} className="mb-2.5">
+            <div className="flex items-start justify-between gap-2">
+              <p className="mb-1.5 min-w-0 flex-1 leading-relaxed">{n.body}</p>
               <Button variant="ghost" size="icon-sm" onClick={() => deleteNote(n.id)}>
                 <Trash2 size={14} />
               </Button>

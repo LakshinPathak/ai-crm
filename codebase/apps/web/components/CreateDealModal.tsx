@@ -85,7 +85,7 @@ export function CreateDealModal({
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>New deal</DialogTitle>
           <DialogDescription>Add a deal to your pipeline</DialogDescription>

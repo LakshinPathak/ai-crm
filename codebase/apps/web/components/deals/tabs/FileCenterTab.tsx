@@ -86,7 +86,7 @@ export function FileCenterTab({ dealId }: { dealId: string }) {
   return (
     <>
       <form onSubmit={addFile} className="mb-4">
-        <div className="mb-2 grid grid-cols-2 gap-2">
+        <div className="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Input
             placeholder="File name"
             value={name}
@@ -110,8 +110,8 @@ export function FileCenterTab({ dealId }: { dealId: string }) {
           description="Link proposals, contracts, and shared documents by URL."
         />
       ) : (
-        <Card>
-          <table className="ui-table">
+        <Card className="overflow-x-auto">
+          <table className="ui-table min-w-[560px]">
             <thead>
               <tr>
                 <th>Name</th>

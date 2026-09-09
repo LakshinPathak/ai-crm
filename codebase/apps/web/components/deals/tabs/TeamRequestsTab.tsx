@@ -102,10 +102,10 @@ export function TeamRequestsTab({ dealId }: { dealId: string }) {
   return (
     <>
       <form onSubmit={addRequest} className="mb-4">
-        <div className="mb-2 grid grid-cols-2 gap-2">
+        <div className="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Input placeholder="Request title" value={title} onChange={(e) => setTitle(e.target.value)} required />
           <Input placeholder="Department (e.g. SE, Legal)" value={department} onChange={(e) => setDepartment(e.target.value)} required />
-          <Input className="col-span-2" placeholder="Assignee (optional)" value={assigneeName} onChange={(e) => setAssigneeName(e.target.value)} />
+          <Input className="sm:col-span-2" placeholder="Assignee (optional)" value={assigneeName} onChange={(e) => setAssigneeName(e.target.value)} />
         </div>
         <Button type="submit">Create request</Button>
       </form>
@@ -116,8 +116,8 @@ export function TeamRequestsTab({ dealId }: { dealId: string }) {
           description="Route internal asks — SE support, legal review, security architect — to the right specialist."
         />
       ) : (
-        <Card>
-          <table className="ui-table">
+        <Card className="overflow-x-auto">
+          <table className="ui-table min-w-[560px]">
             <thead>
               <tr>
                 <th>Request</th>

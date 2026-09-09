@@ -85,15 +85,15 @@ export function ProjectsTab({ dealId }: { dealId: string }) {
 
   return (
     <>
-      <form onSubmit={addProject} className="mb-4 flex flex-wrap gap-2">
+      <form onSubmit={addProject} className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <Input
-          className="min-w-[200px] flex-1"
+          className="min-w-0 flex-1"
           placeholder="Project title…"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
         <Select value={status} onValueChange={(v) => setStatus(v as ProjectStatus)}>
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-full sm:w-[160px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -111,8 +111,8 @@ export function ProjectsTab({ dealId }: { dealId: string }) {
           description="POC and delivery projects associated with this deal will show here."
         />
       ) : (
-        <Card>
-          <table className="ui-table">
+        <Card className="overflow-x-auto">
+          <table className="ui-table min-w-[480px]">
             <thead>
               <tr>
                 <th>Title</th>

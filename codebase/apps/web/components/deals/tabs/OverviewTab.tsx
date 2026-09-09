@@ -168,9 +168,11 @@ export function OverviewTab({
         </Card>
 
         <div className="ui-ai-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <h3 style={{ margin: 0 }}>AI Deal Summary {streaming && <span className="live">Refreshing</span>}</h3>
-            <Button size="sm" onClick={refreshMeddpicc} disabled={streaming}>
+          <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="m-0 text-base font-bold">
+              AI Deal Summary {streaming && <span className="live">Refreshing</span>}
+            </h3>
+            <Button size="sm" className="w-full shrink-0 sm:w-auto" onClick={refreshMeddpicc} disabled={streaming}>
               <RefreshCw size={14} />
               {streaming ? 'Refreshing…' : 'Refresh'}
             </Button>
@@ -204,7 +206,7 @@ export function OverviewTab({
       {Object.entries(meddpicc).length > 0 && (
         <div style={{ marginTop: '1.5rem' }}>
           <h3 style={{ margin: '0 0 1rem', fontSize: '0.9375rem', fontWeight: 700 }}>MEDDPICC Breakdown</h3>
-          <div className="grid-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {Object.entries(meddpicc).map(([key, letter]) => (
               <Card key={key} className="transition-shadow hover:shadow-md">
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>

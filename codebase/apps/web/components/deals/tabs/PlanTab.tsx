@@ -95,8 +95,8 @@ export function PlanTab({ dealId }: { dealId: string }) {
         <Card style={{ marginBottom: goals.length > 0 ? 16 : 0 }}>
           <h4 style={{ margin: '0 0 0.75rem', fontSize: '0.8125rem', fontWeight: 700 }}>Milestones</h4>
           {milestones.map((m) => (
-            <div key={m.id} className="ui-task" style={{ alignItems: 'flex-start' }}>
-              <span style={{ flex: 1 }}>
+            <div key={m.id} className="ui-task flex-wrap" style={{ alignItems: 'flex-start' }}>
+              <span className="min-w-0 flex-1">
                 <div style={{ fontWeight: 600, marginBottom: m.description ? 4 : 0 }}>{m.title}</div>
                 {m.description && (
                   <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--muted)', lineHeight: 1.5 }}>
