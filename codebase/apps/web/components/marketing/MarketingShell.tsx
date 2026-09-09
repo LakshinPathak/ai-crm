@@ -1,0 +1,31 @@
+import Link from 'next/link';
+import { Zap } from 'lucide-react';
+import { MarketingFooter } from '@/components/marketing/MarketingFooter';
+import { MarketingHeader, type MarketingNavItem } from '@/components/marketing/MarketingHeader';
+import { StickyMobileCta } from '@/components/marketing/StickyMobileCta';
+
+export function MarketingShell({
+  children,
+  nav,
+  activeHref,
+}: {
+  children: React.ReactNode;
+  nav?: MarketingNavItem[];
+  activeHref?: string;
+}) {
+  return (
+    <div className="mkt pb-20 md:pb-0">
+      <div className="sticky top-0 z-50 flex items-center justify-center gap-2 border-b bg-primary/5 px-4 py-2.5 text-sm font-medium">
+        <Zap size={14} className="shrink-0 text-primary" />
+        Connect HubSpot or Salesforce in under 10 minutes.
+        <Link href="/onboarding" className="font-semibold text-primary hover:underline">
+          See setup →
+        </Link>
+      </div>
+      <MarketingHeader nav={nav} activeHref={activeHref} />
+      {children}
+      <MarketingFooter />
+      <StickyMobileCta />
+    </div>
+  );
+}

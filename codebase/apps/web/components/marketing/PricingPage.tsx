@@ -1,47 +1,24 @@
-import Link from 'next/link';
-import { ArrowRight, Check, Zap } from 'lucide-react';
-import { BrandLogo } from '@/components/brand/BrandLogo';
-import { LinkButton } from '@/components/ui/LinkButton';
+import { Check } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FeatureIcon } from '@/components/marketing/FeatureIcon';
-import { MobileNav } from '@/components/marketing/MobileNav';
+import { MarketingCta } from '@/components/marketing/MarketingCta';
+import { MarketingShell } from '@/components/marketing/MarketingShell';
 import { PricingWizard } from '@/components/marketing/PricingWizard';
+import { TrustSection } from '@/components/marketing/TrustSection';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import {
   PRICING_BULLETS,
   PRICING_SECURITY,
   PRICING_TESTIMONIALS,
-  TRUST_BADGES,
 } from '@/lib/marketing-content';
 
 export function PricingPage() {
   return (
-    <div className="mkt">
-      <div className="mkt-announce">
-        <Zap size={14} className="mkt-announce__icon" />
-        Connect HubSpot, Salesforce, Pipedrive, or Zoho in under 10 minutes.
-        <Link href="/sign-in">See how →</Link>
-      </div>
-
-      <header className="mkt-header">
-        <BrandLogo href="/" size="sm" />
-        <nav className="mkt-nav" aria-label="Main">
-          <Link href="/#features">Product</Link>
-          <Link href="/#modules">Solutions</Link>
-          <Link href="/#integrations">Integrations</Link>
-          <Link href="/pricing" aria-current="page">Pricing</Link>
-          <Link href="/#mvp">MVP</Link>
-        </nav>
-        <div className="mkt-header__ctas">
-          <LinkButton href="/sign-in" variant="ghost" size="sm">Sign in</LinkButton>
-          <LinkButton href="/pricing#quote" size="sm" icon={<ArrowRight size={15} />}>
-            Get pricing
-          </LinkButton>
-        </div>
-        <MobileNav />
-      </header>
-
+    <MarketingShell activeHref="/pricing">
       <section className="mkt-pricing-hero">
         <div className="mkt-pricing-hero__inner">
-          <span className="mkt-eyebrow">Request custom pricing</span>
+          <Badge variant="secondary" className="mb-4">Request custom pricing</Badge>
           <h1>Pricing tailored to how your team sells.</h1>
           <p>
             Your CRM, your team size, your process — pricing should reflect that.
@@ -50,7 +27,7 @@ export function PricingPage() {
           <ul className="mkt-pricing-hero__bullets">
             {PRICING_BULLETS.map((bullet) => (
               <li key={bullet}>
-                <Check size={16} />
+                <Check size={16} className="text-primary" />
                 {bullet}
               </li>
             ))}
@@ -61,95 +38,65 @@ export function PricingPage() {
         </div>
       </section>
 
-      <section className="mkt-pricing-wizard-wrap">
+      <section id="quote" className="mkt-pricing-wizard-wrap">
         <PricingWizard />
       </section>
 
-      <section className="mkt-pricing-proof">
+      <section className="mkt-pricing-proof px-6 py-16">
         <div className="mkt-section-head">
           <span className="mkt-eyebrow">Proof</span>
           <h2>Trusted by presales and RevOps leaders</h2>
         </div>
-        <div className="mkt-pricing-proof__grid">
+        <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-2 lg:grid-cols-4">
           {PRICING_TESTIMONIALS.map((item) => (
-            <article key={item.name} className="mkt-pricing-quote">
-              <p>&ldquo;{item.quote}&rdquo;</p>
-              <footer>
-                <strong>{item.name}</strong>
-                <span>{item.title}</span>
-              </footer>
-            </article>
+            <Card key={item.name} className="h-full">
+              <CardContent className="pt-6">
+                <p className="text-sm leading-relaxed text-muted-foreground">&ldquo;{item.quote}&rdquo;</p>
+              </CardContent>
+              <CardHeader className="flex-row items-center gap-3 border-t pt-4">
+                <UserAvatar name={item.name} size="sm" />
+                <div>
+                  <CardTitle className="text-sm">{item.name}</CardTitle>
+                  <CardDescription className="text-xs">{item.title}</CardDescription>
+                </div>
+              </CardHeader>
+            </Card>
           ))}
         </div>
       </section>
 
-      <section className="mkt-pricing-security">
+      <section className="mkt-pricing-security px-6 py-16">
         <div className="mkt-section-head">
           <span className="mkt-eyebrow">Security</span>
           <h2>Built for enterprise revenue teams</h2>
         </div>
-        <div className="mkt-pricing-security__grid">
+        <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
           {PRICING_SECURITY.map((item, i) => (
-            <article key={item.title} className="mkt-card">
-              <FeatureIcon
-                name={(['shield', 'key', 'lock'] as const)[i]}
-                size={22}
-                color="#7c3aed"
-              />
-              <h3>{item.title}</h3>
-              <p>{item.description}</p>
-            </article>
+            <Card key={item.title}>
+              <CardHeader>
+                <FeatureIcon
+                  name={(['shield', 'key', 'lock'] as const)[i]}
+                  size={22}
+                  color="#7c3aed"
+                />
+                <CardTitle className="text-base">{item.title}</CardTitle>
+                <CardDescription>{item.description}</CardDescription>
+              </CardHeader>
+            </Card>
           ))}
         </div>
       </section>
 
-      <section className="mkt-trust">
-        <div className="mkt-trust__badges">
-          {TRUST_BADGES.map((badge) => (
-            <span key={badge.label} className="mkt-trust-badge">
-              <FeatureIcon name={badge.icon} size={15} />
-              {badge.label}
-            </span>
-          ))}
-        </div>
-      </section>
+      <TrustSection />
 
-      <section className="mkt-cta">
-        <h2>Get your custom pricing now.</h2>
-        <p>Answer four quick questions — we&apos;ll tailor a quote to your stack and team.</p>
-        <LinkButton href="/pricing#quote" size="lg" icon={<ArrowRight size={18} />}>
-          Start quote wizard →
-        </LinkButton>
-      </section>
-
-      <footer className="mkt-footer">
-        <div className="mkt-footer__grid">
-          <div>
-            <BrandLogo href="/" variant="light" size="sm" />
-            <p>AI-native presales operating system</p>
-          </div>
-          <div>
-            <h4>Product</h4>
-            <Link href="/#mvp">Features</Link>
-            <Link href="/pricing">Pricing</Link>
-            <Link href="/sign-in">Sign in</Link>
-          </div>
-          <div>
-            <h4>Build</h4>
-            <a href="https://github.com" target="_blank" rel="noreferrer">API (roadmap)</a>
-            <Link href="/#modules">MCP (roadmap)</Link>
-          </div>
-          <div>
-            <h4>Company</h4>
-            <Link href="/#features">Security</Link>
-            <Link href="/sign-in">Contact</Link>
-          </div>
-        </div>
-        <div className="mkt-footer__bar">
-          <span>© 2026 AI CRM. Built for revenue teams.</span>
-          <span>Privacy · Terms · Status</span>
-        </div>
-      </footer>
-    </div>
+      <MarketingCta
+        title="Get your custom pricing now."
+        description="Answer four quick questions — we'll tailor a quote to your stack and team."
+        primaryHref="/pricing#quote"
+        primaryLabel="Start quote wizard"
+        secondaryHref="/sign-up"
+        secondaryLabel="Start free instead"
+      />
+    </MarketingShell>
   );
 }

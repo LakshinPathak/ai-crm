@@ -7,6 +7,8 @@ import { getToken } from '@/lib/auth';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/Toast';
@@ -80,12 +82,12 @@ export function TasksTab({ dealId }: { dealId: string }) {
 
   return (
     <>
-      <form onSubmit={addTask} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <input
-          className="ui-input"
+      <form onSubmit={addTask} className="mb-4 flex gap-2">
+        <Input
           placeholder="New task…"
           value={taskTitle}
           onChange={(e) => setTaskTitle(e.target.value)}
+          className="flex-1"
         />
         <Button type="submit">Add</Button>
       </form>
@@ -98,13 +100,12 @@ export function TasksTab({ dealId }: { dealId: string }) {
       ) : (
         <Card>
           {tasks.map((t) => (
-            <div key={t.id} className="ui-task">
-              <input
-                type="checkbox"
+            <div key={t.id} className="flex items-center gap-3 border-b px-4 py-3 last:border-0">
+              <Checkbox
                 checked={t.status === 'done'}
-                onChange={() => toggleTask(t.id, t.status)}
+                onCheckedChange={() => toggleTask(t.id, t.status)}
               />
-              <span style={{ flex: 1, textDecoration: t.status === 'done' ? 'line-through' : 'none' }}>{t.title}</span>
+              <span className={`flex-1 text-sm ${t.status === 'done' ? 'text-muted-foreground line-through' : ''}`}>{t.title}</span>
               <Badge variant="default">{t.status}</Badge>
               <Button variant="ghost" size="icon-sm" onClick={() => deleteTask(t.id)}>
                 <Trash2 size={14} />

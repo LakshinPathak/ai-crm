@@ -14,6 +14,14 @@ import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PageSkeleton } from '@/components/ui/page-skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 export default function AccountsPage() {
   const [companies, setCompanies] = useState<CompanySummary[]>([]);
@@ -84,31 +92,31 @@ export default function AccountsPage() {
         />
       ) : (
         <Card className="overflow-hidden p-0">
-          <table className="ui-table">
-            <thead>
-              <tr>
-                <th>Account</th>
-                <th>Domain</th>
-                <th>Industry</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Account</TableHead>
+                <TableHead>Domain</TableHead>
+                <TableHead>Industry</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filtered.map((company) => (
-                <tr key={company.id}>
-                  <td>
-                    <Link href={`/accounts/${company.id}`} className="cell-title text-foreground">
+                <TableRow key={company.id}>
+                  <TableCell>
+                    <Link href={`/accounts/${company.id}`} className="font-medium text-foreground hover:underline">
                       <div className="flex items-center gap-2">
                         <UserAvatar name={company.name} size="xs" />
                         {company.name}
                       </div>
                     </Link>
-                  </td>
-                  <td>{company.domain ?? '—'}</td>
-                  <td>{company.industry ?? '—'}</td>
-                </tr>
+                  </TableCell>
+                  <TableCell>{company.domain ?? '—'}</TableCell>
+                  <TableCell>{company.industry ?? '—'}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </Card>
       )}
 

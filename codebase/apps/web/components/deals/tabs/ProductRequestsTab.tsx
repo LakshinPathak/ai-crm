@@ -6,6 +6,15 @@ import { apiGet, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -109,31 +118,25 @@ export function ProductRequestsTab({ dealId }: { dealId: string }) {
 
   return (
     <>
-      <form onSubmit={addRequest} style={{ marginBottom: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-          <input
-            className="ui-input"
-            placeholder="Request title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-          <select
-            className="ui-input"
-            value={priority}
-            onChange={(e) => setPriority(e.target.value as ProductRequestPriority)}
-          >
-            <option value="low">Low priority</option>
-            <option value="medium">Medium priority</option>
-            <option value="high">High priority</option>
-          </select>
-          <textarea
-            className="ui-input"
+      <form onSubmit={addRequest} className="mb-4">
+        <div className="mb-2 grid grid-cols-2 gap-2">
+          <Input placeholder="Request title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+          <Select value={priority} onValueChange={(v) => setPriority(v as ProductRequestPriority)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="low">Low priority</SelectItem>
+              <SelectItem value="medium">Medium priority</SelectItem>
+              <SelectItem value="high">High priority</SelectItem>
+            </SelectContent>
+          </Select>
+          <Textarea
+            className="col-span-2"
             rows={2}
             placeholder="Description (optional)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            style={{ gridColumn: '1 / -1' }}
           />
         </div>
         <Button type="submit">Create request</Button>

@@ -5,9 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { apiGet } from '@/lib/api-client';
 import { exchangeAuthCode, getToken, setToken } from '@/lib/auth';
 import type { MeResponse, OnboardingStatus } from '@/lib/types';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { BrandLogo } from '@/components/brand/BrandLogo';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 
 async function routeAfterAuth(router: ReturnType<typeof useRouter>) {
   const token = getToken();
@@ -74,43 +75,42 @@ function AuthCallbackInner() {
   const busy = exchanging || Boolean(params.get('code') || params.get('token'));
 
   return (
-    <main className="auth-page">
-      <div className="auth-card">
-        <div className="auth-card__brand">
+    <main className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+      <Card className="w-full max-w-md text-center">
+        <CardHeader className="items-center">
           <BrandLogo href="/" size="lg" showText={false} />
-        </div>
-        <h1>{busy ? 'Completing sign-in…' : 'Sign in'}</h1>
-        {error && <p style={{ color: 'var(--red)', fontSize: 14 }}>{error}</p>}
+          <CardTitle className="mt-4">{busy ? 'Completing sign-in…' : 'Sign in'}</CardTitle>
+          {error && <CardDescription className="text-destructive">{error}</CardDescription>}
+        </CardHeader>
         {!busy && !params.get('code') && !params.get('token') && (
-          <div style={{ marginTop: '1.5rem', textAlign: 'left' }}>
-            <p style={{ color: 'var(--muted)', fontSize: 14 }}>
+          <CardContent className="space-y-3 text-left">
+            <CardDescription>
               Dev fallback — paste access token from POST /api/v1/auth/dev-login
-            </p>
+            </CardDescription>
             <Textarea
               value={manualToken}
               onChange={(e) => setManualToken(e.target.value)}
               rows={4}
-              className="mt-2 font-mono text-xs"
+              className="font-mono text-xs"
               placeholder="eyJhbG..."
             />
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button onClick={saveManualToken} className="mt-3 w-full">
-              Save token
-            </Button>
-          </div>
+            <Button onClick={saveManualToken} className="w-full">Save token</Button>
+          </CardContent>
         )}
-      </div>
+      </Card>
     </main>
   );
 }
 
 function AuthCallbackFallback() {
   return (
-    <main className="auth-page">
-      <div className="auth-card">
-        <BrandLogo href="/" size="lg" showText={false} />
-        <h1>Completing sign-in…</h1>
-      </div>
+    <main className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+      <Card className="w-full max-w-md text-center">
+        <CardHeader className="items-center">
+          <BrandLogo href="/" size="lg" showText={false} />
+          <CardTitle className="mt-4">Completing sign-in…</CardTitle>
+        </CardHeader>
+      </Card>
     </main>
   );
 }

@@ -6,6 +6,7 @@ import { apiDelete, apiGet, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/Toast';
@@ -66,15 +67,14 @@ export function NotesTab({ dealId }: { dealId: string }) {
 
   return (
     <>
-      <form onSubmit={addNote} style={{ marginBottom: 16 }}>
-        <textarea
-          className="ui-input"
+      <form onSubmit={addNote} className="mb-4 space-y-2">
+        <Textarea
           rows={3}
           placeholder="Write a note…"
           value={noteBody}
           onChange={(e) => setNoteBody(e.target.value)}
         />
-        <Button type="submit" style={{ marginTop: 8 }}>Add note</Button>
+        <Button type="submit">Add note</Button>
       </form>
       {notes.length === 0 ? (
         <EmptyState

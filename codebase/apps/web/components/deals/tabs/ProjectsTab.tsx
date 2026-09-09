@@ -6,6 +6,14 @@ import { apiGet, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -77,24 +85,23 @@ export function ProjectsTab({ dealId }: { dealId: string }) {
 
   return (
     <>
-      <form onSubmit={addProject} style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-        <input
-          className="ui-input"
+      <form onSubmit={addProject} className="mb-4 flex flex-wrap gap-2">
+        <Input
+          className="min-w-[200px] flex-1"
           placeholder="Project title…"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          style={{ flex: '1 1 200px' }}
         />
-        <select
-          className="ui-input"
-          value={status}
-          onChange={(e) => setStatus(e.target.value as ProjectStatus)}
-          style={{ flex: '0 0 auto' }}
-        >
-          {Object.entries(STATUS_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </select>
+        <Select value={status} onValueChange={(v) => setStatus(v as ProjectStatus)}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(STATUS_LABELS).map(([value, label]) => (
+              <SelectItem key={value} value={value}>{label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button type="submit">Add</Button>
       </form>
       {projects.length === 0 ? (

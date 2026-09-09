@@ -16,11 +16,11 @@ import {
 type NavLink = { href: string; label: string; isRoute?: boolean };
 
 const NAV_LINKS: NavLink[] = [
-  { href: '#platform', label: 'Platform' },
-  { href: '#modules', label: 'Solutions' },
-  { href: '#integrations', label: 'Integrations' },
+  { href: '/product', label: 'Product', isRoute: true },
+  { href: '/why', label: 'Why AI CRM', isRoute: true },
+  { href: '/#modules', label: 'Solutions' },
+  { href: '/#integrations', label: 'Integrations' },
   { href: '/pricing', label: 'Pricing', isRoute: true },
-  { href: '#security', label: 'Security' },
 ];
 
 export function MobileNav() {

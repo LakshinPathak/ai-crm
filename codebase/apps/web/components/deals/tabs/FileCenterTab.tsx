@@ -5,6 +5,7 @@ import { ExternalLink, FolderOpen, Trash2 } from 'lucide-react';
 import { apiDelete, apiGet, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -84,17 +85,15 @@ export function FileCenterTab({ dealId }: { dealId: string }) {
 
   return (
     <>
-      <form onSubmit={addFile} style={{ marginBottom: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-          <input
-            className="ui-input"
+      <form onSubmit={addFile} className="mb-4">
+        <div className="mb-2 grid grid-cols-2 gap-2">
+          <Input
             placeholder="File name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
           />
-          <input
-            className="ui-input"
+          <Input
             type="url"
             placeholder="https://…"
             value={url}

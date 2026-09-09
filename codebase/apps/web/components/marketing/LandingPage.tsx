@@ -1,24 +1,17 @@
 import Link from 'next/link';
-import { ArrowRight, Play, Sparkles, Zap } from 'lucide-react';
-import { BrandLogo } from '@/components/brand/BrandLogo';
+import { ArrowRight, Play, Sparkles } from 'lucide-react';
 import { IntegrationLogo } from '@/components/brand/IntegrationLogo';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Separator } from '@/components/ui/separator';
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  navigationMenuTriggerStyle,
-} from '@/components/ui/navigation-menu';
 import { FeatureIcon } from '@/components/marketing/FeatureIcon';
 import { HeroVisual } from '@/components/marketing/HeroVisual';
 import { IntegrationsTabs } from '@/components/marketing/IntegrationsTabs';
+import { MarketingCta } from '@/components/marketing/MarketingCta';
+import { MarketingShell } from '@/components/marketing/MarketingShell';
 import { ModulesTabs } from '@/components/marketing/ModulesTabs';
-import { StickyMobileCta } from '@/components/marketing/StickyMobileCta';
 import { TestimonialCarousel } from '@/components/marketing/TestimonialCarousel';
 import { TrustSection } from '@/components/marketing/TrustSection';
 import {
@@ -30,13 +23,9 @@ import {
   STATS,
   STATS_FOOTNOTE,
 } from '@/lib/marketing-content';
-import { MobileNav } from '@/components/marketing/MobileNav';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { cn } from 'cn';
 
-type NavLink = { href: string; label: string; isRoute?: boolean };
-
-const NAV_LINKS: NavLink[] = [
+const LANDING_NAV = [
   { href: '#platform', label: 'Platform' },
   { href: '#modules', label: 'Solutions' },
   { href: '#integrations', label: 'Integrations' },
@@ -46,49 +35,7 @@ const NAV_LINKS: NavLink[] = [
 
 export function LandingPage() {
   return (
-    <div className="mkt pb-20 md:pb-0">
-      <div className="sticky top-0 z-50 flex items-center justify-center gap-2 border-b bg-primary/5 px-4 py-2.5 text-sm font-medium">
-        <Zap size={14} className="shrink-0 text-primary" />
-        Connect HubSpot or Salesforce in under 10 minutes.
-        <Link href="/onboarding" className="font-semibold text-primary hover:underline">
-          See setup →
-        </Link>
-      </div>
-
-      <header className="mkt-header">
-        <BrandLogo href="/" size="sm" />
-        <NavigationMenu className="mkt-nav hidden max-w-none flex-1 justify-center md:flex" viewport={false}>
-          <NavigationMenuList>
-            {NAV_LINKS.map((link) => (
-              <NavigationMenuItem key={link.href}>
-                <NavigationMenuLink
-                  asChild
-                  className={cn(navigationMenuTriggerStyle(), 'bg-transparent')}
-                >
-                  {link.isRoute ? (
-                    <Link href={link.href}>{link.label}</Link>
-                  ) : (
-                    <a href={link.href}>{link.label}</a>
-                  )}
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            ))}
-          </NavigationMenuList>
-        </NavigationMenu>
-        <div className="mkt-header__ctas">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/sign-in">Sign in</Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href="/sign-up">
-              Start free
-              <ArrowRight className="size-3.5" />
-            </Link>
-          </Button>
-        </div>
-        <MobileNav />
-      </header>
-
+    <MarketingShell nav={LANDING_NAV}>
       <section className="mkt-hero">
         <div className="mkt-hero__inner">
           <div className="mkt-hero__copy">
@@ -131,9 +78,7 @@ export function LandingPage() {
             <div className="mb-6 flex items-start gap-3 rounded-lg border bg-card p-3 text-sm">
               <UserAvatar name={HERO_TESTIMONIAL.name} size="sm" />
               <div>
-                <p className="text-muted-foreground">
-                  &ldquo;{HERO_TESTIMONIAL.quote}&rdquo;
-                </p>
+                <p className="text-muted-foreground">&ldquo;{HERO_TESTIMONIAL.quote}&rdquo;</p>
                 <p className="mt-1 font-medium">
                   {HERO_TESTIMONIAL.name}, {HERO_TESTIMONIAL.title}
                   <span className="ml-2 text-muted-foreground">· {HERO_TESTIMONIAL.rating}</span>
@@ -263,64 +208,10 @@ export function LandingPage() {
 
       <TrustSection />
 
-      <section className="px-6 py-20">
-        <Card className="mx-auto max-w-3xl border-primary/20 bg-gradient-to-br from-primary/5 to-transparent text-center">
-          <CardHeader className="items-center gap-4">
-            <BrandLogo href="/" size="lg" showText={false} />
-            <CardTitle className="text-2xl sm:text-3xl">
-              Connect your CRM this week. See cited deal context by Friday.
-            </CardTitle>
-            <CardDescription className="max-w-lg text-base">
-              Start with HubSpot or demo data. Add Gong, Slack, and agents when you&apos;re ready.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Button size="lg" asChild>
-              <Link href="/sign-up">
-                Start free
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/pricing#quote">Get custom pricing</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </section>
-
-      <footer className="mkt-footer">
-        <div className="mkt-footer__grid">
-          <div>
-            <BrandLogo href="/" variant="light" size="sm" />
-            <p>AI-native presales operating system</p>
-          </div>
-          <div>
-            <h4>Product</h4>
-            <a href="#platform">Platform</a>
-            <a href="#integrations">Integrations</a>
-            <Link href="/pricing">Pricing</Link>
-            <a href="#security">Security</a>
-          </div>
-          <div>
-            <h4>Solutions</h4>
-            <a href="#modules">For SEs</a>
-            <a href="#modules">For AEs</a>
-            <a href="#modules">For Leaders</a>
-          </div>
-          <div>
-            <h4>Company</h4>
-            <Link href="/pricing#quote">Contact</Link>
-            <Link href="/sign-in">Sign in</Link>
-          </div>
-        </div>
-        <Separator className="my-6 bg-white/10" />
-        <div className="mkt-footer__bar">
-          <span>© 2026 AI CRM. Built for revenue teams.</span>
-          <span className="text-white/60">Privacy · Terms · Status</span>
-        </div>
-      </footer>
-
-      <StickyMobileCta />
-    </div>
+      <MarketingCta
+        title="Connect your CRM this week. See cited deal context by Friday."
+        description="Start with HubSpot or demo data. Add Gong, Slack, and agents when you're ready."
+      />
+    </MarketingShell>
   );
 }

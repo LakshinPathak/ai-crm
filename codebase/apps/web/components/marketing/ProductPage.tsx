@@ -1,46 +1,19 @@
 import Link from 'next/link';
-import { ArrowRight, Zap } from 'lucide-react';
-import { BrandLogo } from '@/components/brand/BrandLogo';
-import { LinkButton } from '@/components/ui/LinkButton';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FeatureIcon } from '@/components/marketing/FeatureIcon';
-import { MobileNav } from '@/components/marketing/MobileNav';
-import {
-  FEATURE_MODULES,
-  MVP_FEATURES,
-  PRODUCT_SECTIONS,
-  TRUST_BADGES,
-} from '@/lib/marketing-content';
+import { IntegrationsTabs } from '@/components/marketing/IntegrationsTabs';
+import { MarketingCta } from '@/components/marketing/MarketingCta';
+import { MarketingShell } from '@/components/marketing/MarketingShell';
+import { ModulesTabs } from '@/components/marketing/ModulesTabs';
+import { MVP_FEATURES, PRODUCT_SECTIONS } from '@/lib/marketing-content';
 
 export function ProductPage() {
   return (
-    <div className="mkt">
-      <div className="mkt-announce">
-        <Zap size={14} className="mkt-announce__icon" />
-        Connect HubSpot, Salesforce, Pipedrive, or Zoho in under 10 minutes.
-        <Link href="/sign-in">See how →</Link>
-      </div>
-
-      <header className="mkt-header">
-        <BrandLogo href="/" size="sm" />
-        <nav className="mkt-nav" aria-label="Main">
-          <Link href="/product" aria-current="page">Product</Link>
-          <Link href="/why">Why AI CRM</Link>
-          <Link href="/#modules">Solutions</Link>
-          <Link href="/#integrations">Integrations</Link>
-          <Link href="/pricing">Pricing</Link>
-        </nav>
-        <div className="mkt-header__ctas">
-          <LinkButton href="/sign-in" variant="ghost" size="sm">Sign in</LinkButton>
-          <LinkButton href="/sign-in" size="sm" icon={<ArrowRight size={15} />}>
-            Start free
-          </LinkButton>
-        </div>
-        <MobileNav />
-      </header>
-
+    <MarketingShell activeHref="/product">
       <section className="mkt-pricing-hero">
         <div className="mkt-pricing-hero__inner">
-          <span className="mkt-eyebrow">Product overview</span>
+          <Badge variant="secondary" className="mb-4">Product overview</Badge>
           <h1>Everything technical sales teams need — in one presales OS.</h1>
           <p>
             AI CRM sits next to your CRM and revenue stack. Explore each capability below —
@@ -49,128 +22,76 @@ export function ProductPage() {
         </div>
       </section>
 
-      <section id="capabilities" className="mkt-mvp">
+      <section id="capabilities" className="mkt-mvp px-6 py-16">
         <div className="mkt-section-head">
           <span className="mkt-eyebrow">Core capabilities</span>
           <h2>Five pillars of the platform</h2>
-          <p>
-            Dive into each area — detailed product pages coming soon for every workflow.
-          </p>
+          <p>Dive into each area — detailed workflows for every presales motion.</p>
         </div>
         <div className="mkt-mvp__grid">
           {PRODUCT_SECTIONS.map((section) => (
-            <Link
-              key={section.slug}
-              href={`/product/${section.slug}`}
-              className="mkt-card mkt-card--link"
-            >
-              <FeatureIcon name={section.icon} size={22} color={section.accent} />
-              <h3>{section.title}</h3>
-              <p>{section.description}</p>
-              <span className="mkt-card__link">
-                Explore {section.title.toLowerCase()} →
-              </span>
+            <Link key={section.slug} href={`/product/${section.slug}`} className="block">
+              <Card className="h-full transition-shadow hover:shadow-md">
+                <CardHeader>
+                  <FeatureIcon name={section.icon} size={22} color={section.accent} />
+                  <CardTitle className="text-base">{section.title}</CardTitle>
+                  <CardDescription className="text-sm leading-relaxed">{section.description}</CardDescription>
+                  <span className="text-sm font-medium text-primary">
+                    Explore {section.title.toLowerCase()} →
+                  </span>
+                </CardHeader>
+              </Card>
             </Link>
           ))}
         </div>
       </section>
 
-      <section id="mvp" className="mkt-mvp">
+      <section id="platform" className="mkt-mvp px-6 py-16">
         <div className="mkt-section-head">
-          <span className="mkt-eyebrow">MVP scope</span>
-          <h2>Highest-leverage features to ship first</h2>
-          <p>Based on our core value prop — citation-first AI, agents with approval, and presales workflow.</p>
+          <span className="mkt-eyebrow">Platform</span>
+          <h2>Six capabilities revenue teams adopt first</h2>
+          <p>Citation-first AI, agents with approval, and presales workflow.</p>
         </div>
         <div className="mkt-mvp__grid">
           {MVP_FEATURES.map((feature) => (
-            <article key={feature.title} className="mkt-card">
-              <FeatureIcon name={feature.icon} size={22} color={feature.accent} />
-              <h3>{feature.title}</h3>
-              <p>{feature.description}</p>
-            </article>
+            <Card key={feature.title} className="transition-shadow hover:shadow-md">
+              <CardHeader>
+                <div className="flex items-start justify-between gap-2">
+                  <FeatureIcon name={feature.icon} size={22} color={feature.accent} />
+                  {'badge' in feature && feature.badge && (
+                    <Badge variant="secondary" className="text-xs">{feature.badge}</Badge>
+                  )}
+                </div>
+                <CardTitle className="text-base">{feature.title}</CardTitle>
+                <CardDescription className="text-sm leading-relaxed">{feature.description}</CardDescription>
+              </CardHeader>
+            </Card>
           ))}
         </div>
       </section>
 
-      <section id="modules" className="mkt-modules">
+      <section id="modules" className="mkt-modules px-6 py-16">
         <div className="mkt-section-head">
           <span className="mkt-eyebrow">Full platform</span>
           <h2>Module map for revenue teams</h2>
-          <p>Six capability areas covering presales, intelligence, automation, analytics, and buyer experience.</p>
         </div>
-        <div className="mkt-modules__grid">
-          {FEATURE_MODULES.map((mod) => (
-            <article key={mod.letter} className="mkt-module">
-              <div className="mkt-module__head">
-                <FeatureIcon name={mod.icon} size={20} color={mod.accent} />
-                <span className="mkt-module__letter">{mod.letter}</span>
-              </div>
-              <h3>{mod.title}</h3>
-              <ul>
-                {mod.items.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
+        <ModulesTabs />
       </section>
 
-      <section className="mkt-trust">
-        <div className="mkt-trust__badges">
-          {TRUST_BADGES.map((badge) => (
-            <span key={badge.label} className="mkt-trust-badge">
-              <FeatureIcon name={badge.icon} size={15} />
-              {badge.label}
-            </span>
-          ))}
+      <section id="integrations" className="mkt-integrations px-6 py-16">
+        <div className="mkt-section-head">
+          <span className="mkt-eyebrow">Integrations</span>
+          <h2>Your revenue stack, one deal record</h2>
         </div>
-        <p className="mkt-trust__note">Enterprise-grade security for revenue teams</p>
+        <IntegrationsTabs />
       </section>
 
-      <section className="mkt-cta">
-        <BrandLogo href="/" size="lg" showText={false} />
-        <h2>Ready to unify your presales workflow?</h2>
-        <p>Start with HubSpot or demo data. Add agents and integrations as you grow.</p>
-        <div className="mkt-hero__actions">
-          <LinkButton href="/sign-in" size="lg" icon={<ArrowRight size={18} />}>
-            Start free
-          </LinkButton>
-          <LinkButton href="/why" variant="soft" size="lg">
-            Why AI CRM
-          </LinkButton>
-        </div>
-      </section>
-
-      <footer className="mkt-footer">
-        <div className="mkt-footer__grid">
-          <div>
-            <BrandLogo href="/" variant="light" size="sm" />
-            <p>AI-native presales operating system</p>
-          </div>
-          <div>
-            <h4>Product</h4>
-            <Link href="/product">Overview</Link>
-            <Link href="/why">Why AI CRM</Link>
-            <Link href="/pricing">Pricing</Link>
-            <Link href="/sign-in">Sign in</Link>
-          </div>
-          <div>
-            <h4>Build</h4>
-            <a href="https://github.com" target="_blank" rel="noreferrer">API (roadmap)</a>
-            <Link href="/#modules">MCP (roadmap)</Link>
-          </div>
-          <div>
-            <h4>Company</h4>
-            <Link href="/#features">Security</Link>
-            <Link href="/sign-in">Contact</Link>
-          </div>
-        </div>
-        <div className="mkt-footer__bar">
-          <span>© 2026 AI CRM. Built for revenue teams.</span>
-          <span>Privacy · Terms · Status</span>
-        </div>
-      </footer>
-    </div>
+      <MarketingCta
+        title="Ready to unify your presales workflow?"
+        description="Start with HubSpot or demo data. Add agents and integrations as you grow."
+        secondaryHref="/why"
+        secondaryLabel="Why AI CRM"
+      />
+    </MarketingShell>
   );
 }

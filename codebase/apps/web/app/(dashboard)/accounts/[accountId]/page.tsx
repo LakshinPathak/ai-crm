@@ -18,6 +18,14 @@ import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageSkeleton } from '@/components/ui/page-skeleton';
 import { useToast } from '@/components/ui/Toast';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 export default function AccountDetailPage() {
   const { accountId } = useParams<{ accountId: string }>();
@@ -204,32 +212,32 @@ export default function AccountDetailPage() {
         <EmptyState title="No deals linked" description="Deals associated with this account will appear here." />
       ) : (
         <Card className="overflow-hidden p-0">
-          <table className="ui-table">
-            <thead>
-              <tr>
-                <th>Deal</th>
-                <th>Amount</th>
-                <th>Win %</th>
-                <th>Sentiment</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Deal</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Win %</TableHead>
+                <TableHead>Sentiment</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {deals.map((deal) => (
-                <tr key={deal.id}>
-                  <td>
-                    <Link href={`/deals/${deal.id}`} className="cell-title text-foreground">
+                <TableRow key={deal.id}>
+                  <TableCell>
+                    <Link href={`/deals/${deal.id}`} className="font-medium text-foreground hover:underline">
                       {deal.title}
                     </Link>
-                  </td>
-                  <td>{formatMoney(deal.amount)}</td>
-                  <td>{deal.winProbability}%</td>
-                  <td>
+                  </TableCell>
+                  <TableCell>{formatMoney(deal.amount)}</TableCell>
+                  <TableCell>{deal.winProbability}%</TableCell>
+                  <TableCell>
                     <Badge variant={legacyBadgeVariant(deal.sentiment)}>
                       {sentimentLabel(deal.sentiment)}
                     </Badge>
-                  </td>
-                  <td>
+                  </TableCell>
+                  <TableCell className="space-x-1">
                     <Badge variant={legacyBadgeVariant(deal.status === 'open' ? 'enabled' : 'default')}>
                       {deal.status}
                     </Badge>
@@ -237,11 +245,11 @@ export default function AccountDetailPage() {
                     {deal.blockerCount > 0 && (
                       <Badge variant="destructive">{deal.blockerCount} blockers</Badge>
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </Card>
       )}
     </div>

@@ -5,6 +5,7 @@ import { Users } from 'lucide-react';
 import { apiGet, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -90,35 +91,12 @@ export function ParticipantsTab({ dealId }: { dealId: string }) {
 
   return (
     <>
-      <form onSubmit={addParticipant} style={{ marginBottom: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-          <input
-            className="ui-input"
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          <input
-            className="ui-input"
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            className="ui-input"
-            placeholder="Role (e.g. Champion)"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-          />
-          <input
-            className="ui-input"
-            placeholder="Company"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-          />
+      <form onSubmit={addParticipant} className="mb-4">
+        <div className="mb-2 grid grid-cols-2 gap-2">
+          <Input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} required />
+          <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <Input placeholder="Role (e.g. Champion)" value={role} onChange={(e) => setRole(e.target.value)} />
+          <Input placeholder="Company" value={company} onChange={(e) => setCompany(e.target.value)} />
         </div>
         <Button type="submit">Add participant</Button>
       </form>
