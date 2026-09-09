@@ -1,21 +1,23 @@
 import Link from 'next/link';
 import { getGoogleSignInUrl } from '@/lib/auth';
 import { AuthCard } from '@/components/auth/AuthCard';
+import { AuthRedirectIfSignedIn } from '@/components/auth/AuthRedirectIfSignedIn';
 
 export default function SignInPage() {
   return (
+    <>
+    <AuthRedirectIfSignedIn />
     <AuthCard
       title="Welcome back"
       description="Sign in to your AI-native presales workspace"
       googleUrl={getGoogleSignInUrl()}
       footer={
         <>
-          Dev mode: use POST /api/v1/auth/dev-login, then paste token at{' '}
-          <Link href="/auth/callback" className="text-primary underline">
-            /auth/callback
-          </Link>
+          New here?{' '}
+          <Link href="/sign-up" className="text-primary underline">Create an account</Link>
         </>
       }
     />
+    </>
   );
 }

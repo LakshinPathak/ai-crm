@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { BrandLogo } from '@/components/brand/BrandLogo';
+import { DevLoginForm } from '@/components/auth/DevLoginForm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 function GoogleIcon() {
   return (
@@ -42,6 +44,8 @@ export function AuthCard({
               Continue with Google
             </a>
           </Button>
+          <DevLoginForm />
+          <Separator />
           <div className="text-center text-sm text-muted-foreground">{footer}</div>
         </CardContent>
         <CardFooter className="justify-center">

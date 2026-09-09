@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { apiGet } from '@/lib/api-client';
 import { exchangeAuthCode, getToken, setToken } from '@/lib/auth';
 import type { MeResponse, OnboardingStatus } from '@/lib/types';
+import Link from 'next/link';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +31,13 @@ function AuthCallbackInner() {
   const [exchanging, setExchanging] = useState(false);
 
   useEffect(() => {
+    const oauthError = params.get('error');
+    const oauthErrorDescription = params.get('error_description');
+    if (oauthError) {
+      setError(oauthErrorDescription ?? `Sign-in failed (${oauthError})`);
+      return;
+    }
+
     const exchangeCode = params.get('code');
     const legacyToken = params.get('token');
 
@@ -95,6 +103,11 @@ function AuthCallbackInner() {
               placeholder="eyJhbG..."
             />
             <Button onClick={saveManualToken} className="w-full">Save token</Button>
+            {error && (
+              <Button variant="outline" className="w-full" asChild>
+                <Link href="/sign-in">Back to sign in</Link>
+              </Button>
+            )}
           </CardContent>
         )}
       </Card>

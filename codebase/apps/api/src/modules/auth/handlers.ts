@@ -2,6 +2,7 @@ import type { Response } from 'express';
 import {
   type AuthedRequest,
   buildJwtPayload,
+  clearRefreshCookie,
   createAuthSession,
   createExchangeCode,
   exchangeCodeForTokens,
@@ -73,11 +74,19 @@ function requestMeta(req: AuthedRequest) {
   };
 }
 
+function webBaseUrl(): string {
+  return process.env.WEB_URL ?? 'http://localhost:3000';
+}
+
 function webCallbackUrl(exchangeCode: string, needsWorkspace: boolean): string {
-  const webUrl = process.env.WEB_URL ?? 'http://localhost:3000';
   const params = new URLSearchParams({ code: exchangeCode });
   if (needsWorkspace) params.set('needsWorkspace', '1');
-  return `${webUrl}/auth/callback?${params.toString()}`;
+  return `${webBaseUrl()}/auth/callback?${params.toString()}`;
+}
+
+function webAuthErrorRedirect(code: string, message: string): string {
+  const params = new URLSearchParams({ error: code, error_description: message });
+  return `${webBaseUrl()}/auth/callback?${params.toString()}`;
 }
 
 export function startGoogleAuth(_req: AuthedRequest, res: Response) {
@@ -85,12 +94,8 @@ export function startGoogleAuth(_req: AuthedRequest, res: Response) {
     const state = issueOAuthState(res);
     res.redirect(getGoogleAuthUrl(state));
   } catch (err) {
-    res.status(503).json({
-      error: {
-        code: 'OAUTH_NOT_CONFIGURED',
-        message: err instanceof Error ? err.message : 'Google OAuth not configured',
-      },
-    });
+    const message = err instanceof Error ? err.message : 'Google OAuth not configured';
+    res.redirect(webAuthErrorRedirect('OAUTH_NOT_CONFIGURED', message));
   }
 }
 
@@ -99,12 +104,12 @@ export async function googleCallback(req: AuthedRequest, res: Response) {
   const state = req.query.state as string | undefined;
 
   if (!code) {
-    res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Missing OAuth code' } });
+    res.redirect(webAuthErrorRedirect('BAD_REQUEST', 'Missing OAuth code'));
     return;
   }
 
   if (!validateOAuthState(res, req.header('cookie'), state)) {
-    res.status(400).json({ error: { code: 'INVALID_STATE', message: 'OAuth state mismatch — try signing in again' } });
+    res.redirect(webAuthErrorRedirect('INVALID_STATE', 'OAuth state mismatch — try signing in again'));
     return;
   }
 
@@ -121,7 +126,7 @@ export async function googleCallback(req: AuthedRequest, res: Response) {
         role: 'admin',
       });
     } else if (!user.isActive) {
-      res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Account deactivated' } });
+      res.redirect(webAuthErrorRedirect('FORBIDDEN', 'Account deactivated'));
       return;
     } else {
       user.email = profile.email;
@@ -135,12 +140,8 @@ export async function googleCallback(req: AuthedRequest, res: Response) {
     const exchangeCode = await createExchangeCode(user.id, !user.workspaceId);
     res.redirect(webCallbackUrl(exchangeCode, !user.workspaceId));
   } catch (err) {
-    res.status(500).json({
-      error: {
-        code: 'OAUTH_FAILED',
-        message: err instanceof Error ? err.message : 'Google OAuth failed',
-      },
-    });
+    const message = err instanceof Error ? err.message : 'Google OAuth failed';
+    res.redirect(webAuthErrorRedirect('OAUTH_FAILED', message));
   }
 }
 
@@ -190,7 +191,7 @@ export async function logout(req: AuthedRequest, res: Response) {
   if (refresh) {
     await revokeRefreshToken(refresh);
   }
-  res.clearCookie('ai_crm_refresh', { httpOnly: true, path: '/' });
+  clearRefreshCookie(res);
   res.json({ ok: true });
 }
 
