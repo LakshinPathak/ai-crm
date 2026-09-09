@@ -47,7 +47,7 @@ export default function SettingsPage() {
     <div>
       <PageHeader title="Settings" subtitle="Manage your workspace and preferences" />
 
-      <div className="grid-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Workspace</CardTitle>
@@ -79,7 +79,7 @@ export default function SettingsPage() {
         </Card>
       </div>
 
-      <div className="grid-2 mt-4">
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Team members</CardTitle>

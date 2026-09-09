@@ -408,8 +408,11 @@ export default function NewAgentPage() {
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-[220px_1fr_280px]">
-        <nav className="space-y-1" aria-label="Wizard steps">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr_280px]">
+        <nav
+          className="-mx-1 flex gap-1 overflow-x-auto pb-1 lg:mx-0 lg:flex-col lg:space-y-1 lg:overflow-visible lg:pb-0"
+          aria-label="Wizard steps"
+        >
           {STEPS.map((label, idx) => {
             const n = idx + 1;
             const done = n < step;
@@ -420,12 +423,12 @@ export default function NewAgentPage() {
                 type="button"
                 onClick={() => n < step && setStep(n)}
                 disabled={n > step}
-                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors lg:w-full lg:gap-3 ${
                   active ? 'bg-muted font-medium' : done ? 'text-foreground hover:bg-muted/50' : 'text-muted-foreground'
                 }`}
               >
                 <StepIcon done={done} active={active} />
-                <span>{label}</span>
+                <span className="whitespace-nowrap">{label}</span>
               </button>
             );
           })}
@@ -581,8 +584,8 @@ export default function NewAgentPage() {
                 <Separator />
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <div className="min-w-0">
                       <Label htmlFor="deliver-enabled" className="font-medium">Deliver results to chat</Label>
                       <p className="text-sm text-muted-foreground">
                         Send agent output to Slack, Google Chat, or Teams after each run.
@@ -592,6 +595,7 @@ export default function NewAgentPage() {
                       id="deliver-enabled"
                       checked={form.deliverEnabled}
                       onCheckedChange={(checked) => setForm((p) => ({ ...p, deliverEnabled: checked }))}
+                      className="shrink-0 self-start sm:self-center"
                     />
                   </div>
 
@@ -772,27 +776,28 @@ export default function NewAgentPage() {
             </Card>
           )}
 
-          <div className="flex justify-between gap-2">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button
               variant="outline"
               disabled={step <= 1 || loading}
               onClick={() => setStep((s) => Math.max(1, s - 1))}
+              className="w-full sm:w-auto"
             >
               Back
             </Button>
             {step < 5 ? (
-              <Button disabled={loading} onClick={() => persistProgress(step + 1)}>
+              <Button disabled={loading} onClick={() => persistProgress(step + 1)} className="w-full sm:w-auto">
                 {loading ? 'Saving…' : 'Continue'}
               </Button>
             ) : (
-              <Button disabled={loading} onClick={finish}>
+              <Button disabled={loading} onClick={finish} className="w-full sm:w-auto">
                 {loading ? 'Creating…' : agentId ? 'Save agent' : 'Create agent'}
               </Button>
             )}
           </div>
         </div>
 
-        <Card className="hidden h-fit lg:block">
+        <Card className="h-fit lg:order-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Sparkles className="size-4 text-primary" />

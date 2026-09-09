@@ -97,7 +97,7 @@ export default function InsightsPage() {
 
   if (loadError) {
     return (
-      <div className="analytics-page">
+      <div className="analytics-page min-w-0">
         <PageHeader title="Insights" subtitle="Pipeline, activity, funnel & loss analytics" />
         <p className="text-destructive">{loadError}</p>
         <Button size="sm" onClick={loadCore} className="mt-3">Retry</Button>
@@ -124,7 +124,7 @@ export default function InsightsPage() {
   }
 
   return (
-    <div className="analytics-page">
+    <div className="analytics-page min-w-0">
       <PageHeader
         title="Insights"
         subtitle="Pipeline, activity, funnel & loss analytics"
@@ -138,13 +138,13 @@ export default function InsightsPage() {
         }
       />
 
-      <Tabs value={mainTab} onValueChange={(v) => selectTab(v as MainTab)} className="mt-4">
-        <TabsList>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-          <TabsTrigger value="funnel">Funnel</TabsTrigger>
-          <TabsTrigger value="loss">Loss</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
+      <Tabs value={mainTab} onValueChange={(v) => selectTab(v as MainTab)} className="mt-4 min-w-0">
+        <TabsList className="h-auto w-full justify-start overflow-x-auto">
+          <TabsTrigger value="performance" className="shrink-0">Performance</TabsTrigger>
+          <TabsTrigger value="activity" className="shrink-0">Activity</TabsTrigger>
+          <TabsTrigger value="funnel" className="shrink-0">Funnel</TabsTrigger>
+          <TabsTrigger value="loss" className="shrink-0">Loss</TabsTrigger>
+          <TabsTrigger value="users" className="shrink-0">Users</TabsTrigger>
         </TabsList>
 
         <TabsContent value="performance" className="mt-4">

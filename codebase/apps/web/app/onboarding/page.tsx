@@ -394,7 +394,7 @@ export default function OnboardingPage() {
   if (phase === 'loading') {
     return (
       <main className="auth-page">
-        <div className="auth-card onboarding-card">
+        <div className="auth-card onboarding-card w-full max-w-[640px]">
           <p className="subtitle" style={{ marginBottom: 0 }}>Loading…</p>
         </div>
       </main>
@@ -404,7 +404,7 @@ export default function OnboardingPage() {
   if (phase === 'workspace') {
     return (
       <main className="auth-page">
-        <div className="auth-card onboarding-card">
+        <div className="auth-card onboarding-card w-full max-w-[640px]">
           <div className="auth-card__logo" style={{ margin: '0 0 1rem' }}>AI</div>
           <h1>Create your workspace</h1>
           <p className="subtitle">Set up your team before connecting a CRM.</p>
@@ -430,7 +430,7 @@ export default function OnboardingPage() {
 
   return (
     <main className="auth-page">
-      <div className="auth-card onboarding-card">
+      <div className="auth-card onboarding-card w-full max-w-[640px]">
         <div className="auth-card__logo" style={{ margin: '0 0 1rem' }}>AI</div>
         <h1>Connect your CRM</h1>
         <p className="subtitle">Step {step} of 5 — {STEP_LABELS[step - 1]}</p>

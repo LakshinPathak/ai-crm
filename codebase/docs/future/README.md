@@ -1,7 +1,7 @@
 # Future Development — Vibe Coding Reference Library
 
-**Version:** 1.0  
-**Date:** 2026-09-09  
+**Version:** 1.1  
+**Date:** 2026-09-10  
 **Audience:** Engineers, PMs, and AI agents building the next waves of AI CRM  
 **Parent:** [`../README.md`](../README.md) · [`../wbs.md`](../wbs.md) · [`../r6-roadmap.md`](../r6-roadmap.md)
 
@@ -34,19 +34,22 @@ Each doc is written to be **self-contained** — paste sections into Cursor/Clau
 | [`opine-template-parity.md`](opine-template-parity.md) | Opine template replication | 13-template matrix + gaps to exact parity |
 | [`integration-ai-patterns.md`](integration-ai-patterns.md) | Gong, HubSpot, Slack, Teams + AI pipelines | You are building ingest → RAG → agent flows |
 | [`vibe-coding-patterns.md`](vibe-coding-patterns.md) | Repo conventions for AI-assisted implementation | You are starting a `/dev-cycle` or subagent fork |
+| [`implementation-status.md`](implementation-status.md) | **Done vs remaining** across R6–R8 | You need a current ship status before planning |
 
 ---
 
-## Current platform snapshot (2026-09-09)
+## Current platform snapshot (2026-09-10)
+
+See **[`implementation-status.md`](implementation-status.md)** for the full done / partial / remaining matrix.
 
 | Layer | Live | Partial | Planned |
 |-------|------|---------|---------|
-| **Deal AI** | MEDDPICC SSE, sentiment, fit score, blocker suggest | RAG over Gong transcripts | Multi-modal (slides, PDFs) |
-| **Agents** | 13 templates, 10 executors, wizard, runs log | Scheduled triggers, chat delivery | NL builder, custom LangGraph |
+| **Deal AI** | MEDDPICC SSE, Gemini on Gong transcripts (direct, no RAG) | MEDDPICC → chunk citations | Multi-modal (slides, PDFs) |
+| **Agents** | 14 templates, NL builder, cron, event triggers, Slack delivery | Teams/GChat delivery | Custom LangGraph, Slack slash |
 | **Approvals** | Queue UI, email/CRM draft types | Write-back to HubSpot | Jira, calendar invites |
-| **Insights** | Performance, activity, funnel, loss, users | Deal-level insights tab | SQL explorer, forecasting |
-| **Integrations** | HubSpot OAuth, Gong webhook, CRM webhook path | Gong transcript fetch | Teams, GChat, Calendar |
-| **Chat** | Slack scaffold | — | Teams, Google Chat delivery |
+| **Insights** | Performance, activity, funnel, loss, users (responsive) | Deal-level insights tab | SQL explorer, forecasting |
+| **Integrations** | HubSpot OAuth + incremental sync, Gong transcript, Slack post | Teams/GChat OAuth connect | Calendar, Salesforce |
+| **UI** | shadcn + responsive (320px+) | — | PWA |
 
 **Run locally:** `cd codebase && pnpm dev` → web `:3000`, API `:4000`, MongoDB required.
 
@@ -118,4 +121,5 @@ Update the doc's **Implementation status** table when you ship.
 
 | Date | Change |
 |------|--------|
+| 2026-09-10 | v1.1 — Added implementation-status.md; updated snapshot post R7 + responsive UI |
 | 2026-09-09 | v1.0 — Initial future-dev library (8 docs) |

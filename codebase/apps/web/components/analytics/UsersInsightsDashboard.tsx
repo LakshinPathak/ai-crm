@@ -50,5 +50,9 @@ export function UsersInsightsDashboard({
     );
   }
 
-  return <PerformanceDashboard data={toPerformanceData(data)} view="users" compareOrg={compareOrg} />;
+  return (
+    <div className="min-w-0">
+      <PerformanceDashboard data={toPerformanceData(data)} view="users" compareOrg={compareOrg} />
+    </div>
+  );
 }

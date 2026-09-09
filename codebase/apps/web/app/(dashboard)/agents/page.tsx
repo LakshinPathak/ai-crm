@@ -164,31 +164,31 @@ export default function AgentsPage() {
         title="Agents"
         subtitle="Automate deal workflows with AI agents"
         actions={
-          <>
-            <div className="relative">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+            <div className="relative min-w-0 flex-1 sm:flex-none">
               <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder="Search agents…"
-                className="w-48 pl-8"
+                className="w-full pl-8 sm:w-48"
               />
             </div>
-            <Button size="sm" variant="outline" asChild>
+            <Button size="sm" variant="outline" asChild className="flex-1 sm:flex-none">
               <Link href="/agents/new">
                 <Wand2 className="size-3.5" />
                 New agent
               </Link>
             </Button>
-            <Button size="sm" onClick={() => setShowTemplates(true)}>
+            <Button size="sm" onClick={() => setShowTemplates(true)} className="flex-1 sm:flex-none">
               <Plus className="size-3.5" />
               Start from template
             </Button>
-          </>
+          </div>
         }
       />
 
-      <div className="grid-3" style={{ marginBottom: '1.5rem' }}>
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <KpiCard label="Total Agents" value={stats?.totalAgents ?? agents.length} sub={`${stats?.activeAgents ?? 0} active · ${inactiveCount} inactive`} progress={activePct} accent="purple" />
         <KpiCard label="Runs (30d)" value={stats?.runs30d ?? 0} sub={`${stats?.runsToday ?? 0} today`} accent="blue" />
         <KpiCard label="Credits (30d)" value={(stats?.creditsUsed30d ?? 0).toFixed(2)} accent="green" />
@@ -198,7 +198,7 @@ export default function AgentsPage() {
         type="single"
         value={filter}
         onValueChange={(v) => { if (v) { setFilter(v as 'mine' | 'all'); setPage(1); } }}
-        className="mb-4"
+        className="mb-4 w-full flex-wrap sm:w-auto"
         variant="outline"
         size="sm"
       >
@@ -331,7 +331,7 @@ export default function AgentsPage() {
       )}
 
       <Dialog open={showTemplates} onOpenChange={setShowTemplates}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>Start from template</DialogTitle>
             <DialogDescription>
@@ -345,7 +345,7 @@ export default function AgentsPage() {
               return (
                 <div key={key}>
                   <h3 className="mb-3 text-sm font-semibold">{label}</h3>
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {items.map((t) => (
                       <Card
                         key={t.slug}

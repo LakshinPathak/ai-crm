@@ -27,16 +27,16 @@ export function LandingPage() {
     <MarketingShell nav={LANDING_NAV}>
       <LandingHero />
 
-      <section className="border-y border-border bg-muted/40 py-10 text-center">
+      <section className="border-y border-border bg-muted/40 px-4 py-10 text-center sm:px-6">
         <ScrollReveal>
           <p className="mb-6 font-semibold text-muted-foreground">
             Works with your CRM — we don&apos;t replace it
           </p>
         </ScrollReveal>
-        <div className="mx-auto flex max-w-3xl flex-wrap justify-center gap-4 px-6">
+        <div className="mx-auto grid max-w-3xl grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:justify-center sm:gap-4">
           {INTEGRATIONS.crm.map((item, i) => (
             <ScrollReveal key={item.id} delay={i * 60}>
-              <Card className="flex w-28 flex-col items-center gap-2 p-4 transition-all hover:-translate-y-1 hover:shadow-md">
+              <Card className="flex w-full flex-col items-center gap-2 p-4 transition-all hover:-translate-y-1 hover:shadow-md sm:w-28">
                 <IntegrationLogo id={item.id} size={36} />
                 <span className="text-sm font-medium text-foreground">{item.name}</span>
               </Card>
@@ -62,7 +62,7 @@ export function LandingPage() {
             <p>Citation-first AI, agents with approval, and presales workflow — built for technical sales.</p>
           </div>
         </ScrollReveal>
-        <div className="mkt-mvp__grid">
+        <div className="mkt-mvp__grid grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {MVP_FEATURES.map((f, i) => (
             <ScrollReveal key={f.title} delay={i * 70}>
               <Card className="h-full transition-all hover:-translate-y-0.5 hover:shadow-md">

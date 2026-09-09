@@ -66,14 +66,14 @@ export default function AccountsPage() {
         title="Accounts"
         subtitle={`${companies.length} compan${companies.length === 1 ? 'y' : 'ies'}`}
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+            <div className="relative min-w-0 w-full sm:w-auto">
               <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search accounts…"
-                className="w-44 pl-8"
+                className="w-full pl-8 sm:w-44"
               />
             </div>
             <Button size="sm" onClick={() => setShowCreate(true)}>
@@ -92,6 +92,7 @@ export default function AccountsPage() {
         />
       ) : (
         <Card className="overflow-hidden p-0">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -117,6 +118,7 @@ export default function AccountsPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </Card>
       )}
 

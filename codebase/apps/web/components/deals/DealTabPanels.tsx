@@ -47,7 +47,7 @@ function TabFallback() {
 
 function TabPanel({ visible, children }: { visible: boolean; children: ReactNode }) {
   return (
-    <div style={{ display: visible ? 'block' : 'none' }} aria-hidden={!visible}>
+    <div className="min-w-0" style={{ display: visible ? 'block' : 'none' }} aria-hidden={!visible}>
       {children}
     </div>
   );

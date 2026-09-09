@@ -8,10 +8,12 @@ import { WHY_VALUE_PROPS } from '@/lib/marketing-content';
 export function WhyPage() {
   return (
     <MarketingShell activeHref="/why">
-      <section className="mkt-pricing-hero bg-background px-6">
+      <section className="mkt-pricing-hero bg-background px-4 sm:px-6">
         <div className="mkt-pricing-hero__inner">
           <Badge variant="secondary" className="mb-4">Why AI CRM</Badge>
-          <h1 className="text-foreground">Your CRM stores fields. We unify the context behind every deal.</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+            Your CRM stores fields. We unify the context behind every deal.
+          </h1>
           <p className="text-muted-foreground">
             Technical sales teams lose hours hunting across Slack threads, Gong clips, calendar notes,
             and CRM updates. AI CRM is the presales operating system that sits next to your CRM —
@@ -23,7 +25,7 @@ export function WhyPage() {
         </div>
       </section>
 
-      <section className="mkt-mvp bg-muted/40 px-6 py-16">
+      <section className="mkt-mvp bg-muted/40 px-4 py-12 sm:px-6 sm:py-16">
         <div className="mkt-section-head">
           <span className="mkt-eyebrow text-primary">Why teams switch</span>
           <h2 className="text-foreground">Four reasons revenue teams choose AI CRM</h2>
@@ -32,7 +34,7 @@ export function WhyPage() {
             engineering, presales, and RevOps.
           </p>
         </div>
-        <div className="mkt-mvp__grid">
+        <div className="mkt-mvp__grid grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {WHY_VALUE_PROPS.map((prop) => (
             <Card key={prop.title} className="transition-shadow hover:shadow-md">
               <CardHeader>

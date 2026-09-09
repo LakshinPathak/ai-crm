@@ -387,19 +387,19 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <SidebarRail />
         </Sidebar>
 
-        <SidebarInset className="bg-[var(--bg)] bg-[image:var(--bg-mesh)]">
+        <SidebarInset className="min-w-0 overflow-x-hidden bg-[var(--bg)] bg-[image:var(--bg-mesh)]">
           <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border/60 bg-background/70 px-4 backdrop-blur-sm md:hidden">
             <SidebarTrigger className="-ml-1" />
-            <BrandLogo href="/home" size="sm" />
+            <BrandLogo href="/home" size="sm" showText />
           </header>
           <header className="hidden h-12 shrink-0 items-center gap-2 border-b border-border/40 bg-background/50 px-4 backdrop-blur-sm md:flex">
             <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
             <Separator orientation="vertical" className="mr-1 h-4" />
-            <span className="text-sm font-medium text-muted-foreground">
+            <span className="min-w-0 truncate text-sm font-medium text-muted-foreground">
               {workspaceName}
             </span>
           </header>
-          <div className="page-content">{children}</div>
+          <div className="page-content min-w-0">{children}</div>
         </SidebarInset>
       </TooltipProvider>
     </SidebarProvider>

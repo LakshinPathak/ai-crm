@@ -27,20 +27,20 @@ export function LandingHero() {
             <Sparkles className="mr-1 size-3.5" />
             Early access · HubSpot &amp; Salesforce connectors live
           </Badge>
-          <h1 className="text-foreground">
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             Stop hunting deal context<br />
             <em>
               across <RotatingText words={ROTATING_SOURCES} /> and your CRM
             </em>
           </h1>
-          <p className="mkt-hero__sub">
+          <p className="mkt-hero__sub text-base sm:text-lg">
             Connect HubSpot, Salesforce, Pipedrive, or Zoho in under 10 minutes. One record per deal
             — calls, threads, calendar, and CRM fields — with MEDDPICC summaries that cite every
             claim. <strong>Nothing writes back without your approval.</strong>
           </p>
-          <div className="mkt-hero__actions">
-            <div className="flex flex-col gap-1">
-              <Button size="lg" asChild className="mkt-cta-glow">
+          <div className="mkt-hero__actions flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
+            <div className="flex w-full flex-col gap-1 sm:w-auto">
+              <Button size="lg" asChild className="mkt-cta-glow w-full sm:w-auto">
                 <Link href="/sign-up">
                   Connect your CRM free
                   <ArrowRight className="size-4" />
@@ -50,10 +50,10 @@ export function LandingHero() {
                 Free for presales teams · No credit card · OAuth setup ~10 min
               </p>
             </div>
-            <Button size="lg" variant="outline" asChild>
+            <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
               <Link href="/pricing#quote">Book a 15-min demo</Link>
             </Button>
-            <Button variant="ghost" size="lg" asChild>
+            <Button variant="ghost" size="lg" asChild className="w-full sm:w-auto">
               <Link href="/sign-in">
                 <Play className="size-4" />
                 Watch overview
@@ -61,7 +61,7 @@ export function LandingHero() {
             </Button>
           </div>
 
-          <div className="mb-6 flex items-start gap-3 rounded-lg border border-border bg-card p-3 text-sm shadow-sm">
+          <div className="mb-6 flex min-w-0 items-start gap-3 rounded-lg border border-border bg-card p-3 text-sm shadow-sm">
             <UserAvatar name={HERO_TESTIMONIAL.name} size="sm" />
             <div>
               <p className="text-muted-foreground">&ldquo;{HERO_TESTIMONIAL.quote}&rdquo;</p>
@@ -91,7 +91,7 @@ export function LandingHero() {
 
       <Separator className="my-10 max-w-6xl mx-auto" />
 
-      <div className="mkt-hero__blocks">
+      <div className="mkt-hero__blocks grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {BUILDING_BLOCKS.map((block, i) => (
           <ScrollReveal key={block.id} delay={i * 100}>
             <Card className="h-full transition-all hover:-translate-y-0.5 hover:shadow-md">

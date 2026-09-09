@@ -63,7 +63,7 @@ function HomeDashboardSkeleton() {
         <Skeleton className="h-4 w-56 max-w-full" />
         <Skeleton className="mt-5 h-px w-full" />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i} className="overflow-hidden">
             <CardHeader className="space-y-3">
@@ -77,10 +77,10 @@ function HomeDashboardSkeleton() {
           </Card>
         ))}
       </div>
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-4">
           <Skeleton className="h-6 w-36" />
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Skeleton className="h-52 w-full rounded-xl" />
             <Skeleton className="h-52 w-full rounded-xl" />
           </div>
@@ -163,7 +163,7 @@ export default function DashboardHomePage() {
           }
         />
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard
             label="Open pipeline"
             value={formatMoney(home.pipelineSnapshot.totalAmount)}
@@ -209,9 +209,9 @@ export default function DashboardHomePage() {
           </Alert>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="space-y-6">
-            <div className="flex items-center justify-between gap-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="min-w-0 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Flame className="size-4" />
@@ -225,7 +225,7 @@ export default function DashboardHomePage() {
             </div>
 
             {home.focusDeals.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {home.focusDeals.map((deal) => (
                   <DealKanbanCard key={deal.id} deal={deal} />
                 ))}
@@ -249,7 +249,7 @@ export default function DashboardHomePage() {
                     {home.atRiskDeals.length}
                   </Badge>
                 </div>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {home.atRiskDeals.map((deal) => (
                     <DealKanbanCard key={`risk-${deal.id}`} deal={deal} />
                   ))}
@@ -258,7 +258,7 @@ export default function DashboardHomePage() {
             )}
           </div>
 
-          <aside className="flex flex-col gap-5">
+          <aside className="flex min-w-0 w-full flex-col gap-5">
             <Card className="overflow-hidden border-border/70 bg-gradient-to-b from-card to-muted/20">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-sm font-bold">

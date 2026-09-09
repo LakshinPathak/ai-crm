@@ -87,6 +87,7 @@ export default function ProjectsPage() {
           <CardHeader className="border-b">
             <CardTitle className="text-sm">Recent deal projects</CardTitle>
           </CardHeader>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -113,6 +114,7 @@ export default function ProjectsPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </Card>
       ) : (
         <Card>

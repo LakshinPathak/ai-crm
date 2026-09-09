@@ -30,14 +30,14 @@ export function AuthCard({
   backHref?: string;
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+    <main className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-6 sm:p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="items-center text-center">
+        <CardHeader className="items-center px-4 text-center sm:px-6">
           <BrandLogo href="/" size="lg" showText={false} />
-          <CardTitle className="mt-4 text-2xl">{title}</CardTitle>
+          <CardTitle className="mt-4 text-xl sm:text-2xl">{title}</CardTitle>
           <CardDescription>{description}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 px-4 sm:px-6">
           <Button variant="outline" className="w-full gap-2" asChild>
             <a href={googleUrl}>
               <GoogleIcon />

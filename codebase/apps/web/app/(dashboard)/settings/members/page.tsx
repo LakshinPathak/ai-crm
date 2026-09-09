@@ -128,7 +128,7 @@ export default function SettingsMembersPage() {
                   required
                 />
               </div>
-              <div className="w-[140px] space-y-2">
+              <div className="w-full space-y-2 sm:w-[140px]">
                 <Label htmlFor="invite-role">Role</Label>
                 <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as InviteRole)}>
                   <SelectTrigger id="invite-role" className="w-full">
@@ -141,7 +141,7 @@ export default function SettingsMembersPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button type="submit" disabled={inviting}>
+              <Button type="submit" disabled={inviting} className="w-full sm:w-auto">
                 {inviting ? 'Sending…' : 'Send invite'}
               </Button>
             </form>

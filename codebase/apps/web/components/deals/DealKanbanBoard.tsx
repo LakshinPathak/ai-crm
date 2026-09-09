@@ -170,8 +170,8 @@ export function DealKanbanBoard({
   };
 
   return (
-    <ScrollArea className="w-full whitespace-nowrap">
-      <div className="flex gap-4 pb-4">
+    <ScrollArea className="-mx-4 w-[calc(100%+2rem)] px-4 sm:mx-0 sm:w-full sm:px-0">
+      <div className="flex gap-3 pb-4 sm:gap-4">
         {stages.map((stage) => {
           const stageTotal = stage.deals.reduce((s, d) => s + d.amount, 0);
           const isDragOver = dragOverStageId === stage.id;
@@ -180,7 +180,7 @@ export function DealKanbanBoard({
             <Card
               key={stage.id}
               size="sm"
-              className="flex w-72 shrink-0 flex-col py-0"
+              className="flex w-[280px] min-w-[280px] shrink-0 flex-col py-0 sm:w-72"
             >
               <CardHeader className="border-b pb-3">
                 <CardTitle className="flex items-center gap-2 text-sm">

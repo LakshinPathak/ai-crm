@@ -64,7 +64,7 @@ function IntegrationSection({
           const badgeVariant = integrationStatusBadge(p.status);
           return (
             <Card key={p.id}>
-              <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
+              <CardHeader className="flex flex-col items-start gap-2 space-y-0 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-center gap-3">
                   <IntegrationLogoOrFallback id={p.id} name={p.name} size={40} />
                   <CardTitle className="text-sm">{p.name}</CardTitle>
@@ -94,7 +94,7 @@ function IntegrationSection({
                       : `Manage your ${p.name} connection.`}
                 </CardDescription>
               </CardContent>
-              <CardFooter className="gap-2">
+              <CardFooter className="flex-wrap gap-2">
                 {isConnectableStatus(p.status) && !isConnected && (
                   <Button size="sm" onClick={() => onConnect(p.id)}>Connect</Button>
                 )}
@@ -277,14 +277,14 @@ export default function IntegrationsPage() {
             {status.provider && resolveIntegrationId(status.provider) && (
               <IntegrationLogo id={resolveIntegrationId(status.provider)!} size={28} />
             )}
-            <strong>{status.provider ? providers.find((p) => p.id === status.provider)?.name ?? status.provider : ''}</strong>
+            <strong className="min-w-0">{status.provider ? providers.find((p) => p.id === status.provider)?.name ?? status.provider : ''}</strong>
             {status.mode === 'demo' && <Badge variant="outline">Demo mode</Badge>}
             {status.lastSyncAt && (
               <span className="text-sm text-muted-foreground">
                 Last sync {new Date(status.lastSyncAt).toLocaleString()}
               </span>
             )}
-            <Button size="sm" onClick={sync} disabled={syncing} className="ml-auto">
+            <Button size="sm" onClick={sync} disabled={syncing} className="w-full sm:ml-auto sm:w-auto">
               {syncing ? 'Syncing…' : 'Sync now'}
             </Button>
           </CardContent>

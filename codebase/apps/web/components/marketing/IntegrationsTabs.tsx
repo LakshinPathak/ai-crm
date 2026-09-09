@@ -19,9 +19,9 @@ export function IntegrationsTabs() {
   const categories = Object.keys(INTEGRATIONS);
 
   return (
-    <div className="mx-auto w-full max-w-3xl">
+    <div className="mx-auto w-full max-w-3xl px-4 sm:px-0">
       <Tabs defaultValue="crm">
-        <TabsList className="mb-6 flex h-auto w-full flex-wrap justify-center gap-1">
+        <TabsList className="mb-6 flex h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto sm:flex-wrap sm:justify-center">
           {categories.map((cat) => (
             <TabsTrigger
               key={cat}

@@ -87,6 +87,7 @@ export default function CallsPage() {
         </Card>
       ) : (
         <Card className="py-0">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -121,6 +122,7 @@ export default function CallsPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </Card>
       )}
     </div>

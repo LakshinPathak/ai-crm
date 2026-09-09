@@ -16,8 +16,8 @@ const TAB_LABELS: Record<string, string> = {
 
 export function ModulesTabs() {
   return (
-    <Tabs defaultValue="A" className="mx-auto w-full max-w-4xl">
-      <TabsList className="mb-6 grid h-auto w-full grid-cols-3 gap-1 lg:grid-cols-6">
+    <Tabs defaultValue="A" className="mx-auto w-full max-w-4xl px-4 sm:px-0">
+      <TabsList className="mb-6 grid h-auto w-full grid-cols-2 gap-1 overflow-x-auto sm:grid-cols-3 lg:grid-cols-6">
         {FEATURE_MODULES.map((mod) => (
           <TabsTrigger
             key={mod.letter}
@@ -32,9 +32,9 @@ export function ModulesTabs() {
         <TabsContent key={mod.letter} value={mod.letter}>
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <FeatureIcon name={mod.icon} size={24} />
-                <div>
+                <div className="min-w-0">
                   <CardTitle>{mod.title}</CardTitle>
                   <CardDescription>{MODULE_OUTCOMES[mod.letter]}</CardDescription>
                 </div>

@@ -79,7 +79,7 @@ export default function SettingsSalesProcessPage() {
 
       {processes.map((process) => (
         <Card key={process.id} className="mb-4">
-          <CardHeader className="flex-row items-center gap-2 space-y-0">
+          <CardHeader className="flex flex-col items-start gap-2 space-y-0 sm:flex-row sm:items-center">
             <CardTitle>{process.name}</CardTitle>
             {process.isDefault && <Badge variant="default">Default</Badge>}
           </CardHeader>

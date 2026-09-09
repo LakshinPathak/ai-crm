@@ -150,11 +150,12 @@ export default function ApprovalsPage() {
 
   function renderActions(id: string, inModal = false) {
     return (
-      <div className={`flex gap-2 ${inModal ? 'mt-4 justify-end' : ''}`}>
+      <div className={`flex flex-wrap gap-2 ${inModal ? 'mt-4 flex-col-reverse sm:flex-row sm:justify-end' : 'w-full sm:w-auto'}`}>
         <Button
           size="sm"
           disabled={actingId === id}
           onClick={(e) => { e.stopPropagation(); approve(id); }}
+          className={inModal ? 'w-full sm:w-auto' : 'flex-1 sm:flex-none'}
         >
           Approve
         </Button>
@@ -163,6 +164,7 @@ export default function ApprovalsPage() {
           size="sm"
           disabled={actingId === id}
           onClick={(e) => { e.stopPropagation(); setRejectId(id); }}
+          className={inModal ? 'w-full sm:w-auto' : 'flex-1 sm:flex-none'}
         >
           Reject
         </Button>
@@ -200,7 +202,7 @@ export default function ApprovalsPage() {
               onClick={() => openDetail(a.id)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(a.id); } }}
             >
-              <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
+              <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div className="min-w-0 flex-1">
                   <CardTitle className="text-[0.9375rem]">{a.title}</CardTitle>
                   {a.dealTitle && (
@@ -212,7 +214,7 @@ export default function ApprovalsPage() {
                     </p>
                   )}
                 </div>
-                <div onClick={(e) => e.stopPropagation()}>
+                <div className="w-full shrink-0 sm:w-auto" onClick={(e) => e.stopPropagation()}>
                   {renderActions(a.id)}
                 </div>
               </CardHeader>
@@ -222,7 +224,7 @@ export default function ApprovalsPage() {
       )}
 
       <Dialog open={selectedId !== null} onOpenChange={(open) => { if (!open) closeDetail(); }}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{modalTitle}</DialogTitle>
             <DialogDescription>

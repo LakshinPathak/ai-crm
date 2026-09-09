@@ -10,10 +10,12 @@ import { PRICING_BULLETS, PRICING_TESTIMONIALS } from '@/lib/marketing-content';
 export function PricingPage() {
   return (
     <MarketingShell activeHref="/pricing">
-      <section className="mkt-pricing-hero bg-background">
+      <section className="mkt-pricing-hero bg-background px-4 sm:px-6">
         <div className="mkt-pricing-hero__inner">
           <Badge variant="secondary" className="mb-4">Request custom pricing</Badge>
-          <h1 className="text-foreground">Pricing tailored to how your team sells.</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+            Pricing tailored to how your team sells.
+          </h1>
           <p className="text-muted-foreground">
             Your CRM, your team size, your process — pricing should reflect that.
             No rigid per-seat surprises.
@@ -32,16 +34,16 @@ export function PricingPage() {
         </div>
       </section>
 
-      <section id="quote" className="mkt-pricing-wizard-wrap bg-background">
+      <section id="quote" className="mkt-pricing-wizard-wrap bg-background px-4 sm:px-6">
         <PricingWizard />
       </section>
 
-      <section className="mkt-pricing-proof bg-muted/40 px-6 py-16">
+      <section className="mkt-pricing-proof bg-muted/40 px-4 py-12 sm:px-6 sm:py-16">
         <div className="mkt-section-head">
           <span className="mkt-eyebrow text-primary">Proof</span>
-          <h2 className="text-foreground">Trusted by presales and RevOps leaders</h2>
+          <h2 className="text-2xl text-foreground sm:text-3xl">Trusted by presales and RevOps leaders</h2>
         </div>
-        <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {PRICING_TESTIMONIALS.map((item) => (
             <Card key={item.name} className="h-full">
               <CardContent className="pt-6">

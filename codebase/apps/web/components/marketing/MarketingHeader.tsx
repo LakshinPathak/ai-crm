@@ -30,7 +30,7 @@ export function MarketingHeader({
   activeHref?: string;
 }) {
   return (
-    <header className="mkt-header">
+    <header className="mkt-header px-4 sm:px-6">
       <BrandLogo href="/" size="sm" />
       <NavigationMenu className="mkt-nav hidden max-w-none flex-1 justify-center md:flex" viewport={false}>
         <NavigationMenuList>
@@ -54,7 +54,7 @@ export function MarketingHeader({
           ))}
         </NavigationMenuList>
       </NavigationMenu>
-      <div className="mkt-header__ctas">
+      <div className="mkt-header__ctas hidden md:flex">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/sign-in">Sign in</Link>
         </Button>

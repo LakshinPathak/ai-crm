@@ -40,7 +40,7 @@ export function FunnelDashboard({ data }: { data: FunnelData }) {
   }));
 
   return (
-    <div className="analytics-funnel">
+    <div className="analytics-funnel min-w-0 overflow-hidden">
       <div className="analytics-kpi-row">
         <KpiCard label="Total deals" value={data.totalDeals} sub="Across all pipeline stages" accent="purple" />
         <KpiCard
@@ -57,7 +57,7 @@ export function FunnelDashboard({ data }: { data: FunnelData }) {
         />
       </div>
 
-      <div className="analytics-activity__chart-card">
+      <div className="analytics-activity__chart-card min-w-0 overflow-hidden">
         <div className="analytics-activity__chart-header">
           <h3>Stage conversion funnel</h3>
         </div>
@@ -66,7 +66,8 @@ export function FunnelDashboard({ data }: { data: FunnelData }) {
             No deals in the pipeline yet. Deals will appear here as they move through stages.
           </p>
         ) : (
-          <ResponsiveContainer width="100%" height={300}>
+          <div className="min-w-0 w-full overflow-x-auto">
+          <ResponsiveContainer width="100%" height={300} minWidth={280}>
             <ComposedChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e8eaef" />
               <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="#94a3b8" />
@@ -96,6 +97,7 @@ export function FunnelDashboard({ data }: { data: FunnelData }) {
               />
             </ComposedChart>
           </ResponsiveContainer>
+          </div>
         )}
       </div>
 

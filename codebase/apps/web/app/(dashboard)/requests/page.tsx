@@ -130,6 +130,7 @@ export default function RequestsPage() {
           <CardHeader className="border-b">
             <CardTitle className="text-sm">Recent deal requests</CardTitle>
           </CardHeader>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -160,6 +161,7 @@ export default function RequestsPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </Card>
       ) : (
         <Card>

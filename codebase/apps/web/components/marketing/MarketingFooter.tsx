@@ -4,8 +4,8 @@ import { Separator } from '@/components/ui/separator';
 
 export function MarketingFooter() {
   return (
-    <footer className="mkt-footer">
-      <div className="mkt-footer__grid">
+    <footer className="mkt-footer px-4 sm:px-6">
+      <div className="mkt-footer__grid grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5">
         <div>
           <BrandLogo href="/" variant="light" size="sm" />
           <p>AI-native presales operating system</p>
@@ -30,7 +30,7 @@ export function MarketingFooter() {
         </div>
       </div>
       <Separator className="my-6 bg-white/10" />
-      <div className="mkt-footer__bar">
+      <div className="mkt-footer__bar flex flex-col gap-2 text-center sm:flex-row sm:justify-between sm:text-left">
         <span>© 2026 AI CRM. Built for revenue teams.</span>
         <span className="text-white/60">Privacy · Terms · Status</span>
       </div>

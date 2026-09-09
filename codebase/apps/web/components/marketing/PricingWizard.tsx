@@ -211,14 +211,14 @@ export function PricingWizard() {
           </Alert>
         )}
 
-        <div className="flex items-center justify-end gap-2 pt-2">
+        <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:items-center sm:justify-end">
           {step > 1 && (
-            <Button variant="ghost" onClick={back} disabled={loading}>
+            <Button variant="ghost" onClick={back} disabled={loading} className="w-full sm:w-auto">
               <ArrowLeft className="size-4" />
               Back
             </Button>
           )}
-          <Button onClick={next} disabled={!canContinue() || loading}>
+          <Button onClick={next} disabled={!canContinue() || loading} className="w-full sm:w-auto">
             {loading ? 'Submitting…' : step < 4 ? 'Continue' : 'Get custom pricing'}
             {step < 4 && !loading && <ArrowRight className="size-4" />}
           </Button>

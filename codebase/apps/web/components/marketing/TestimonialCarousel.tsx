@@ -14,8 +14,8 @@ import { LANDING_TESTIMONIALS } from '@/lib/marketing-content';
 
 export function TestimonialCarousel() {
   return (
-    <section className="border-y border-border bg-background py-16">
-      <div className="mx-auto max-w-5xl px-6">
+    <section className="border-y border-border bg-background px-4 py-12 sm:px-6 sm:py-16">
+      <div className="mx-auto max-w-5xl">
         <div className="mb-8 text-center">
           <div className="mb-2 flex items-center justify-center gap-1 text-amber-500">
             {Array.from({ length: 5 }).map((_, i) => (

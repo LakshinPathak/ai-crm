@@ -28,10 +28,12 @@ const MISSION_POINTS = [
 export function AboutPage() {
   return (
     <MarketingShell activeHref="/about">
-      <section className="mkt-pricing-hero bg-background px-6">
+      <section className="mkt-pricing-hero bg-background px-4 sm:px-6">
         <div className="mkt-pricing-hero__inner">
           <Badge variant="secondary" className="mb-4">About us</Badge>
-          <h1 className="text-foreground">The presales operating system revenue teams deserve</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+            The presales operating system revenue teams deserve
+          </h1>
           <p className="text-muted-foreground">
             AI CRM was founded to solve a simple problem: technical sellers spend more time hunting
             for context than advancing deals. Our mission is to give every SE, AE, and RevOps leader a
@@ -43,7 +45,7 @@ export function AboutPage() {
         </div>
       </section>
 
-      <section className="mkt-mvp bg-muted/40 px-6 py-16">
+      <section className="mkt-mvp bg-muted/40 px-4 py-12 sm:px-6 sm:py-16">
         <div className="mkt-section-head">
           <span className="mkt-eyebrow text-primary">Our mission</span>
           <h2 className="text-foreground">What we believe presales teams need</h2>
@@ -52,7 +54,7 @@ export function AboutPage() {
             fields, but a living record of every signal that shapes a deal.
           </p>
         </div>
-        <div className="mkt-mvp__grid">
+        <div className="mkt-mvp__grid grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {MISSION_POINTS.map((point) => (
             <Card key={point.title} className="transition-shadow hover:shadow-md">
               <CardHeader>

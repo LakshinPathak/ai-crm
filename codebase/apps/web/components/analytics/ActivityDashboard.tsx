@@ -79,9 +79,9 @@ export function ActivityDashboard({
   }
 
   return (
-    <div className="analytics-activity">
-      <div className="analytics-activity__chart-card">
-        <div className="analytics-activity__chart-header">
+    <div className="analytics-activity min-w-0 overflow-hidden">
+      <div className="analytics-activity__chart-card min-w-0 overflow-hidden">
+        <div className="analytics-activity__chart-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h3>Activity over time</h3>
           <div className="analytics-toggle-group">
             {(['daily', 'weekly', 'monthly'] as const).map((g) => (
@@ -99,7 +99,8 @@ export function ActivityDashboard({
         {isEmpty ? (
           <p className="analytics-empty-state">No activity recorded yet. Notes, tasks, and deal updates will appear here.</p>
         ) : (
-          <ResponsiveContainer width="100%" height={280}>
+          <div className="min-w-0 w-full overflow-x-auto">
+          <ResponsiveContainer width="100%" height={280} minWidth={280}>
             <ComposedChart data={data.timeSeries} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e8eaef" />
               <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="#94a3b8" />
@@ -118,6 +119,7 @@ export function ActivityDashboard({
               <Line type="monotone" dataKey="total" stroke="#0f172a" strokeWidth={2} dot={false} />
             </ComposedChart>
           </ResponsiveContainer>
+          </div>
         )}
       </div>
 
@@ -140,9 +142,9 @@ export function ActivityDashboard({
             <p className="analytics-empty-state">No activity breakdown yet — sync notes and tasks from your CRM.</p>
           ) : (
             <>
-              <div className="analytics-donut-card">
+              <div className="analytics-donut-card min-w-0 overflow-hidden">
                 <h4>By event type</h4>
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer width="100%" height={200} minWidth={200}>
                   <PieChart>
                     <Pie data={data.donutByType} dataKey="hours" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2}>
                       {data.donutByType.map((d) => (
@@ -153,9 +155,9 @@ export function ActivityDashboard({
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="analytics-donut-card">
+              <div className="analytics-donut-card min-w-0 overflow-hidden">
                 <h4>By label</h4>
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer width="100%" height={200} minWidth={200}>
                   <PieChart>
                     <Pie data={data.donutByLabel} dataKey="hours" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2}>
                       {data.donutByLabel.map((d) => (

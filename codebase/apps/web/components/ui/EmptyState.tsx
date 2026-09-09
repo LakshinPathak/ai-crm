@@ -14,7 +14,7 @@ export function EmptyState({
 }) {
   return (
     <Card>
-      <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+      <CardContent className="flex flex-col items-center justify-center px-4 py-10 text-center sm:px-6 sm:py-12">
         {icon && <div className="mb-4 text-muted-foreground">{icon}</div>}
         <h3 className="text-lg font-semibold">{title}</h3>
         {description && (

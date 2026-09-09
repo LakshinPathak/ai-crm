@@ -97,7 +97,7 @@ export function DealKanbanCard({ deal, showOpine = false }: { deal: DealCard; sh
           <Link href={`/deals/${deal.id}`} className="block">
             <Card
               className={cn(
-                'group overflow-hidden border-border/70 bg-card/95 py-0 shadow-sm transition-all duration-200',
+                'group min-w-0 overflow-hidden border-border/70 bg-card/95 py-0 shadow-sm transition-all duration-200',
                 'hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5',
               )}
             >
@@ -118,10 +118,10 @@ export function DealKanbanCard({ deal, showOpine = false }: { deal: DealCard; sh
                   ) : null}
                 </div>
 
-                <div className="text-lg font-extrabold tracking-tight text-foreground">
-                  {formatMoney(deal.amount)}
+                <div className="flex flex-wrap items-center gap-1.5 text-lg font-extrabold tracking-tight text-foreground">
+                  <span className="min-w-0 truncate">{formatMoney(deal.amount)}</span>
                   {showOpine && deal.meddpiccCompleteness !== undefined && (
-                    <Badge variant="secondary" className="ml-2 align-middle text-[10px]">
+                    <Badge variant="secondary" className="shrink-0 text-[10px]">
                       {deal.meddpiccCompleteness}% MEDDPICC
                     </Badge>
                   )}

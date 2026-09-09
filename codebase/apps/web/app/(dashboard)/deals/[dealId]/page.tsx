@@ -174,21 +174,21 @@ export default function DealDetailPage() {
 
   return (
     <div className="space-y-4">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
+      <Breadcrumb className="min-w-0">
+        <BreadcrumbList className="flex-nowrap">
+          <BreadcrumbItem className="shrink-0">
             <BreadcrumbLink asChild>
               <Link href="/deals">Deals</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{header.title}</BreadcrumbPage>
+          <BreadcrumbSeparator className="shrink-0" />
+          <BreadcrumbItem className="min-w-0">
+            <BreadcrumbPage className="truncate">{header.title}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <Avatar size="lg">
             <AvatarFallback>{initials(header.companyName)}</AvatarFallback>
@@ -199,13 +199,13 @@ export default function DealDetailPage() {
                 <Input
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-52"
+                  className="w-full min-w-0 sm:w-52"
                 />
                 <Input
                   type="number"
                   value={editAmount}
                   onChange={(e) => setEditAmount(e.target.value)}
-                  className="w-28"
+                  className="w-full min-w-0 sm:w-28"
                 />
                 <Button size="sm" onClick={saveDeal}>Save</Button>
                 <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
@@ -256,7 +256,7 @@ export default function DealDetailPage() {
           )}
           {isOpen && (
             <Select value={header.stageId ?? ''} onValueChange={moveStage}>
-              <SelectTrigger size="sm" className="min-w-40">
+              <SelectTrigger size="sm" className="w-full min-w-0 sm:min-w-40">
                 <SelectValue placeholder="Stage" />
               </SelectTrigger>
               <SelectContent>

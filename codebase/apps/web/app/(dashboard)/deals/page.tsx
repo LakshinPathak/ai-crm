@@ -165,9 +165,9 @@ export default function DealsPage() {
         title="Deals"
         subtitle="Pipeline overview"
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2">
             <Select defaultValue="deals">
-              <SelectTrigger size="sm" className="w-[150px]">
+              <SelectTrigger size="sm" className="w-full sm:w-[150px]">
                 <SelectValue placeholder="Pipeline" />
               </SelectTrigger>
               <SelectContent>
@@ -184,13 +184,13 @@ export default function DealsPage() {
               <ToggleGroupItem value="crm">CRM</ToggleGroupItem>
               <ToggleGroupItem value="opine">Opine</ToggleGroupItem>
             </ToggleGroup>
-            <div className="relative">
+            <div className="relative w-full min-w-0 sm:w-auto">
               <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search deals"
-                className="w-44 pl-8"
+                className="w-full min-w-0 pl-8 sm:w-44"
               />
             </div>
             <Popover>
@@ -258,7 +258,7 @@ export default function DealsPage() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:grid-cols-4">
         {metricCards.map((metric) => (
           <Card key={metric.label} size="sm">
             <CardHeader className="pb-1">
@@ -280,6 +280,7 @@ export default function DealsPage() {
         onValueChange={(v) => v && setViewMode(v as 'board' | 'table')}
         variant="outline"
         size="sm"
+        className="flex w-full flex-wrap sm:w-auto"
       >
         <ToggleGroupItem value="board">Board view</ToggleGroupItem>
         <ToggleGroupItem value="table">Table view</ToggleGroupItem>

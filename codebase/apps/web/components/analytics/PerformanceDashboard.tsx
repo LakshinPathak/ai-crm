@@ -75,7 +75,7 @@ export function PerformanceDashboard({
   const k = data.orgKpis;
 
   return (
-    <div className={`analytics-performance ${compact ? 'analytics-performance--compact' : ''}`}>
+    <div className={`analytics-performance min-w-0 ${compact ? 'analytics-performance--compact' : ''}`}>
       {!compact && (
       <div className="analytics-kpi-row">
         <KpiCard label="Members" value={k.members} sub="Total members" accent="purple" />

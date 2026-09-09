@@ -194,8 +194,8 @@ export default function AgentDetailPage() {
         title={agent.name}
         subtitle={templateLabel}
         actions={
-          <>
-            <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+            <div className="flex w-full items-center gap-2 sm:w-auto">
               <Switch
                 id="agent-enabled"
                 checked={agent.enabled}
@@ -208,11 +208,12 @@ export default function AgentDetailPage() {
               size="sm"
               disabled={running || !agent.enabled}
               onClick={runAgent}
+              className="w-full sm:w-auto"
             >
               <Play className="size-3.5" />
               Run
             </Button>
-          </>
+          </div>
         }
       />
 

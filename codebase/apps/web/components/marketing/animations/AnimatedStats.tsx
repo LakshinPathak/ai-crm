@@ -44,7 +44,7 @@ function StatCard({
       <Card className="text-center transition-shadow hover:shadow-md">
         <CardContent className="pt-6">
           <FeatureIcon name={stat.icon} size={18} className="mx-auto mb-2" />
-          <div className="text-4xl font-extrabold tabular-nums text-primary">
+          <div className="text-3xl font-extrabold tabular-nums text-primary sm:text-4xl">
             {count}{stat.suffix}
           </div>
           <div className="mt-1 text-sm text-muted-foreground">{stat.label}</div>
@@ -75,12 +75,14 @@ export function AnimatedStats() {
   }, []);
 
   return (
-    <section ref={ref} className="mkt-stats">
+    <section ref={ref} className="mkt-stats px-4 sm:px-6">
       <ScrollReveal>
-        <h2>What presales teams report in the <em>first 90 days</em></h2>
+        <h2 className="text-2xl font-bold sm:text-3xl">
+          What presales teams report in the <em>first 90 days</em>
+        </h2>
         <p>SEs and AEs stop hunting context across tools — leadership sees risk before it slips.</p>
       </ScrollReveal>
-      <div className="mkt-stats__grid">
+      <div className="mkt-stats__grid grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {STATS.map((stat, i) => (
           <StatCard key={stat.label} stat={stat} active={active} delay={i * 80} />
         ))}

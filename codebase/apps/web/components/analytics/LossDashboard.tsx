@@ -46,7 +46,7 @@ export function LossDashboard({ data }: { data: LossData }) {
   }));
 
   return (
-    <div className="analytics-loss">
+    <div className="analytics-loss min-w-0 overflow-hidden">
       <div className="analytics-kpi-row">
         <KpiCard label="Won deals" value={data.won.count} sub={formatMoney(data.won.value, true)} accent="green" />
         <KpiCard label="Lost deals" value={data.lost.count} sub={formatMoney(data.lost.value, true)} accent="blue" />
@@ -65,9 +65,9 @@ export function LossDashboard({ data }: { data: LossData }) {
         </div>
       ) : (
         <div className="analytics-breakdown-grid">
-          <div className="analytics-donut-card">
+          <div className="analytics-donut-card min-w-0 overflow-hidden">
             <h4>Won vs lost</h4>
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={220} minWidth={200}>
               <PieChart>
                 <Pie
                   data={outcomeData}
@@ -98,7 +98,7 @@ export function LossDashboard({ data }: { data: LossData }) {
             </div>
           </div>
 
-          <div className="analytics-activity__chart-card">
+          <div className="analytics-activity__chart-card min-w-0 overflow-hidden">
             <div className="analytics-activity__chart-header">
               <h3>Loss reasons</h3>
             </div>
@@ -107,7 +107,8 @@ export function LossDashboard({ data }: { data: LossData }) {
                 No loss reasons recorded yet.
               </p>
             ) : (
-              <ResponsiveContainer width="100%" height={Math.max(200, reasonChartData.length * 36)}>
+              <div className="min-w-0 w-full overflow-x-auto">
+              <ResponsiveContainer width="100%" height={Math.max(200, reasonChartData.length * 36)} minWidth={280}>
                 <BarChart data={reasonChartData} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e8eaef" horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
@@ -120,6 +121,7 @@ export function LossDashboard({ data }: { data: LossData }) {
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+              </div>
             )}
           </div>
 

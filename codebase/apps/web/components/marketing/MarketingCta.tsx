@@ -20,21 +20,21 @@ export function MarketingCta({
   secondaryLabel?: string;
 }) {
   return (
-    <section className="px-6 py-20">
+    <section className="px-4 py-12 sm:px-6 sm:py-20">
       <Card className="mx-auto max-w-3xl border-primary/30 bg-gradient-to-br from-primary/8 to-background text-center">
         <CardHeader className="items-center gap-4">
           <BrandLogo href="/" size="lg" showText={false} />
           <CardTitle className="text-2xl text-foreground sm:text-3xl">{title}</CardTitle>
           <CardDescription className="max-w-lg text-base">{description}</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-          <Button size="lg" asChild>
+        <CardContent className="flex w-full flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
+          <Button size="lg" asChild className="w-full sm:w-auto">
             <Link href={primaryHref}>
               {primaryLabel}
               <ArrowRight className="size-4" />
             </Link>
           </Button>
-          <Button size="lg" variant="outline" asChild>
+          <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
             <Link href={secondaryHref}>{secondaryLabel}</Link>
           </Button>
         </CardContent>

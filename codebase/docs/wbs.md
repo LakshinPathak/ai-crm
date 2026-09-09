@@ -1,7 +1,7 @@
 # Work Breakdown Structure (WBS)
 # AI-Native Presales CRM
 
-**Version:** 2.2  
+**Version:** 2.3  
 **Stack:** Next.js 15 + shadcn/ui (web) · Express API · MongoDB only (no Redis)  
 **Duration:** 16 weeks (revised after staff review — 12 weeks was ~2× optimistic)  
 **Team assumption:** 1–2 full-stack engineers + AI-assisted development ("vibe coding")  
@@ -9,20 +9,20 @@
 
 ---
 
-## Implementation status (2026-09-09)
+## Implementation status (2026-09-10)
 
 | Area | Done | Notes |
 |------|------|-------|
-| **1.0 Foundation** | ~88% | Monorepo, JWT auth, shadcn/ui (43 primitives), MongoDB job queue, demo seed, CI |
-| **2.0 Core CRM** | ~92% | Kanban, list, CRUD, 12 deal tabs, accounts, home, projects/requests lists |
-| **3.0 Deal Intelligence** | ~78% | MEDDPICC API + SSE, citations; Artifact model; **RAG chunking → R6** |
-| **4.0 Agents** | ~92% | 10 executors, runs, approvals, `/agents/new` wizard; **NL builder → R6** |
-| **5.0 Integrations** | ~78% | HubSpot OAuth, Gong HMAC + artifact ingest, CRM webhook path; **Teams/GChat → R6** |
-| **6.0 Insights** | ~72% | Funnel, loss, users tabs + APIs |
-| **7.0 Settings** | ~88% | Members, integrations (branded logos), sales-process, workspace |
-| **8.0 QA / DevOps** | ~68% | typecheck + smoke + Playwright E2E (5 tests) + GitHub Actions CI; **E2E in CI → R6** |
-| **9.0 Marketing** | ~72% | Landing animations, pricing, product, why; **blog/about → R6** |
-| **UI (shadcn)** | ~95% | 29/29 routes migrated; see `shadcn-ui-plan.md` |
+| **1.0 Foundation** | ~92% | Monorepo, JWT auth, shadcn/ui, MongoDB job queue, demo seed, CI + E2E in CI |
+| **2.0 Core CRM** | ~95% | Kanban, list, CRUD, 12 deal tabs, accounts, home; **responsive UI ✅** |
+| **3.0 Deal Intelligence** | ~85% | MEDDPICC SSE; Gong transcript + direct Gemini; **RAG chunking → R8** |
+| **4.0 Agents** | ~96% | 14 templates, NL builder, cron, event triggers, Slack delivery |
+| **5.0 Integrations** | ~88% | HubSpot incremental sync, Gong transcript, Slack/Teams/GChat OAuth |
+| **6.0 Insights** | ~78% | Funnel, loss, users tabs; responsive charts |
+| **7.0 Settings** | ~90% | Members, integrations connect flows, sales-process |
+| **8.0 QA / DevOps** | ~82% | typecheck + smoke + Playwright E2E (8 tests) + E2E in CI |
+| **9.0 Marketing** | ~85% | Landing, pricing, product, why, blog, about; responsive |
+| **UI (shadcn + responsive)** | ~98% | 32 routes; mobile-first pass — see `responsive-ui-plan.md` |
 
 ### Release history
 
@@ -30,11 +30,13 @@
 |---------|-------------|------------|
 | **R4** | Core product | Deal tabs, accounts, insights, marketing pages |
 | **R5** | P0 batch | Agent builder, Gong ingest, CRM webhooks, E2E, CI, calls page |
-| **R6** | *planned* | See [`r6-roadmap.md`](r6-roadmap.md) — 5 parallel workstreams |
+| **R6** | Agent platform | NL builder, deliveryConfig, cron, Opine parity |
+| **R7** | Integrations | Gong Gemini, Slack delivery, CRM sync, Teams/GChat OAuth, triggers |
+| **R7.1** | Responsive UI | Mobile-first pass all routes — [`responsive-ui-plan.md`](responsive-ui-plan.md) |
 
-**Recent completions (R5):** `/agents/new` wizard · Gong HMAC + `Artifact` ingest · `POST /webhooks/crm/:connectionId` · Playwright E2E · GitHub Actions CI · `/calls` page · JWT dev login · marketing color system.
+**Recent completions (R7):** Gong transcript + direct Gemini · call detail UI · Slack post · CRM incremental sync · Teams/GChat OAuth · `deal.stage_changed` triggers · `/blog` `/about` · E2E in CI · responsive UI.
 
-**Next batch (R6):** [`r6-roadmap.md`](r6-roadmap.md) — Gong transcript + RAG · Teams/GChat/Calendar OAuth · NL agent builder · CRM incremental sync queue · E2E in CI + blog/about.
+**Next batch (R8):** See [`future/implementation-status.md`](future/implementation-status.md) — Teams/GChat delivery · Gong RAG · HubSpot write-back · blog slugs.
 
 **Playwright E2E (local):** With `pnpm dev` running (API :4000 + web :3000) and MongoDB up:
 

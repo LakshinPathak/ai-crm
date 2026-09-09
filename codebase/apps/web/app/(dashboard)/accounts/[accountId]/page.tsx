@@ -127,35 +127,35 @@ export default function AccountDetailPage() {
 
   return (
     <div>
-      <div className="ui-page-header mb-6">
-        <div className="ui-page-header__left">
-          <Link href="/accounts">
+      <div className="ui-page-header mb-6 flex-col gap-4 sm:flex-row">
+        <div className="ui-page-header__left min-w-0 flex-1">
+          <Link href="/accounts" className="shrink-0">
             <Button variant="ghost" size="icon-sm">
               <ArrowLeft size={16} />
             </Button>
           </Link>
-          <UserAvatar name={company.name} size="md" />
-          <div>
+          <UserAvatar name={company.name} size="md" className="shrink-0" />
+          <div className="min-w-0 flex-1">
             {editing ? (
               <div className="flex flex-col gap-2">
                 <Input
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   placeholder="Company name"
-                  className="w-[280px]"
+                  className="w-full sm:w-[280px]"
                 />
                 <div className="flex flex-wrap gap-2">
                   <Input
                     value={editDomain}
                     onChange={(e) => setEditDomain(e.target.value)}
                     placeholder="Domain"
-                    className="w-40"
+                    className="min-w-0 flex-1 sm:w-40 sm:flex-none"
                   />
                   <Input
                     value={editIndustry}
                     onChange={(e) => setEditIndustry(e.target.value)}
                     placeholder="Industry"
-                    className="w-40"
+                    className="min-w-0 flex-1 sm:w-40 sm:flex-none"
                   />
                   <Input
                     type="number"
@@ -163,7 +163,7 @@ export default function AccountDetailPage() {
                     value={editEmployeeCount}
                     onChange={(e) => setEditEmployeeCount(e.target.value)}
                     placeholder="Employees"
-                    className="w-24"
+                    className="w-full sm:w-24"
                   />
                 </div>
                 <div className="flex gap-2">
@@ -173,7 +173,7 @@ export default function AccountDetailPage() {
               </div>
             ) : (
               <>
-                <h1 className="ui-page-header__title text-xl">{company.name}</h1>
+                <h1 className="ui-page-header__title break-words text-xl">{company.name}</h1>
                 <p className="ui-page-header__subtitle">
                   {[company.domain, company.industry].filter(Boolean).join(' · ') || 'Account details'}
                 </p>
@@ -181,7 +181,7 @@ export default function AccountDetailPage() {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {!editing && (
             <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>Edit</Button>
           )}
@@ -191,7 +191,7 @@ export default function AccountDetailPage() {
         </div>
       </div>
 
-      <div className="mb-6 grid grid-cols-3 gap-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card className="p-4">
           <div className="mb-1 text-xs text-muted-foreground">Open deals</div>
           <div className="text-2xl font-bold">{openDeals.length}</div>
@@ -212,6 +212,7 @@ export default function AccountDetailPage() {
         <EmptyState title="No deals linked" description="Deals associated with this account will appear here." />
       ) : (
         <Card className="overflow-hidden p-0">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -250,6 +251,7 @@ export default function AccountDetailPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </Card>
       )}
     </div>
