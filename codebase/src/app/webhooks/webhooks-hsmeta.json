@@ -1,0 +1,44 @@
+{
+  "uid": "ai_crm_webhooks_v1",
+  "type": "webhooks",
+  "config": {
+    "settings": {
+      "targetUrl": "https://stupid-rice-feel.loca.lt/api/v1/webhooks/hubspot",
+      "maxConcurrentRequests": 10
+    },
+    "subscriptions": {
+      "crmObjects": [
+        {
+          "subscriptionType": "object.creation",
+          "objectType": "contact",
+          "active": true
+        },
+        {
+          "subscriptionType": "object.propertyChange",
+          "objectType": "contact",
+          "propertyName": "email",
+          "active": true
+        },
+        {
+          "subscriptionType": "object.creation",
+          "objectType": "deal",
+          "active": true
+        },
+        {
+          "subscriptionType": "object.propertyChange",
+          "objectType": "deal",
+          "propertyName": "dealstage",
+          "active": true
+        },
+        {
+          "subscriptionType": "object.propertyChange",
+          "objectType": "deal",
+          "propertyName": "amount",
+          "active": true
+        }
+      ],
+      "legacyCrmObjects": [],
+      "hubEvents": []
+    }
+  }
+}

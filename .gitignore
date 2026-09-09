@@ -1,0 +1,47 @@
+# Dependencies
+codebase/node_modules/
+codebase/**/node_modules/
+
+# Build outputs
+codebase/dist/
+codebase/.next/
+codebase/.turbo/
+codebase/out/
+codebase/build/
+
+# Environment & secrets (NEVER commit)
+.env
+.env.*
+!.env.example
+codebase/.env
+codebase/.env.local
+codebase/.env.*.local
+codebase/.agent/.env
+**/client_secret*.json
+
+# Tool / agent artifacts
+codebase/repomix-output.xml
+codebase/graphify-out/
+codebase/.agent/progress.md
+
+# Logs & OS
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+
+# IDE
+.cursor/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test / coverage
+codebase/coverage/
+codebase/playwright-report/
+codebase/test-results/
+
+# Misc
+*.tsbuildinfo

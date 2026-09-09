@@ -1,0 +1,25 @@
+{
+  "name": "ai-crm",
+  "version": "0.0.1",
+  "private": true,
+  "description": "AI-native presales CRM — modular monolith monorepo",
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter @ai-crm/api --filter @ai-crm/web dev",
+    "dev:api": "pnpm --filter @ai-crm/api dev",
+    "dev:web": "pnpm --filter @ai-crm/web dev",
+    "dev:backend": "pnpm dev:api",
+    "dev:frontend": "pnpm dev:web",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "populate-demo": "pnpm --filter @ai-crm/api populate-demo",
+    "hubspot:seed": "pnpm --filter @ai-crm/api hubspot:seed",
+    "hubspot:sync": "pnpm --filter @ai-crm/api hubspot:sync",
+    "hubspot:test": "pnpm --filter @ai-crm/api hubspot:test",
+    "hubspot:setup": "bash scripts/hubspot-setup.sh",
+    "docker:up": "docker compose up mongo -d"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.15.0"
+}
