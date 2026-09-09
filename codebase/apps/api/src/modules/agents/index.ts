@@ -7,6 +7,7 @@ import {
   getAgentStats,
   listAgents,
   listTemplates,
+  postDraftFromNl,
   runAgent,
   updateAgent,
 } from './handlers.js';
@@ -17,6 +18,7 @@ agentsRouter.get('/stats', getAgentStats);
 agentsRouter.get('/templates', listTemplates);
 agentsRouter.get('/', listAgents);
 agentsRouter.post('/', createAgent);
+agentsRouter.post('/draft-from-nl', postDraftFromNl);
 agentsRouter.post('/from-template/:slug', createFromTemplate);
 agentsRouter.get('/:agentId', getAgent);
 agentsRouter.patch('/:agentId', updateAgent);

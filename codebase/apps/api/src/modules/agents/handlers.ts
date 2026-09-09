@@ -1,8 +1,26 @@
 import type { Response } from 'express';
 import type { AuthedRequest } from '../../lib/auth/index.js';
 import { Agent, AgentRun } from '@ai-crm/db';
-import { CreateAgentSchema, RunAgentSchema, UpdateAgentSchema } from '@ai-crm/shared';
+import { CreateAgentSchema, DraftAgentSchema, DraftFromNlRequestSchema, RunAgentSchema, UpdateAgentSchema } from '@ai-crm/shared';
 import { enqueueAgentRun } from './executor.js';
+import { draftFromKeywords, generateDraftWithGemini } from './draft-from-nl.js';
+
+const draftRateLimits = new Map<string, { count: number; resetAt: number }>();
+
+function checkDraftRateLimit(userId: string, limit: number, windowMs: number): boolean {
+  const now = Date.now();
+  const key = `${userId}:draft-from-nl`;
+  const entry = draftRateLimits.get(key);
+
+  if (!entry || now >= entry.resetAt) {
+    draftRateLimits.set(key, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+
+  if (entry.count >= limit) return false;
+  entry.count += 1;
+  return true;
+}
 
 /** Opine-style template catalog — maps to docs/AGENT_AUTOMATIONS.md */
 const TEMPLATES = [
@@ -20,9 +38,15 @@ const TEMPLATES = [
   },
   {
     slug: 'poc-kickoff',
-    name: 'POC Kickoff',
+    name: 'POC Plan Generator',
     category: 'process',
     description: 'When a deal hits pilot stage, generate a kickoff plan with stakeholders, success criteria, and timeline.',
+  },
+  {
+    slug: 'closed-won-handoff',
+    name: 'Closed Won Handoff',
+    category: 'process',
+    description: 'When a deal closes won, generate a handoff package for CS/implementation — stakeholders, MEDDPICC summary, open items, and next steps.',
   },
   {
     slug: 'post-call',
@@ -98,6 +122,7 @@ function toAgentDto(a: InstanceType<typeof Agent>) {
     config: {
       triggerConfig: (a.triggerConfig as Record<string, unknown> | undefined) ?? {},
       toolsConfig: (a.toolsConfig as Record<string, unknown> | undefined) ?? {},
+      deliveryConfig: (a.deliveryConfig as Record<string, unknown> | null | undefined) ?? null,
     },
     createdAt: a.createdAt,
     updatedAt: a.updatedAt,
@@ -184,6 +209,9 @@ export async function updateAgent(req: AuthedRequest, res: Response) {
   if (parsed.data.config?.toolsConfig !== undefined) {
     agent.toolsConfig = parsed.data.config.toolsConfig;
   }
+  if (parsed.data.config?.deliveryConfig !== undefined) {
+    agent.deliveryConfig = parsed.data.config.deliveryConfig;
+  }
   await agent.save();
 
   res.json({ agent: toAgentDto(agent) });
@@ -209,6 +237,54 @@ export async function listTemplates(_req: AuthedRequest, res: Response) {
   res.json({ templates: TEMPLATES });
 }
 
+export async function postDraftFromNl(req: AuthedRequest, res: Response) {
+  const parsed = DraftFromNlRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: parsed.error.message } });
+    return;
+  }
+
+  const userId = req.tenant!.userId;
+  if (!checkDraftRateLimit(userId, 10, 3600_000)) {
+    res.status(429).json({
+      error: { code: 'RATE_LIMIT', message: 'Rate limit exceeded — max 10 drafts per hour' },
+    });
+    return;
+  }
+
+  let draft = process.env.GEMINI_API_KEY
+    ? await generateDraftWithGemini(parsed.data.description)
+    : null;
+
+  if (!draft) {
+    draft = draftFromKeywords(parsed.data.description);
+  }
+
+  if (!draft) {
+    res.status(422).json({
+      error: {
+        code: 'NEEDS_CLARIFICATION',
+        message: 'Description too vague to draft an agent',
+        questions: [
+          'What should trigger this agent — daily schedule, CRM event, or manual run?',
+          'Which outcome do you want — risk alerts, follow-up emails, reporting, or qualification?',
+        ],
+      },
+    });
+    return;
+  }
+
+  const validated = DraftAgentSchema.safeParse(draft);
+  if (!validated.success) {
+    res.status(422).json({
+      error: { code: 'VALIDATION_ERROR', message: validated.error.message },
+    });
+    return;
+  }
+
+  res.json({ draft: validated.data });
+}
+
 export async function createAgent(req: AuthedRequest, res: Response) {
   const parsed = CreateAgentSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -232,6 +308,7 @@ export async function createAgent(req: AuthedRequest, res: Response) {
     isActive: true,
     triggerConfig: config?.triggerConfig ?? {},
     toolsConfig: config?.toolsConfig ?? {},
+    deliveryConfig: config?.deliveryConfig ?? null,
   });
 
   res.status(201).json({ agent: toAgentDto(agent) });

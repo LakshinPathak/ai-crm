@@ -3,6 +3,7 @@ import type { AgentRunContext } from '../../modules/agents/executors/types.js';
 import { AGENT_RUNS_QUEUE } from './agent-runs.js';
 import { INGEST_CALL_QUEUE, processIngestCall, type IngestCallJobData } from './ingest-call.js';
 import { startQueuePoller } from './mongo-queue.js';
+import { startScheduledAgentTicker } from './scheduled-agents.js';
 import { log } from '../logger.js';
 
 let stopPollers: (() => void) | null = null;
@@ -27,9 +28,12 @@ export function startBackgroundJobProcessors(): void {
     { concurrency: 3 },
   );
 
+  const stopScheduled = startScheduledAgentTicker();
+
   stopPollers = () => {
     stopAgent();
     stopIngest();
+    stopScheduled();
     stopPollers = null;
   };
 

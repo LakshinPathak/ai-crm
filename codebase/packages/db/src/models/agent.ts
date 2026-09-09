@@ -10,6 +10,7 @@ const AgentSchema = new Schema(
     isActive: { type: Boolean, default: true },
     triggerConfig: { type: Schema.Types.Mixed, default: {} },
     toolsConfig: { type: Schema.Types.Mixed, default: {} },
+    deliveryConfig: { type: Schema.Types.Mixed, default: null },
   },
   { timestamps: true },
 );

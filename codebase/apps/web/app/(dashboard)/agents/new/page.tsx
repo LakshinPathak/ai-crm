@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Bot, Check, Circle, Sparkles } from 'lucide-react';
-import { apiGet, apiPatch, apiPost } from '@/lib/api-client';
+import { apiGet, apiPatch, apiPost, ApiError } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { agentCategoryBadge } from '@/lib/ui-badge';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -23,11 +23,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/Toast';
 
 type Template = { slug: string; name: string; category: string; description: string };
 type TriggerType = 'schedule' | 'event' | 'manual' | 'webhook';
+type DeliveryProvider = 'slack' | 'google_chat' | 'teams';
+type DeliveryMode = 'dm' | 'channel';
 
 type WizardState = {
   name: string;
@@ -36,9 +39,31 @@ type WizardState = {
   triggerType: TriggerType;
   schedule: string;
   event: string;
+  deliverEnabled: boolean;
+  deliveryProvider: DeliveryProvider;
+  deliveryMode: DeliveryMode;
+  deliveryChannelId: string;
   systemPrompt: string;
   tools: string[];
   skills: string[];
+  aiSuggested?: boolean;
+  draftConfidence?: number;
+};
+
+type DraftAgentResponse = {
+  draft: {
+    name: string;
+    templateSlug: string;
+    category: string;
+    triggerType: TriggerType;
+    schedule: string | null;
+    event: string | null;
+    systemPrompt: string;
+    tools: string[];
+    skills: string[];
+    confidence?: number;
+    reasoning?: string;
+  };
 };
 
 const STEPS = ['Basics', 'Trigger', 'Prompt', 'Tools & Skills', 'Review'] as const;
@@ -71,6 +96,19 @@ const SCHEDULE_PRESETS = [
 
 function parseApiError(err: unknown): string {
   if (!(err instanceof Error)) return 'Something went wrong';
+  if (err instanceof ApiError) {
+    try {
+      const parsed = JSON.parse(err.message) as {
+        error?: { code?: string; message?: string; questions?: string[] };
+      };
+      if (parsed.error?.code === 'NEEDS_CLARIFICATION' && parsed.error.questions?.length) {
+        return `${parsed.error.message ?? 'Need more detail'}: ${parsed.error.questions.join(' ')}`;
+      }
+      return parsed.error?.message ?? err.message;
+    } catch {
+      return err.message;
+    }
+  }
   try {
     const parsed = JSON.parse(err.message) as { error?: { message?: string } };
     return parsed.error?.message ?? err.message;
@@ -97,6 +135,8 @@ export default function NewAgentPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [agentId, setAgentId] = useState<string | null>(editAgentId);
   const [loading, setLoading] = useState(false);
+  const [nlLoading, setNlLoading] = useState(false);
+  const [nlDescription, setNlDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState<WizardState>({
@@ -106,6 +146,10 @@ export default function NewAgentPage() {
     triggerType: 'manual',
     schedule: '0 8 * * *',
     event: 'activity.ingested',
+    deliverEnabled: false,
+    deliveryProvider: 'slack',
+    deliveryMode: 'dm',
+    deliveryChannelId: '',
     systemPrompt: '',
     tools: [],
     skills: [],
@@ -130,12 +174,14 @@ export default function NewAgentPage() {
         config: {
           triggerConfig: Record<string, unknown>;
           toolsConfig: Record<string, unknown>;
+          deliveryConfig: Record<string, unknown> | null;
         };
       };
     }>(`/agents/${editAgentId}`, token);
 
     const trigger = agent.config.triggerConfig;
     const toolsCfg = agent.config.toolsConfig;
+    const delivery = agent.config.deliveryConfig;
     setForm({
       name: agent.name,
       templateSlug: agent.templateSlug ?? '',
@@ -143,6 +189,13 @@ export default function NewAgentPage() {
       triggerType: (trigger.type as TriggerType) ?? 'manual',
       schedule: typeof trigger.schedule === 'string' ? trigger.schedule : '0 8 * * *',
       event: typeof trigger.event === 'string' ? trigger.event : 'activity.ingested',
+      deliverEnabled: delivery != null,
+      deliveryProvider:
+        delivery?.provider === 'google_chat' || delivery?.provider === 'teams'
+          ? delivery.provider
+          : 'slack',
+      deliveryMode: delivery?.mode === 'channel' ? 'channel' : 'dm',
+      deliveryChannelId: typeof delivery?.channelId === 'string' ? delivery.channelId : '',
       systemPrompt: typeof toolsCfg.systemPrompt === 'string' ? toolsCfg.systemPrompt : '',
       tools: Array.isArray(toolsCfg.tools) ? (toolsCfg.tools as string[]) : [],
       skills: Array.isArray(toolsCfg.skills) ? (toolsCfg.skills as string[]) : [],
@@ -183,7 +236,21 @@ export default function NewAgentPage() {
     if (form.tools.length) toolsConfig.tools = form.tools;
     if (form.skills.length) toolsConfig.skills = form.skills;
 
-    return { triggerConfig, toolsConfig };
+    const config: Record<string, unknown> = { triggerConfig, toolsConfig };
+    if (form.deliverEnabled) {
+      const deliveryConfig: Record<string, unknown> = {
+        provider: form.deliveryProvider,
+        mode: form.deliveryMode,
+      };
+      if (form.deliveryChannelId.trim()) {
+        deliveryConfig.channelId = form.deliveryChannelId.trim();
+      }
+      config.deliveryConfig = deliveryConfig;
+    } else {
+      config.deliveryConfig = null;
+    }
+
+    return config;
   }
 
   function buildCreatePayload() {
@@ -278,6 +345,47 @@ export default function NewAgentPage() {
     }));
   }
 
+  async function handleNlDraft() {
+    const description = nlDescription.trim();
+    if (description.length < 10) {
+      toast('Describe your agent in at least 10 characters', 'error');
+      return;
+    }
+
+    const token = getToken();
+    if (!token) return;
+
+    setNlLoading(true);
+    setError(null);
+
+    try {
+      const { draft } = await apiPost<DraftAgentResponse>('/agents/draft-from-nl', token, { description });
+      setForm((prev) => ({
+        ...prev,
+        name: draft.name,
+        templateSlug: draft.templateSlug,
+        category: draft.category,
+        triggerType: draft.triggerType,
+        schedule: draft.schedule ?? SCHEDULE_PRESETS[0].value,
+        event: draft.event ?? EVENT_OPTIONS[0].value,
+        systemPrompt: draft.systemPrompt,
+        tools: draft.tools,
+        skills: draft.skills,
+        deliverEnabled: draft.skills.includes('slack_delivery'),
+        aiSuggested: true,
+        draftConfidence: draft.confidence,
+      }));
+      setStep(1);
+      toast('Agent draft ready — review each step', 'success');
+    } catch (err) {
+      const message = parseApiError(err);
+      setError(message);
+      toast(message, 'error');
+    } finally {
+      setNlLoading(false);
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -290,6 +398,14 @@ export default function NewAgentPage() {
         }
         title={agentId ? 'Edit agent' : 'New agent'}
         subtitle="Configure triggers, prompt, and tools in five steps"
+        actions={
+          form.aiSuggested ? (
+            <Badge variant="secondary" className="gap-1">
+              <Sparkles className="size-3" />
+              AI suggested — review before saving
+            </Badge>
+          ) : undefined
+        }
       />
 
       <div className="grid gap-6 lg:grid-cols-[220px_1fr_280px]">
@@ -461,6 +577,71 @@ export default function NewAgentPage() {
                     </div>
                   </div>
                 </RadioGroup>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <Label htmlFor="deliver-enabled" className="font-medium">Deliver results to chat</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Send agent output to Slack, Google Chat, or Teams after each run.
+                      </p>
+                    </div>
+                    <Switch
+                      id="deliver-enabled"
+                      checked={form.deliverEnabled}
+                      onCheckedChange={(checked) => setForm((p) => ({ ...p, deliverEnabled: checked }))}
+                    />
+                  </div>
+
+                  {form.deliverEnabled && (
+                    <div className="space-y-4 rounded-lg border p-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="delivery-provider">Provider</Label>
+                        <Select
+                          value={form.deliveryProvider}
+                          onValueChange={(v) => setForm((p) => ({ ...p, deliveryProvider: v as DeliveryProvider }))}
+                        >
+                          <SelectTrigger id="delivery-provider">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="slack">Slack</SelectItem>
+                            <SelectItem value="google_chat">Google Chat</SelectItem>
+                            <SelectItem value="teams">Microsoft Teams</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="delivery-mode">Mode</Label>
+                        <Select
+                          value={form.deliveryMode}
+                          onValueChange={(v) => setForm((p) => ({ ...p, deliveryMode: v as DeliveryMode }))}
+                        >
+                          <SelectTrigger id="delivery-mode">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="dm">DM</SelectItem>
+                            <SelectItem value="channel">Channel</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {form.deliveryMode === 'channel' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="delivery-channel-id">Channel ID (optional)</Label>
+                          <Input
+                            id="delivery-channel-id"
+                            value={form.deliveryChannelId}
+                            onChange={(e) => setForm((p) => ({ ...p, deliveryChannelId: e.target.value }))}
+                            placeholder="e.g. C0123456789 or #pipeline"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           )}
@@ -556,6 +737,14 @@ export default function NewAgentPage() {
                   </p>
                 </div>
                 <div>
+                  <p className="font-medium">Chat delivery</p>
+                  <p className="text-muted-foreground">
+                    {form.deliverEnabled
+                      ? `${form.deliveryProvider.replace('_', ' ')} — ${form.deliveryMode}${form.deliveryChannelId ? ` (${form.deliveryChannelId})` : ''}`
+                      : 'Disabled'}
+                  </p>
+                </div>
+                <div>
                   <p className="font-medium">System prompt</p>
                   <p className="line-clamp-4 whitespace-pre-wrap text-muted-foreground">{form.systemPrompt || '—'}</p>
                 </div>
@@ -607,20 +796,35 @@ export default function NewAgentPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Sparkles className="size-4 text-primary" />
-              Want help getting started?
+              Describe your agent
             </CardTitle>
             <CardDescription>
-              Describe what you want this agent to do in plain language. NL drafting ships in a later release.
+              Enter plain language and we&apos;ll pre-fill the wizard. Review each step before creating.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
             <Textarea
+              value={nlDescription}
+              onChange={(e) => setNlDescription(e.target.value)}
               placeholder="e.g. Every morning, scan my open deals and Slack me the top 5 that need attention…"
               rows={6}
-              disabled
+              disabled={nlLoading || Boolean(editAgentId)}
               className="text-sm"
             />
-            <p className="mt-2 text-xs text-muted-foreground">
+            {form.draftConfidence !== undefined && form.draftConfidence < 0.7 && (
+              <p className="text-xs text-amber-600 dark:text-amber-500">
+                Low confidence ({Math.round(form.draftConfidence * 100)}%) — double-check trigger and tools.
+              </p>
+            )}
+            <Button
+              type="button"
+              className="w-full"
+              disabled={nlLoading || nlDescription.trim().length < 10 || Boolean(editAgentId)}
+              onClick={() => void handleNlDraft()}
+            >
+              {nlLoading ? 'Generating…' : 'Generate'}
+            </Button>
+            <p className="text-xs text-muted-foreground">
               Tip: pick a template on step 1 to pre-fill category and description.
             </p>
           </CardContent>

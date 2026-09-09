@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Bot, Plus, Search, Wand2 } from 'lucide-react';
 import { apiGet, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
@@ -53,7 +54,15 @@ type Stats = { activeAgents: number; totalAgents: number; runsToday: number; run
 
 const PAGE_SIZE = 10;
 
+const TEMPLATE_CATEGORIES = [
+  { key: 'process', label: 'Process' },
+  { key: 'risk', label: 'Risk' },
+  { key: 'signals', label: 'Signals' },
+  { key: 'reporting', label: 'Reporting' },
+] as const;
+
 export default function AgentsPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -99,13 +108,9 @@ export default function AgentsPage() {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
 
-  async function addFromTemplate(slug: string) {
-    const token = getToken();
-    if (!token) return;
-    await apiPost(`/agents/from-template/${slug}`, token, {});
+  function selectTemplate(slug: string) {
     setShowTemplates(false);
-    load();
-    toast('Agent created', 'success');
+    router.push(`/agents/new?template=${slug}`);
   }
 
   async function pollRunStatus(runId: string, token: string) {
@@ -326,29 +331,42 @@ export default function AgentsPage() {
       )}
 
       <Dialog open={showTemplates} onOpenChange={setShowTemplates}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>Start from template</DialogTitle>
-            <DialogDescription>Pick a pre-built agent to kickstart setup.</DialogDescription>
+            <DialogDescription>
+              Pick a pre-built agent to kickstart setup. You can customize everything after applying.
+            </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {templates.map((t) => (
-              <Card
-                key={t.slug}
-                className="cursor-pointer transition-colors hover:bg-muted/50"
-                onClick={() => addFromTemplate(t.slug)}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-sm">{t.name}</CardTitle>
-                    <Badge variant={agentCategoryBadge(t.category)}>{t.category}</Badge>
+          <div className="space-y-6">
+            {TEMPLATE_CATEGORIES.map(({ key, label }) => {
+              const items = templates.filter((t) => t.category === key);
+              if (items.length === 0) return null;
+              return (
+                <div key={key}>
+                  <h3 className="mb-3 text-sm font-semibold">{label}</h3>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {items.map((t) => (
+                      <Card
+                        key={t.slug}
+                        className="cursor-pointer transition-colors hover:bg-muted/50"
+                        onClick={() => selectTemplate(t.slug)}
+                      >
+                        <CardHeader className="pb-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <CardTitle className="text-sm">{t.name}</CardTitle>
+                            <Badge variant={agentCategoryBadge(t.category)}>{t.category}</Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <CardDescription>{t.description}</CardDescription>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>{t.description}</CardDescription>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </DialogContent>
       </Dialog>
