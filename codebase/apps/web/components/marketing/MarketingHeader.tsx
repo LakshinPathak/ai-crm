@@ -40,8 +40,8 @@ export function MarketingHeader({
                 asChild
                 className={cn(
                   navigationMenuTriggerStyle(),
-                  'bg-transparent',
-                  activeHref === link.href && 'text-primary',
+                  'bg-transparent text-muted-foreground hover:text-primary',
+                  activeHref === link.href && 'text-primary font-semibold',
                 )}
               >
                 {link.isRoute ? (

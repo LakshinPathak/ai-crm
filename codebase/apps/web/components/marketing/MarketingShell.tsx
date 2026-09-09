@@ -14,11 +14,11 @@ export function MarketingShell({
   activeHref?: string;
 }) {
   return (
-    <div className="mkt pb-20 md:pb-0">
-      <div className="sticky top-0 z-50 flex items-center justify-center gap-2 border-b bg-primary/5 px-4 py-2.5 text-sm font-medium">
+    <div className="mkt bg-background text-foreground pb-20 md:pb-0">
+      <div className="sticky top-0 z-50 flex items-center justify-center gap-2 border-b border-border bg-muted/60 px-4 py-2.5 text-sm font-medium text-foreground">
         <Zap size={14} className="shrink-0 text-primary" />
         Connect HubSpot or Salesforce in under 10 minutes.
-        <Link href="/onboarding" className="font-semibold text-primary hover:underline">
+        <Link href="/onboarding" className="font-semibold text-primary hover:text-primary/80 hover:underline">
           See setup →
         </Link>
       </div>

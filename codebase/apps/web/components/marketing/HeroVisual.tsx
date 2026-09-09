@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { IntegrationLogo } from '@/components/brand/IntegrationLogo';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, TrendingUp, CheckCircle2 } from 'lucide-react';
@@ -89,7 +90,11 @@ export function HeroVisual() {
                 </div>
                 <div className="hero-visual__activity-bars">
                   {[72, 45, 88, 60, 95, 70].map((h, i) => (
-                    <div key={i} className="hero-visual__bar" style={{ height: `${h}%` }} />
+                    <div
+                      key={i}
+                      className="hero-visual__bar hero-visual__bar--animated"
+                      style={{ '--bar-height': `${h}%`, '--bar-delay': `${i * 0.12}s` } as CSSProperties}
+                    />
                   ))}
                 </div>
               </div>

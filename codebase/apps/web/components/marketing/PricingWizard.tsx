@@ -54,8 +54,10 @@ function OptionCards({
           key={opt.value}
           htmlFor={`wizard-${opt.value}`}
           className={cn(
-            'flex cursor-pointer items-center gap-3 rounded-xl border p-4 text-sm transition-colors',
-            value === opt.value ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-muted/50',
+            'flex cursor-pointer items-center gap-3 rounded-xl border border-border p-4 text-sm text-foreground transition-colors',
+            value === opt.value
+              ? 'border-primary bg-primary/5 text-foreground'
+              : 'hover:bg-muted/50',
           )}
         >
           <RadioGroupItem value={opt.value} id={`wizard-${opt.value}`} />
@@ -126,13 +128,13 @@ export function PricingWizard() {
 
   if (done) {
     return (
-      <Card className="mkt-wizard mkt-wizard--done" id="quote">
+      <Card className="mkt-wizard mkt-wizard--done border-border bg-card" id="quote">
         <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
           <div className="rounded-full bg-primary/10 p-3 text-primary">
             <Check className="size-7" />
           </div>
-          <CardTitle>Thanks — we&apos;ll be in touch</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-foreground">Thanks — we&apos;ll be in touch</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Your custom pricing request is in. We&apos;ll reach out at {form.email} shortly.
           </CardDescription>
         </CardContent>
@@ -141,10 +143,10 @@ export function PricingWizard() {
   }
 
   return (
-    <Card className="mkt-wizard" id="quote">
+    <Card className="mkt-wizard border-border bg-card" id="quote">
       <CardHeader>
         <p className="text-xs font-medium text-muted-foreground">Step {step} of {STEPS.length}</p>
-        <CardTitle>{STEPS[step - 1].question}</CardTitle>
+        <CardTitle className="text-foreground">{STEPS[step - 1].question}</CardTitle>
         <Progress value={progress} className="mt-2 h-1.5" />
       </CardHeader>
 

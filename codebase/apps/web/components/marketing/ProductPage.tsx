@@ -11,29 +11,29 @@ import { MVP_FEATURES, PRODUCT_SECTIONS } from '@/lib/marketing-content';
 export function ProductPage() {
   return (
     <MarketingShell activeHref="/product">
-      <section className="mkt-pricing-hero">
+      <section className="mkt-pricing-hero bg-background px-6">
         <div className="mkt-pricing-hero__inner">
           <Badge variant="secondary" className="mb-4">Product overview</Badge>
-          <h1>Everything technical sales teams need — in one presales OS.</h1>
-          <p>
+          <h1 className="text-foreground">Everything technical sales teams need — in one presales OS.</h1>
+          <p className="text-muted-foreground">
             AI CRM sits next to your CRM and revenue stack. Explore each capability below —
             from unified deal records and cited AI to agents, analytics, and multi-CRM connectors.
           </p>
         </div>
       </section>
 
-      <section id="capabilities" className="mkt-mvp px-6 py-16">
+      <section id="capabilities" className="mkt-mvp bg-muted/40 px-6 py-16">
         <div className="mkt-section-head">
-          <span className="mkt-eyebrow">Core capabilities</span>
-          <h2>Five pillars of the platform</h2>
-          <p>Dive into each area — detailed workflows for every presales motion.</p>
+          <span className="mkt-eyebrow text-primary">Core capabilities</span>
+          <h2 className="text-foreground">Five pillars of the platform</h2>
+          <p className="text-muted-foreground">Dive into each area — detailed workflows for every presales motion.</p>
         </div>
         <div className="mkt-mvp__grid">
           {PRODUCT_SECTIONS.map((section) => (
             <Link key={section.slug} href={`/product/${section.slug}`} className="block">
               <Card className="h-full transition-shadow hover:shadow-md">
                 <CardHeader>
-                  <FeatureIcon name={section.icon} size={22} color={section.accent} />
+                  <FeatureIcon name={section.icon} size={22} />
                   <CardTitle className="text-base">{section.title}</CardTitle>
                   <CardDescription className="text-sm leading-relaxed">{section.description}</CardDescription>
                   <span className="text-sm font-medium text-primary">
@@ -46,18 +46,18 @@ export function ProductPage() {
         </div>
       </section>
 
-      <section id="platform" className="mkt-mvp px-6 py-16">
+      <section id="platform" className="mkt-mvp bg-background px-6 py-16">
         <div className="mkt-section-head">
-          <span className="mkt-eyebrow">Platform</span>
-          <h2>Six capabilities revenue teams adopt first</h2>
-          <p>Citation-first AI, agents with approval, and presales workflow.</p>
+          <span className="mkt-eyebrow text-primary">Platform</span>
+          <h2 className="text-foreground">Six capabilities revenue teams adopt first</h2>
+          <p className="text-muted-foreground">Citation-first AI, agents with approval, and presales workflow.</p>
         </div>
         <div className="mkt-mvp__grid">
           {MVP_FEATURES.map((feature) => (
             <Card key={feature.title} className="transition-shadow hover:shadow-md">
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">
-                  <FeatureIcon name={feature.icon} size={22} color={feature.accent} />
+                  <FeatureIcon name={feature.icon} size={22} />
                   {'badge' in feature && feature.badge && (
                     <Badge variant="secondary" className="text-xs">{feature.badge}</Badge>
                   )}
@@ -70,18 +70,18 @@ export function ProductPage() {
         </div>
       </section>
 
-      <section id="modules" className="mkt-modules px-6 py-16">
+      <section id="modules" className="mkt-modules bg-muted/40 px-6 py-16">
         <div className="mkt-section-head">
-          <span className="mkt-eyebrow">Full platform</span>
-          <h2>Module map for revenue teams</h2>
+          <span className="mkt-eyebrow text-primary">Full platform</span>
+          <h2 className="text-foreground">Module map for revenue teams</h2>
         </div>
         <ModulesTabs />
       </section>
 
-      <section id="integrations" className="mkt-integrations px-6 py-16">
+      <section id="integrations" className="mkt-integrations bg-background px-6 py-16">
         <div className="mkt-section-head">
-          <span className="mkt-eyebrow">Integrations</span>
-          <h2>Your revenue stack, one deal record</h2>
+          <span className="mkt-eyebrow text-primary">Integrations</span>
+          <h2 className="text-foreground">Your revenue stack, one deal record</h2>
         </div>
         <IntegrationsTabs />
       </section>

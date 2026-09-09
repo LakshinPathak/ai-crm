@@ -19,7 +19,11 @@ export function ModulesTabs() {
     <Tabs defaultValue="A" className="mx-auto w-full max-w-4xl">
       <TabsList className="mb-6 grid h-auto w-full grid-cols-3 gap-1 lg:grid-cols-6">
         {FEATURE_MODULES.map((mod) => (
-          <TabsTrigger key={mod.letter} value={mod.letter} className="text-xs sm:text-sm">
+          <TabsTrigger
+            key={mod.letter}
+            value={mod.letter}
+            className="text-xs sm:text-sm data-active:bg-primary data-active:text-primary-foreground dark:data-active:bg-primary dark:data-active:text-primary-foreground"
+          >
             {TAB_LABELS[mod.letter] ?? mod.letter}
           </TabsTrigger>
         ))}
@@ -29,7 +33,7 @@ export function ModulesTabs() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
-                <FeatureIcon name={mod.icon} size={24} color={mod.accent} />
+                <FeatureIcon name={mod.icon} size={24} />
                 <div>
                   <CardTitle>{mod.title}</CardTitle>
                   <CardDescription>{MODULE_OUTCOMES[mod.letter]}</CardDescription>

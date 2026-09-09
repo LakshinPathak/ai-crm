@@ -22,28 +22,28 @@ export function ProductSectionPage({ section }: { section: ProductSection }) {
 
   return (
     <MarketingShell activeHref="/product">
-      <section className="mkt-pricing-hero">
+      <section className="mkt-pricing-hero bg-background px-6">
         <div className="mkt-pricing-hero__inner">
           <Badge variant="secondary" className="mb-4">{section.title}</Badge>
-          <h1>{section.title}</h1>
-          <p>{section.description}</p>
-          <p className="mkt-pricing-hero__stats">
+          <h1 className="text-foreground">{section.title}</h1>
+          <p className="text-muted-foreground">{section.description}</p>
+          <p className="mkt-pricing-hero__stats text-primary">
             Built for technical sales teams · Cited AI with human approval
           </p>
         </div>
       </section>
 
-      <section className="mkt-mvp px-6 py-16">
+      <section className="mkt-mvp bg-muted/40 px-6 py-16">
         <div className="mkt-section-head">
-          <span className="mkt-eyebrow">Key capabilities</span>
-          <h2>Three ways {section.title.toLowerCase()} helps your team</h2>
-          <p>Purpose-built for presales and RevOps — not a generic CRM add-on.</p>
+          <span className="mkt-eyebrow text-primary">Key capabilities</span>
+          <h2 className="text-foreground">Three ways {section.title.toLowerCase()} helps your team</h2>
+          <p className="text-muted-foreground">Purpose-built for presales and RevOps — not a generic CRM add-on.</p>
         </div>
         <div className="mkt-mvp__grid">
           {features.map((feature) => (
             <Card key={feature.title} className="transition-shadow hover:shadow-md">
               <CardHeader>
-                <FeatureIcon name={feature.icon} size={22} color={feature.accent} />
+                <FeatureIcon name={feature.icon} size={22} />
                 <CardTitle className="text-base">{feature.title}</CardTitle>
                 <CardDescription className="text-sm leading-relaxed">{feature.description}</CardDescription>
               </CardHeader>

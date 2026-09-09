@@ -12,10 +12,10 @@ import { TRUST_BADGES_ROADMAP, TRUST_BADGES_VERIFIED, TRUST_FAQ } from '@/lib/ma
 
 export function TrustSection() {
   return (
-    <section id="security" className="mx-auto max-w-3xl px-6 py-16">
+    <section id="security" className="mx-auto max-w-3xl bg-muted/40 px-6 py-16">
       <div className="mb-8 text-center">
         <span className="text-xs font-semibold uppercase tracking-wider text-primary">Security</span>
-        <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
+        <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           Enterprise-grade controls for revenue teams
         </h2>
       </div>

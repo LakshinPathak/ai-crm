@@ -14,7 +14,7 @@ import { LANDING_TESTIMONIALS } from '@/lib/marketing-content';
 
 export function TestimonialCarousel() {
   return (
-    <section className="border-y bg-muted/30 py-16">
+    <section className="border-y border-border bg-background py-16">
       <div className="mx-auto max-w-5xl px-6">
         <div className="mb-8 text-center">
           <div className="mb-2 flex items-center justify-center gap-1 text-amber-500">
@@ -23,7 +23,7 @@ export function TestimonialCarousel() {
             ))}
             <span className="ml-2 text-sm font-semibold text-foreground">4.8/5 on G2</span>
           </div>
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             What presales leaders are saying
           </h2>
         </div>

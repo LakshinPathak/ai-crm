@@ -21,10 +21,10 @@ export function MarketingCta({
 }) {
   return (
     <section className="px-6 py-20">
-      <Card className="mx-auto max-w-3xl border-primary/20 bg-gradient-to-br from-primary/5 to-transparent text-center">
+      <Card className="mx-auto max-w-3xl border-primary/30 bg-gradient-to-br from-primary/8 to-background text-center">
         <CardHeader className="items-center gap-4">
           <BrandLogo href="/" size="lg" showText={false} />
-          <CardTitle className="text-2xl sm:text-3xl">{title}</CardTitle>
+          <CardTitle className="text-2xl text-foreground sm:text-3xl">{title}</CardTitle>
           <CardDescription className="max-w-lg text-base">{description}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">

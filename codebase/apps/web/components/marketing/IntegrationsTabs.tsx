@@ -23,7 +23,11 @@ export function IntegrationsTabs() {
       <Tabs defaultValue="crm">
         <TabsList className="mb-6 flex h-auto w-full flex-wrap justify-center gap-1">
           {categories.map((cat) => (
-            <TabsTrigger key={cat} value={cat} className="capitalize">
+            <TabsTrigger
+              key={cat}
+              value={cat}
+              className="capitalize data-active:bg-primary data-active:text-primary-foreground dark:data-active:bg-primary dark:data-active:text-primary-foreground"
+            >
               {CATEGORY_LABELS[cat] ?? cat}
             </TabsTrigger>
           ))}
@@ -35,7 +39,7 @@ export function IntegrationsTabs() {
                 <Badge
                   key={item.id}
                   variant="outline"
-                  className="gap-2 px-3 py-2 text-sm font-medium"
+                  className="gap-2 border-border bg-background px-3 py-2 text-sm font-medium text-foreground"
                 >
                   <IntegrationLogo id={item.id} size={22} />
                   {item.name}
