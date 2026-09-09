@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/Toast';
+import { IntegrationLogo, IntegrationLogoOrFallback, resolveIntegrationId } from '@/components/brand/IntegrationLogo';
 
 type Provider = { id: string; name: string; status: string; mode?: string };
 type CrmStatus = { connected: boolean; provider: string | null; lastSyncAt: string | null; mode?: string | null };
@@ -51,9 +52,7 @@ function IntegrationSection({
             <Card key={p.id}>
               <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
                 <div className="flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-xs font-bold">
-                    {p.name.slice(0, 2).toUpperCase()}
-                  </div>
+                  <IntegrationLogoOrFallback id={p.id} name={p.name} size={40} />
                   <CardTitle className="text-sm">{p.name}</CardTitle>
                 </div>
                 {isConnected ? (
@@ -189,6 +188,16 @@ export default function IntegrationsPage() {
     { id: 'zoom', name: 'Zoom', status: 'warning' },
     { id: 'chorus', name: 'Chorus', status: 'coming_soon' },
   ];
+  const calendar: Provider[] = [
+    { id: 'google-calendar', name: 'Google Calendar', status: 'coming_soon' },
+    { id: 'outlook', name: 'Outlook', status: 'coming_soon' },
+  ];
+  const platform: Provider[] = [
+    { id: 'jira', name: 'Jira', status: 'coming_soon' },
+    { id: 'linear', name: 'Linear', status: 'coming_soon' },
+    { id: 'google-drive', name: 'Google Drive', status: 'coming_soon' },
+    { id: 'notion', name: 'Notion', status: 'coming_soon' },
+  ];
 
   return (
     <div>
@@ -198,7 +207,10 @@ export default function IntegrationsPage() {
         <Card className="mb-6">
           <CardContent className="flex flex-wrap items-center gap-3 py-4">
             <Badge variant="default">Connected</Badge>
-            <strong className="capitalize">{status.provider}</strong>
+            {status.provider && resolveIntegrationId(status.provider) && (
+              <IntegrationLogo id={resolveIntegrationId(status.provider)!} size={28} />
+            )}
+            <strong>{status.provider ? providers.find((p) => p.id === status.provider)?.name ?? status.provider : ''}</strong>
             {status.mode === 'demo' && <Badge variant="outline">Demo mode</Badge>}
             {status.lastSyncAt && (
               <span className="text-sm text-muted-foreground">
@@ -220,7 +232,9 @@ export default function IntegrationsPage() {
         onDisconnect={disconnect}
       />
       <IntegrationSection title="Chat" providers={chat} onConnect={() => toast('Slack is pre-enabled in demo mode', 'info')} />
-      <IntegrationSection title="Call Recording" providers={recording} onConnect={() => toast('Coming soon', 'info')} />
+      <IntegrationSection title="Call recording" providers={recording} onConnect={() => toast('Coming soon', 'info')} />
+      <IntegrationSection title="Calendar" providers={calendar} onConnect={() => toast('Coming soon', 'info')} />
+      <IntegrationSection title="Platform" providers={platform} onConnect={() => toast('Coming soon', 'info')} />
     </div>
   );
 }

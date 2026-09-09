@@ -154,9 +154,53 @@ const LOGOS: Record<IntegrationId, (size?: number, className?: string) => React.
   ),
 };
 
+const PROVIDER_ALIASES: Record<string, IntegrationId> = {
+  'microsoft-teams': 'teams',
+  'ms-teams': 'teams',
+  'google_chat': 'google-chat',
+  'google-calendar': 'google-calendar',
+  'google-drive': 'google-drive',
+};
+
+export function isIntegrationId(id: string): id is IntegrationId {
+  return id in LOGOS || id in PROVIDER_ALIASES;
+}
+
+export function resolveIntegrationId(id: string): IntegrationId | null {
+  if (id in LOGOS) return id as IntegrationId;
+  return PROVIDER_ALIASES[id] ?? null;
+}
+
 export function IntegrationLogo({ id, size = 28, className = '' }: Props) {
   const render = LOGOS[id];
   return <span className={`integration-logo ${className}`.trim()}>{render(size, className)}</span>;
+}
+
+export function IntegrationLogoOrFallback({
+  id,
+  name,
+  size = 28,
+  className = '',
+}: {
+  id: string;
+  name?: string;
+  size?: number;
+  className?: string;
+}) {
+  const resolved = resolveIntegrationId(id);
+  if (resolved) {
+    return <IntegrationLogo id={resolved} size={size} className={className} />;
+  }
+  const label = (name ?? id).slice(0, 2).toUpperCase();
+  return (
+    <div
+      className={`flex shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-bold text-muted-foreground ${className}`.trim()}
+      style={{ width: size, height: size }}
+      aria-hidden
+    >
+      {label}
+    </div>
+  );
 }
 
 export function IntegrationLogoRow({ ids, size = 32 }: { ids: IntegrationId[]; size?: number }) {

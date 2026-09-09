@@ -17,6 +17,7 @@ import { TrustSection } from '@/components/marketing/TrustSection';
 import {
   BUILDING_BLOCKS,
   CRM_LOGO_IDS,
+  INTEGRATIONS,
   HERO_TESTIMONIAL,
   MARQUEE_ITEMS,
   MVP_FEATURES,
@@ -120,10 +121,10 @@ export function LandingPage() {
           Works with your CRM — we don&apos;t replace it
         </p>
         <div className="mx-auto flex max-w-3xl flex-wrap justify-center gap-4 px-6">
-          {CRM_LOGO_IDS.map((id) => (
-            <Card key={id} className="flex w-28 flex-col items-center gap-2 p-4">
-              <IntegrationLogo id={id} size={36} />
-              <span className="text-sm font-medium capitalize">{id}</span>
+          {INTEGRATIONS.crm.map((item) => (
+            <Card key={item.id} className="flex w-28 flex-col items-center gap-2 p-4">
+              <IntegrationLogo id={item.id} size={36} />
+              <span className="text-sm font-medium">{item.name}</span>
             </Card>
           ))}
         </div>
