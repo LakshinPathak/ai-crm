@@ -86,6 +86,7 @@ Everything lives under `codebase/docs/` — there is no separate `artifacts/plan
 | [`future/ai-demo-playbook.md`](future/ai-demo-playbook.md) | Demo Playbook | 5/15/30 min demo scripts |
 | [`future/trigger-event-catalog.md`](future/trigger-event-catalog.md) | Event Catalog | Webhooks, queues, cron |
 | [`future/nl-agent-builder-spec.md`](future/nl-agent-builder-spec.md) | NL Agent Builder | R6 WS-3 API + UI spec |
+| [`future/nl-chat-automation-vision.md`](future/nl-chat-automation-vision.md) | NL + Chat Automations | Type query → agent → Slack/GChat results |
 | [`future/integration-ai-patterns.md`](future/integration-ai-patterns.md) | Integration + AI | Gong, CRM, chat, RAG pipelines |
 | [`future/vibe-coding-patterns.md`](future/vibe-coding-patterns.md) | Vibe Coding | Repo conventions for AI dev |
 | [`staff-review.md`](staff-review.md) | Staff Review | Technical audit |
@@ -119,6 +120,7 @@ Everything lives under `codebase/docs/` — there is no separate `artifacts/plan
 
 | Date | Change |
 |------|--------|
+| 2026-09-10 | v3.4 — added `nl-chat-automation-vision.md` |
 | 2026-09-09 | v3.3 — added `future/` vibe coding library (8 docs) |
 | 2026-09-09 | v3.2 — added `r6-roadmap.md`; WBS v2.2 after R5 |
 | 2026-09-09 | v3.1 — consolidated docs; removed duplicate `artifacts/planning/` |

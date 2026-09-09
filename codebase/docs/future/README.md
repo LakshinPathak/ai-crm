@@ -30,6 +30,7 @@ Each doc is written to be **self-contained** — paste sections into Cursor/Clau
 | [`ai-demo-playbook.md`](ai-demo-playbook.md) | Scripted demos: 5-min, 15-min, 30-min flows | You are preparing a sales or investor demo |
 | [`trigger-event-catalog.md`](trigger-event-catalog.md) | Every event, webhook, cron, and queue job | You are wiring triggers or background workers |
 | [`nl-agent-builder-spec.md`](nl-agent-builder-spec.md) | Natural-language → agent wizard (R6 WS-3) | You are implementing `draft-from-nl` |
+| [`nl-chat-automation-vision.md`](nl-chat-automation-vision.md) | NL query → automation → Slack/GChat | Product vision for chat-first automations |
 | [`integration-ai-patterns.md`](integration-ai-patterns.md) | Gong, HubSpot, Slack, Teams + AI pipelines | You are building ingest → RAG → agent flows |
 | [`vibe-coding-patterns.md`](vibe-coding-patterns.md) | Repo conventions for AI-assisted implementation | You are starting a `/dev-cycle` or subagent fork |
 
