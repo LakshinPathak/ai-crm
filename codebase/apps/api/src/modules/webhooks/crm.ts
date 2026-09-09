@@ -3,10 +3,12 @@ import { IntegrationConnection } from '@ai-crm/db';
 import { isValidObjectId } from 'mongoose';
 import { log } from '../../lib/logger.js';
 import { resolveWebhookSecret, verifyCrmWebhookSignature } from '../../lib/webhook-hmac.js';
+import { addCrmIncrementalJob } from '../../lib/queues/crm-incremental.js';
 import {
   getWebhookRawBody,
   parseHubSpotWebhookPayload,
   partitionHubSpotEvents,
+  type HubSpotEvent,
 } from './hubspot-events.js';
 
 const CRM_PROVIDER_KEYS = ['hubspot', 'salesforce', 'zoho', 'pipedrive'];
@@ -67,6 +69,15 @@ export async function handleCrmWebhook(req: Request, res: Response) {
     contacts: contactEvents.length,
   });
 
+  for (const event of dealEvents) {
+    void enqueueCrmIncrementalEvent({
+      connectionId,
+      workspaceId,
+      providerKey: connection.providerKey,
+      event,
+    });
+  }
+
   res.status(202).json({
     status: 'accepted',
     received: parsed.events.length,
@@ -74,5 +85,26 @@ export async function handleCrmWebhook(req: Request, res: Response) {
     contactEvents: contactEvents.length,
     workspaceId,
     provider: connection.providerKey,
+  });
+}
+
+function enqueueCrmIncrementalEvent(params: {
+  connectionId: string;
+  workspaceId: string;
+  providerKey: string;
+  event: HubSpotEvent;
+}): void {
+  void addCrmIncrementalJob({
+    connectionId: params.connectionId,
+    workspaceId: params.workspaceId,
+    providerKey: params.providerKey,
+    portalId: params.event.portalId ?? null,
+    event: params.event,
+  }).catch((err) => {
+    log('webhooks', 'crm enqueue failed', {
+      connectionId: params.connectionId,
+      objectId: params.event.objectId,
+      error: err instanceof Error ? err.message : String(err),
+    });
   });
 }

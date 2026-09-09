@@ -1,5 +1,6 @@
 import type { Response } from 'express';
 import type { AuthedRequest } from '../../lib/auth/index.js';
+import { dispatchDealStageChanged } from '../../lib/agent-events.js';
 import { Company, Deal, DealBlocker, DealStageChange, Note, PipelineStage, Task } from '@ai-crm/db';
 import {
   CreateBlockerSchema,
@@ -225,6 +226,13 @@ export async function moveDealStage(req: AuthedRequest, res: Response) {
       fromStageId: previousStageId,
       toStageId: stage._id,
       changedById: req.tenant!.userId,
+    });
+
+    void dispatchDealStageChanged({
+      workspaceId: req.tenant!.workspaceId,
+      dealId: deal.id,
+      fromStageId: previousStageId.toString(),
+      toStageId: stage._id.toString(),
     });
   }
 

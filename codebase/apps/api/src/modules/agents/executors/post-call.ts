@@ -1,6 +1,7 @@
 import { Approval, Company, Deal, Note, Task } from '@ai-crm/db';
 import type { Types } from 'mongoose';
 import { log } from '../../../lib/logger.js';
+import { formatTranscriptsForPrompt, loadDealTranscripts } from '../../../lib/transcript-context.js';
 import type { AgentRunContext, AgentRunResult } from '../executor.js';
 
 const MS_PER_DAY = 86400000;
@@ -93,6 +94,7 @@ async function generateBundleWithGemini(input: {
   amount?: number;
   noteSnippets: string[];
   openTaskTitles: string[];
+  transcriptBlock?: string;
 }): Promise<PostCallBundle | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
@@ -107,6 +109,7 @@ Recent notes:
 ${input.noteSnippets.length ? input.noteSnippets.map((n, i) => `${i + 1}. ${n}`).join('\n') : '(none)'}
 Open tasks:
 ${input.openTaskTitles.length ? input.openTaskTitles.map((t) => `- ${t}`).join('\n') : '(none)'}
+${input.transcriptBlock ? `\nCall transcript(s):\n${input.transcriptBlock}` : ''}
 
 Return ONLY valid JSON:
 {
@@ -192,6 +195,9 @@ export async function runPostCall(ctx: AgentRunContext): Promise<AgentRunResult>
 
   const noteSnippets = recentNotes.map((n) => n.body);
   const openTaskTitles = openTasks.map((t) => t.title);
+  const transcripts = await loadDealTranscripts(ctx.workspaceId, deal._id, 2);
+  const transcriptBlock =
+    transcripts.length > 0 ? formatTranscriptsForPrompt(transcripts) : undefined;
 
   const geminiBundle = await generateBundleWithGemini({
     dealTitle: deal.title,
@@ -199,6 +205,7 @@ export async function runPostCall(ctx: AgentRunContext): Promise<AgentRunResult>
     amount: deal.amount,
     noteSnippets,
     openTaskTitles,
+    transcriptBlock,
   });
 
   const bundle =
@@ -253,7 +260,8 @@ export async function runPostCall(ctx: AgentRunContext): Promise<AgentRunResult>
     output: {
       approvalId: approval.id,
       dealId: deal.id,
-      generatedWith: geminiBundle ? 'gemini' : 'template',
+      generatedWith: geminiBundle ? (transcripts.length > 0 ? 'gemini+transcript' : 'gemini') : 'template',
+      transcriptCount: transcripts.length,
       actionItemCount: bundle.actionItems.length,
       emailSubject: bundle.emailDraft.subject,
     },

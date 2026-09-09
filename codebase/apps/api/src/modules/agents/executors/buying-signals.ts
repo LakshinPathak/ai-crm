@@ -1,5 +1,7 @@
 import { Approval, Deal, Note, Task } from '@ai-crm/db';
 import type { Types } from 'mongoose';
+import { analyzeBuyingSignalsFromTranscripts } from '../../../lib/gemini-transcript.js';
+import { loadDealTranscripts } from '../../../lib/transcript-context.js';
 import type { AgentRunContext, AgentRunResult } from '../executor.js';
 
 const MS_PER_DAY = 86400000;
@@ -18,7 +20,7 @@ interface DetectedSignal {
   tagSlug: string;
   keyword: string;
   confidence: number;
-  source: 'note' | 'task';
+  source: 'note' | 'task' | 'call';
   sourceId: string;
   excerpt: string;
   detectedAt: Date;
@@ -70,7 +72,7 @@ function excerptAround(text: string, keyword: string, radius = 60): string {
 
 function scanText(
   text: string,
-  source: 'note' | 'task',
+  source: 'note' | 'task' | 'call',
   sourceId: string,
   detectedAt: Date,
 ): DetectedSignal[] {
@@ -159,12 +161,34 @@ export async function runBuyingSignals(ctx: AgentRunContext): Promise<AgentRunRe
     const dealNotes = notesByDeal.get(dealKey) ?? [];
     const dealTasks = tasksByDeal.get(dealKey) ?? [];
     const signals: DetectedSignal[] = [];
+    const transcripts = await loadDealTranscripts(ctx.workspaceId, deal._id, 2);
+    const geminiSignals = await analyzeBuyingSignalsFromTranscripts({
+      dealTitle: deal.title,
+      transcripts,
+    });
 
-    for (const note of dealNotes) {
-      signals.push(...scanText(note.body, 'note', note.id, note.createdAt));
-    }
-    for (const task of dealTasks) {
-      signals.push(...scanText(task.title, 'task', task.id, task.createdAt));
+    if (geminiSignals) {
+      for (const g of geminiSignals) {
+        signals.push({
+          tagSlug: g.tagSlug,
+          keyword: g.label,
+          confidence: g.confidence,
+          source: 'call',
+          sourceId: transcripts[0]?.artifactId ?? 'transcript',
+          excerpt: g.excerpt,
+          detectedAt: new Date(),
+        });
+      }
+    } else {
+      for (const note of dealNotes) {
+        signals.push(...scanText(note.body, 'note', note.id, note.createdAt));
+      }
+      for (const task of dealTasks) {
+        signals.push(...scanText(task.title, 'task', task.id, task.createdAt));
+      }
+      for (const t of transcripts) {
+        signals.push(...scanText(t.text, 'call', t.artifactId, t.occurredAt));
+      }
     }
 
     const tags = uniqueTags(signals);
@@ -229,7 +253,7 @@ export async function runBuyingSignals(ctx: AgentRunContext): Promise<AgentRunRe
 
   return {
     status: approvalIds.length > 0 ? 'awaiting_approval' : 'completed',
-    creditsUsed: 0.2,
+    creditsUsed: process.env.GEMINI_API_KEY ? 0.8 : 0.2,
     output: {
       dealsScanned: deals.length,
       hotDeals,

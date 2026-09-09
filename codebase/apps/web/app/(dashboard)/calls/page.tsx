@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Phone, Settings } from 'lucide-react';
 import { apiGet } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
@@ -43,6 +44,7 @@ function CallsPageSkeleton() {
 }
 
 export default function CallsPage() {
+  const router = useRouter();
   const [calls, setCalls] = useState<CallRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,13 +98,17 @@ export default function CallsPage() {
             </TableHeader>
             <TableBody>
               {calls.map((call) => (
-                <TableRow key={call.id}>
+                <TableRow
+                  key={call.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => router.push(`/calls/${call.id}`)}
+                >
                   <TableCell className="font-medium">{call.title}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{call.source}</Badge>
                   </TableCell>
                   <TableCell>{new Date(call.date).toLocaleDateString()}</TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     {call.dealId && call.dealTitle ? (
                       <Link href={`/deals/${call.dealId}`} className="hover:underline">
                         {call.dealTitle}

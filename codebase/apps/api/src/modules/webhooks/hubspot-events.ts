@@ -1,6 +1,7 @@
 import type { Request } from 'express';
 
 export type HubSpotEvent = {
+  eventId?: number;
   subscriptionType?: string;
   objectType?: string;
   objectId?: number;

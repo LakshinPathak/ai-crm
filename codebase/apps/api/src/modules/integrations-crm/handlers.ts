@@ -16,6 +16,7 @@ import { getAccessToken } from '../../lib/integrations/tokens.js';
 import { hubspotOAuthConfigured } from '../../lib/integrations/hubspot-oauth.js';
 import { hasHubSpotAccessToken } from '../../lib/hubspot/client.js';
 import { syncHubSpotToWorkspace } from '../../lib/hubspot/sync.js';
+import { getCrmIncrementalQueueStats } from '../../lib/queues/crm-incremental.js';
 import { ensureConnectionWebhookSecret } from '../../lib/webhook-hmac.js';
 import { startCrmOAuth } from '../oauth/handlers.js';
 
@@ -44,6 +45,7 @@ type ConnectionSettings = {
     total: number;
   };
   lastHubSpotSync?: unknown;
+  incrementalSyncErrorCount?: number;
 };
 
 async function getConnectedConnection(req: AuthedRequest) {
@@ -463,6 +465,31 @@ export async function updateUserMappings(req: AuthedRequest, res: Response) {
   await conn.save();
 
   res.json({ saved: true, mappings: body.mappings });
+}
+
+export async function getIncrementalSyncStatus(req: AuthedRequest, res: Response) {
+  const conn = await getConnectedConnection(req);
+  if (!conn) {
+    res.json({
+      connected: false,
+      lastSyncAt: null,
+      errorCount: 0,
+      pendingJobs: 0,
+    });
+    return;
+  }
+
+  const settings = (conn.settings ?? {}) as ConnectionSettings;
+  const queueStats = await getCrmIncrementalQueueStats(req.tenant!.workspaceId);
+  const settingsErrorCount = settings.incrementalSyncErrorCount ?? 0;
+
+  res.json({
+    connected: true,
+    provider: conn.providerKey,
+    lastSyncAt: conn.lastSyncAt ?? null,
+    errorCount: Math.max(queueStats.errorCount, settingsErrorCount),
+    pendingJobs: queueStats.pendingJobs,
+  });
 }
 
 export async function getSyncStatus(req: AuthedRequest, res: Response) {

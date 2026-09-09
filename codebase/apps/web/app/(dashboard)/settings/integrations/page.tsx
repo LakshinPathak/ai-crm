@@ -23,7 +23,21 @@ import { IntegrationLogo, IntegrationLogoOrFallback, resolveIntegrationId } from
 
 type Provider = { id: string; name: string; status: string; mode?: string };
 type CrmStatus = { connected: boolean; provider: string | null; lastSyncAt: string | null; mode?: string | null };
+type ChatStatus = { connected: boolean; provider: string; externalAccountId: string | null; lastSyncAt: string | null };
 type SyncResult = { imported: { companies: number; deals: number; notes: number; tasks?: number; skipped?: number }; mode?: string };
+
+const CHAT_PROVIDER_IDS = ['slack', 'teams', 'google_chat'] as const;
+type ChatProviderId = (typeof CHAT_PROVIDER_IDS)[number];
+
+const CHAT_PROVIDER_LABELS: Record<ChatProviderId, string> = {
+  slack: 'Slack',
+  teams: 'Microsoft Teams',
+  google_chat: 'Google Chat',
+};
+
+function isConnectableStatus(status: string): boolean {
+  return status === 'available' || status === 'enabled';
+}
 
 function IntegrationSection({
   title,
@@ -59,21 +73,29 @@ function IntegrationSection({
                   <Badge variant="default">Connected</Badge>
                 ) : badgeVariant ? (
                   <Badge variant={badgeVariant}>
-                    {p.status === 'coming_soon' ? 'Coming soon' : p.status === 'warning' ? 'Warning' : 'Enabled'}
+                    {p.status === 'coming_soon'
+                      ? 'Coming soon'
+                      : p.status === 'needs_config'
+                        ? 'Needs config'
+                        : p.status === 'warning'
+                          ? 'Warning'
+                          : 'Enabled'}
                   </Badge>
                 ) : null}
               </CardHeader>
               <CardContent>
                 <CardDescription>
-                  {p.status === 'available'
-                    ? `Connect ${p.name} to sync deals and contacts (demo mode until API keys are added).`
+                  {p.status === 'available' || p.status === 'enabled'
+                    ? `Connect ${p.name} to receive agent notifications and deal updates.`
+                    : p.status === 'needs_config'
+                      ? `${p.name} OAuth is not configured on the server yet.`
                     : p.status === 'coming_soon'
                       ? `${p.name} integration is coming soon.`
                       : `Manage your ${p.name} connection.`}
                 </CardDescription>
               </CardContent>
               <CardFooter className="gap-2">
-                {p.status === 'available' && !isConnected && (
+                {isConnectableStatus(p.status) && !isConnected && (
                   <Button size="sm" onClick={() => onConnect(p.id)}>Connect</Button>
                 )}
                 {isConnected && onDisconnect && (
@@ -119,6 +141,8 @@ export default function IntegrationsPage() {
   const { toast } = useToast();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [status, setStatus] = useState<CrmStatus | null>(null);
+  const [chatProviders, setChatProviders] = useState<Provider[]>([]);
+  const [chatStatus, setChatStatus] = useState<Record<string, ChatStatus>>({});
   const [syncing, setSyncing] = useState(false);
 
   function load() {
@@ -127,9 +151,20 @@ export default function IntegrationsPage() {
     Promise.all([
       apiGet<{ providers: Provider[] }>('/integrations/crm/providers', token),
       apiGet<CrmStatus>('/integrations/crm/status', token),
-    ]).then(([p, s]) => {
+      apiGet<{ providers: Provider[] }>('/integrations/chat/providers', token),
+      ...CHAT_PROVIDER_IDS.map((id) => apiGet<ChatStatus>(`/integrations/chat/${id}/status`, token)),
+    ]).then(([p, s, chat, ...chatStatuses]) => {
       setProviders(p.providers);
       setStatus(s);
+      setChatProviders(
+        chat.providers.map((provider) => ({
+          ...provider,
+          status: provider.status === 'available' ? 'enabled' : provider.status,
+        })),
+      );
+      setChatStatus(
+        Object.fromEntries(CHAT_PROVIDER_IDS.map((id, index) => [id, chatStatuses[index]])),
+      );
     });
   }
 
@@ -159,6 +194,34 @@ export default function IntegrationsPage() {
     }
   }
 
+  async function connectChat(providerId: string) {
+    const token = getToken();
+    if (!token) return;
+    try {
+      const result = await apiPost<{ authUrl?: string }>(`/integrations/chat/${providerId}/connect`, token, {});
+      if (result.authUrl) {
+        window.location.href = result.authUrl;
+        return;
+      }
+      load();
+      toast(`${CHAT_PROVIDER_LABELS[providerId as ChatProviderId] ?? providerId} connected`, 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Connect failed', 'error');
+    }
+  }
+
+  async function disconnectChat(providerId: string) {
+    const token = getToken();
+    if (!token) return;
+    try {
+      await apiDelete(`/integrations/chat/${providerId}`, token);
+      load();
+      toast('Disconnected', 'info');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Disconnect failed', 'error');
+    }
+  }
+
   async function sync() {
     const token = getToken();
     if (!token) return;
@@ -179,10 +242,14 @@ export default function IntegrationsPage() {
     }
   }
 
-  const chat: Provider[] = [
-    { id: 'slack', name: 'Slack', status: 'enabled' },
-    { id: 'teams', name: 'Microsoft Teams', status: 'coming_soon' },
-  ];
+  const chat: Provider[] =
+    chatProviders.length > 0
+      ? chatProviders
+      : CHAT_PROVIDER_IDS.map((id) => ({
+          id,
+          name: CHAT_PROVIDER_LABELS[id],
+          status: 'enabled',
+        }));
   const recording: Provider[] = [
     { id: 'gong', name: 'Gong', status: 'coming_soon' },
     { id: 'zoom', name: 'Zoom', status: 'warning' },
@@ -231,7 +298,13 @@ export default function IntegrationsPage() {
         onConnect={connect}
         onDisconnect={disconnect}
       />
-      <IntegrationSection title="Chat" providers={chat} onConnect={() => toast('Slack is pre-enabled in demo mode', 'info')} />
+      <IntegrationSection
+        title="Chat"
+        providers={chat}
+        connectedProvider={CHAT_PROVIDER_IDS.find((id) => chatStatus[id]?.connected) ?? null}
+        onConnect={connectChat}
+        onDisconnect={disconnectChat}
+      />
       <IntegrationSection title="Call recording" providers={recording} onConnect={() => toast('Coming soon', 'info')} />
       <IntegrationSection title="Calendar" providers={calendar} onConnect={() => toast('Coming soon', 'info')} />
       <IntegrationSection title="Platform" providers={platform} onConnect={() => toast('Coming soon', 'info')} />

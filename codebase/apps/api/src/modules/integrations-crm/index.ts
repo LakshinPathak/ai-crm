@@ -4,6 +4,7 @@ import {
   disconnectProvider,
   getConnectionStatus,
   getStageMappings,
+  getIncrementalSyncStatus,
   getSyncStatus,
   getUserMappings,
   listCrmOwners,
@@ -22,6 +23,7 @@ integrationsCrmRouter.get('/mappings/stages', getStageMappings);
 integrationsCrmRouter.patch('/mappings/stages', updateStageMappings);
 integrationsCrmRouter.get('/mappings/users', getUserMappings);
 integrationsCrmRouter.patch('/mappings/users', updateUserMappings);
+integrationsCrmRouter.get('/sync-status', getIncrementalSyncStatus);
 integrationsCrmRouter.get('/sync/status', getSyncStatus);
 integrationsCrmRouter.post('/sync', syncCrm);
 integrationsCrmRouter.post('/connect/:provider', connectProvider);

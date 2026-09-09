@@ -2,6 +2,8 @@ import type { Response } from 'express';
 import { Artifact, Deal, DealEvent } from '@ai-crm/db';
 import type { AuthedRequest } from '../../lib/auth/index.js';
 
+const TRANSCRIPT_EXCERPT_MAX = 2000;
+
 type CallRow = {
   id: string;
   title: string;
@@ -100,5 +102,45 @@ export async function listCalls(req: AuthedRequest, res: Response) {
     page,
     limit,
     total,
+  });
+}
+
+export async function getCallDetail(req: AuthedRequest, res: Response) {
+  const workspaceId = req.tenant!.workspaceId;
+  const { id } = req.params;
+
+  const artifact = await Artifact.findOne({
+    _id: id,
+    workspaceId,
+    type: 'call',
+  });
+
+  if (!artifact) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Call not found' } });
+    return;
+  }
+
+  let dealTitle: string | null = null;
+  if (artifact.dealId) {
+    const deal = await Deal.findOne({ _id: artifact.dealId, workspaceId, deletedAt: null }).select(
+      'title',
+    );
+    dealTitle = deal?.title ?? null;
+  }
+
+  const rawText = artifact.rawText ?? '';
+  const occurredAt = artifact.occurredAt ?? artifact.createdAt;
+
+  res.json({
+    call: {
+      id: artifact.id,
+      title: artifact.title ?? `Call (${artifact.source})`,
+      source: artifact.source,
+      date: occurredAt.toISOString(),
+      dealId: artifact.dealId?.toString() ?? null,
+      dealTitle,
+      transcriptExcerpt: rawText.slice(0, TRANSCRIPT_EXCERPT_MAX),
+      hasFullTranscript: rawText.length > 0,
+    },
   });
 }

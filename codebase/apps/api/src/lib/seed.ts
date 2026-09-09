@@ -1,8 +1,10 @@
 import { Types } from 'mongoose';
+import { createHash } from 'node:crypto';
 import {
   Agent,
   AgentRun,
   Approval,
+  Artifact,
   Company,
   Deal,
   DealBlocker,
@@ -15,6 +17,7 @@ import {
   Task,
 } from '@ai-crm/db';
 import { buildDefaultMeddpicc } from './meddpicc-defaults.js';
+import { DEMO_CALL_TRANSCRIPT } from './integrations/gong-api.js';
 
 export const DEFAULT_PIPELINE_STAGES = [
   { name: 'Qualification', position: 0, color: '#6366f1', stageType: 'open' as const },
@@ -167,6 +170,34 @@ export async function seedWorkspaceData(workspaceId: Types.ObjectId, ownerId: Ty
     { workspaceId, dealId: deals[0]._id, title: 'Legal review pending', severity: 'medium', ownerId },
     { workspaceId, dealId: deals[2]._id, title: 'Security questionnaire incomplete', severity: 'high', ownerId },
     { workspaceId, dealId: deals[2]._id, title: 'No executive sponsor yet', severity: 'critical', ownerId },
+  ]);
+
+  await Artifact.insertMany([
+    {
+      workspaceId,
+      dealId: deals[0]._id,
+      type: 'call',
+      source: 'gong',
+      sourceId: 'seed-call-acme-discovery',
+      title: 'Discovery — stakeholder alignment',
+      occurredAt: new Date(now.getTime() - 2 * 86400000),
+      durationSeconds: 3600,
+      contentHash: createHash('sha256').update(DEMO_CALL_TRANSCRIPT).digest('hex'),
+      rawText: DEMO_CALL_TRANSCRIPT,
+    },
+    {
+      workspaceId,
+      dealId: deals[1]._id,
+      type: 'call',
+      source: 'gong',
+      sourceId: 'seed-call-tech-deep-dive',
+      title: 'Technical deep-dive with IT',
+      occurredAt: new Date(now.getTime() - 5 * 86400000),
+      durationSeconds: 2700,
+      contentHash: createHash('sha256').update('tech-deep-dive-seed').digest('hex'),
+      rawText:
+        'Prospect: CompetitorX is cheaper but lacks Gong integration. Our champion wants budget approved by end of Q3.',
+    },
   ]);
 
   const letters = buildDefaultMeddpicc(deals[0].title);

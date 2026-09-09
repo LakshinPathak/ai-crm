@@ -1,6 +1,9 @@
 import { createHash } from 'node:crypto';
-import { Artifact } from '@ai-crm/db';
+import { Types } from 'mongoose';
+import { Artifact, Company, Deal, DealParticipant, User } from '@ai-crm/db';
+import { fetchGongCallTranscript } from '../integrations/gong-api.js';
 import { log } from '../logger.js';
+import { dispatchActivityIngested } from '../agent-events.js';
 import { enqueueJob } from './mongo-queue.js';
 
 export const INGEST_CALL_QUEUE = 'ingest-call';
@@ -62,6 +65,134 @@ function extractCallFields(payload: Record<string, unknown>) {
   };
 }
 
+function normalizeEmail(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function emailDomain(email: string): string | null {
+  const at = email.lastIndexOf('@');
+  if (at < 0) return null;
+  const domain = email.slice(at + 1).trim().toLowerCase();
+  return domain.length > 0 ? domain : null;
+}
+
+function partyEmail(party: Record<string, unknown>): string | null {
+  const raw =
+    (typeof party.emailAddress === 'string' ? party.emailAddress : null) ??
+    (typeof party.email === 'string' ? party.email : null);
+  if (!raw?.trim()) return null;
+  return normalizeEmail(raw);
+}
+
+function extractGongParticipantEmails(
+  metaData: Record<string, unknown> | undefined,
+  payload: Record<string, unknown>,
+): string[] {
+  const emails = new Set<string>();
+  const callData = asRecord(payload.callData);
+  const partyLists = [metaData?.parties, callData?.metaData && asRecord(callData.metaData)?.parties, payload.parties];
+
+  for (const parties of partyLists) {
+    if (!Array.isArray(parties)) continue;
+    for (const party of parties) {
+      const record = asRecord(party);
+      if (!record) continue;
+      const email = partyEmail(record);
+      if (email) emails.add(email);
+    }
+  }
+
+  return [...emails];
+}
+
+async function pickBestDeal(
+  workspaceId: string,
+  dealIds: Types.ObjectId[],
+): Promise<Types.ObjectId | null> {
+  const unique = [...new Map(dealIds.map((id) => [id.toString(), id])).values()];
+  if (unique.length === 0) return null;
+  if (unique.length === 1) return unique[0];
+
+  const deal = await Deal.findOne({
+    workspaceId,
+    _id: { $in: unique },
+    deletedAt: null,
+  })
+    .sort({ lastActivityAt: -1, updatedAt: -1 })
+    .select('_id');
+
+  return deal?._id ?? unique[0];
+}
+
+async function resolveDealIdFromGongParticipants(
+  workspaceId: string,
+  metaData: Record<string, unknown> | undefined,
+  payload: Record<string, unknown>,
+): Promise<Types.ObjectId | null> {
+  const emails = extractGongParticipantEmails(metaData, payload);
+  if (emails.length === 0) return null;
+
+  const wsId = new Types.ObjectId(workspaceId);
+
+  const participantMatches = await DealParticipant.find({
+    workspaceId: wsId,
+    $expr: { $in: [{ $toLower: '$email' }, emails] },
+  }).select('dealId');
+
+  if (participantMatches.length > 0) {
+    return pickBestDeal(
+      workspaceId,
+      participantMatches.map((p) => p.dealId),
+    );
+  }
+
+  const domains = [...new Set(emails.map(emailDomain).filter(Boolean) as string[])];
+  if (domains.length > 0) {
+    const companies = await Company.find({
+      workspaceId: wsId,
+      domain: { $in: domains },
+      deletedAt: null,
+    }).select('_id');
+
+    if (companies.length > 0) {
+      const domainDeals = await Deal.find({
+        workspaceId: wsId,
+        companyId: { $in: companies.map((c) => c._id) },
+        deletedAt: null,
+      }).select('_id');
+
+      if (domainDeals.length > 0) {
+        return pickBestDeal(
+          workspaceId,
+          domainDeals.map((d) => d._id),
+        );
+      }
+    }
+  }
+
+  const ownerMatches = await User.find({
+    workspaceId: wsId,
+    $expr: { $in: [{ $toLower: '$email' }, emails] },
+  }).select('_id');
+
+  if (ownerMatches.length > 0) {
+    const ownerDeals = await Deal.find({
+      workspaceId: wsId,
+      ownerId: { $in: ownerMatches.map((u) => u._id) },
+      deletedAt: null,
+    }).select('_id');
+
+    if (ownerDeals.length > 0) {
+      return pickBestDeal(
+        workspaceId,
+        ownerDeals.map((d) => d._id),
+      );
+    }
+  }
+
+  return null;
+}
+
 export async function processIngestCall(data: IngestCallJobData): Promise<void> {
   const { callId, title, metaData, occurredAt, durationSeconds } = extractCallFields(data.payload);
   const payloadJson = JSON.stringify(data.payload);
@@ -77,6 +208,12 @@ export async function processIngestCall(data: IngestCallJobData): Promise<void> 
       : typeof occurredAt === 'string' || typeof occurredAt === 'number'
         ? new Date(occurredAt)
         : new Date();
+
+  const resolvedDealId = await resolveDealIdFromGongParticipants(
+    data.workspaceId,
+    metaData,
+    data.payload,
+  );
 
   const artifact = await Artifact.findOneAndUpdate(
     {
@@ -107,11 +244,35 @@ export async function processIngestCall(data: IngestCallJobData): Promise<void> 
     { upsert: true, new: true },
   );
 
+  if (resolvedDealId && !artifact.dealId) {
+    await Artifact.findByIdAndUpdate(artifact._id, { $set: { dealId: resolvedDealId } });
+    artifact.dealId = resolvedDealId;
+  }
+
+  let rawText: string | undefined;
+  if (callId) {
+    const transcript = await fetchGongCallTranscript(data.workspaceId, callId);
+    if (transcript) {
+      rawText = transcript;
+      await Artifact.findByIdAndUpdate(artifact._id, { $set: { rawText } });
+    }
+  }
+
   log('ingest-call', 'artifact upserted', {
     artifactId: artifact.id,
     connectionId: data.connectionId,
     workspaceId: data.workspaceId,
     eventType: data.eventType,
     callId: sourceId,
+    hasTranscript: Boolean(rawText),
+  });
+
+  void dispatchActivityIngested({
+    workspaceId: data.workspaceId,
+    artifactId: artifact.id,
+    dealId: artifact.dealId?.toString() ?? null,
+    source: 'gong',
+  }).catch((err) => {
+    log('ingest-call', 'activity.ingested dispatch failed', { error: String(err) });
   });
 }

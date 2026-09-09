@@ -1,5 +1,7 @@
 import { Deal, Note } from '@ai-crm/db';
 import type { Types } from 'mongoose';
+import { analyzeObjectionsFromTranscripts } from '../../../lib/gemini-transcript.js';
+import { loadDealTranscripts } from '../../../lib/transcript-context.js';
 import type { AgentRunContext, AgentRunResult } from '../executor.js';
 
 const MEDIUM_CONFIDENCE = 0.55;
@@ -214,9 +216,33 @@ export async function runObjectionTracker(ctx: AgentRunContext): Promise<AgentRu
   for (const deal of deals) {
     const dealNotes = notesByDeal.get(deal.id) ?? [];
     const rawObjections: DetectedObjection[] = [];
+    const transcripts = await loadDealTranscripts(ctx.workspaceId, deal._id, 2);
+    const geminiObjections = await analyzeObjectionsFromTranscripts({
+      dealTitle: deal.title,
+      transcripts,
+    });
 
-    for (const note of dealNotes) {
-      rawObjections.push(...scanNote(note.body, note._id.toString(), note.createdAt));
+    if (geminiObjections) {
+      for (const o of geminiObjections) {
+        rawObjections.push({
+          slug: o.slug,
+          label: o.label,
+          confidence: o.confidence,
+          noteId: transcripts[0]?.artifactId ?? 'transcript',
+          excerpt: o.excerpt,
+          talkTrack: o.talkTrack,
+          detectedAt: new Date(),
+        });
+      }
+    } else {
+      for (const note of dealNotes) {
+        rawObjections.push(...scanNote(note.body, note._id.toString(), note.createdAt));
+      }
+      for (const t of transcripts) {
+        for (const o of scanNote(t.text, t.artifactId, t.occurredAt)) {
+          rawObjections.push(o);
+        }
+      }
     }
 
     const objections = uniqueBySlug(rawObjections);
@@ -249,7 +275,7 @@ export async function runObjectionTracker(ctx: AgentRunContext): Promise<AgentRu
 
   return {
     status: 'completed',
-    creditsUsed: 0.2,
+    creditsUsed: process.env.GEMINI_API_KEY ? 0.8 : 0.2,
     output: {
       dealsScanned: deals.length,
       notesScanned: notes.length,

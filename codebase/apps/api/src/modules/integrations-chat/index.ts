@@ -1,8 +1,14 @@
 import { Router } from 'express';
 import {
+  connectGoogleChat,
   connectSlack,
+  connectTeams,
+  disconnectGoogleChat,
   disconnectSlack,
+  disconnectTeams,
+  getGoogleChatStatus,
   getSlackStatus,
+  getTeamsStatus,
   listChatProviders,
 } from './handlers.js';
 
@@ -12,3 +18,9 @@ integrationsChatRouter.get('/providers', listChatProviders);
 integrationsChatRouter.post('/slack/connect', connectSlack);
 integrationsChatRouter.get('/slack/status', getSlackStatus);
 integrationsChatRouter.delete('/slack', disconnectSlack);
+integrationsChatRouter.post('/teams/connect', connectTeams);
+integrationsChatRouter.get('/teams/status', getTeamsStatus);
+integrationsChatRouter.delete('/teams', disconnectTeams);
+integrationsChatRouter.post('/google_chat/connect', connectGoogleChat);
+integrationsChatRouter.get('/google_chat/status', getGoogleChatStatus);
+integrationsChatRouter.delete('/google_chat', disconnectGoogleChat);

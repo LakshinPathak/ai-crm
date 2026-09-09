@@ -466,3 +466,22 @@ export const WHY_VALUE_PROPS = [
     accent: '#ef4444',
   },
 ] as const;
+
+export const BLOG_POSTS = [
+  {
+    slug: 'unified-deal-context',
+    title: 'Why unified deal context beats another CRM field',
+    date: 'September 5, 2026',
+    excerpt:
+      'Technical sellers lose hours jumping between Slack, Gong, and CRM updates. Here is how a context layer changes the presales workflow.',
+    href: '/blog/unified-deal-context',
+  },
+  {
+    slug: 'event-triggered-agents',
+    title: 'Event-triggered agents: POC kickoff when a deal advances',
+    date: 'August 28, 2026',
+    excerpt:
+      'Stage-change automations can draft kickoff plans, tasks, and stakeholder summaries — with human approval before anything writes back.',
+    href: '/blog/event-triggered-agents',
+  },
+] as const;
