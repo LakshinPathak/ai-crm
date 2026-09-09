@@ -18,6 +18,7 @@ import { pipelineRouter } from './modules/pipeline/index.js';
 import { insightsRouter } from './modules/insights/index.js';
 import { marketingRouter } from './modules/marketing/index.js';
 import { internalRouter } from './modules/internal/index.js';
+import { callsRouter } from './modules/calls/index.js';
 
 export {
   authPublicRouter,
@@ -42,4 +43,5 @@ export {
   insightsRouter,
   marketingRouter,
   internalRouter,
+  callsRouter,
 };

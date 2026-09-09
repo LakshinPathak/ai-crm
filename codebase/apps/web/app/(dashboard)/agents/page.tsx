@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Bot, Plus, Search } from 'lucide-react';
+import { Bot, Plus, Search, Wand2 } from 'lucide-react';
 import { apiGet, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { agentCategoryBadge, agentRunStatusBadge } from '@/lib/ui-badge';
@@ -169,6 +169,12 @@ export default function AgentsPage() {
                 className="w-48 pl-8"
               />
             </div>
+            <Button size="sm" variant="outline" asChild>
+              <Link href="/agents/new">
+                <Wand2 className="size-3.5" />
+                New agent
+              </Link>
+            </Button>
             <Button size="sm" onClick={() => setShowTemplates(true)}>
               <Plus className="size-3.5" />
               Start from template
@@ -202,11 +208,19 @@ export default function AgentsPage() {
               <Bot className="size-6" />
             </div>
             <CardTitle>No agents yet</CardTitle>
-            <CardDescription>Start with a pre-built template.</CardDescription>
-            <Button onClick={() => setShowTemplates(true)}>
-              <Plus className="size-3.5" />
-              Start from template
-            </Button>
+            <CardDescription>Create a custom agent or start from a template.</CardDescription>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button asChild>
+                <Link href="/agents/new">
+                  <Wand2 className="size-3.5" />
+                  New agent
+                </Link>
+              </Button>
+              <Button variant="outline" onClick={() => setShowTemplates(true)}>
+                <Plus className="size-3.5" />
+                Start from template
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (

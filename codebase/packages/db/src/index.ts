@@ -25,4 +25,5 @@ export { AuthSession } from './models/auth-session.js';
 export { AuthExchangeCode } from './models/auth-exchange-code.js';
 export { WorkspaceInvite } from './models/workspace-invite.js';
 export { ExternalRecord } from './models/external-record.js';
+export { Artifact } from './models/artifact.js';
 export { BackgroundJob } from './models/background-job.js';

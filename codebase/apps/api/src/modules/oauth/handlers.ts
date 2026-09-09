@@ -1,6 +1,8 @@
 import type { Request, Response } from 'express';
 import { IntegrationConnection } from '@ai-crm/db';
+import { ensureConnectionWebhookSecret } from '../../lib/webhook-hmac.js';
 import { buildGongAuthUrl, exchangeGongCode, gongOAuthConfigured } from '../../lib/integrations/gong-oauth.js';
+import { ensureWebhookSecret } from '../../lib/integrations/webhook-secret.js';
 import {
   consumeIntegrationOAuthContext,
   integrationOAuthRedirectUrl,
@@ -83,12 +85,19 @@ export async function handleCrmOAuthCallback(req: Request, res: Response): Promi
   try {
     if (provider === 'hubspot' && hubspotOAuthConfigured()) {
       const tokens = await exchangeHubSpotCode(code);
+      const existing = await IntegrationConnection.findOne({
+        workspaceId: ctx.workspaceId,
+        providerKey: 'hubspot',
+      });
+      const settings = ensureConnectionWebhookSecret(
+        (existing?.settings ?? {}) as Record<string, unknown>,
+      );
       await IntegrationConnection.findOneAndUpdate(
         { workspaceId: ctx.workspaceId, providerKey: 'hubspot' },
         {
           status: 'connected',
           externalAccountId: 'oauth-hubspot',
-          settings: { mode: 'live' },
+          settings: { ...settings, mode: 'live' },
         },
         { upsert: true },
       );
@@ -175,12 +184,23 @@ export async function handleGongOAuthCallback(req: Request, res: Response): Prom
 
   try {
     const tokens = await exchangeGongCode(code);
+    const existing = await IntegrationConnection.findOne({
+      workspaceId: ctx.workspaceId,
+      providerKey: 'gong',
+    });
+    const settings = ensureWebhookSecret({
+      mode: 'live',
+      apiBaseUrl: tokens.apiBaseUrl,
+      ...(existing?.settings && typeof existing.settings === 'object'
+        ? (existing.settings as Record<string, unknown>)
+        : {}),
+    });
     await IntegrationConnection.findOneAndUpdate(
       { workspaceId: ctx.workspaceId, providerKey: 'gong' },
       {
         status: 'connected',
         externalAccountId: tokens.apiBaseUrl ?? 'gong-workspace',
-        settings: { mode: 'live', apiBaseUrl: tokens.apiBaseUrl },
+        settings,
       },
       { upsert: true },
     );

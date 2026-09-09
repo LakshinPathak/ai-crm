@@ -16,6 +16,7 @@ import { getAccessToken } from '../../lib/integrations/tokens.js';
 import { hubspotOAuthConfigured } from '../../lib/integrations/hubspot-oauth.js';
 import { hasHubSpotAccessToken } from '../../lib/hubspot/client.js';
 import { syncHubSpotToWorkspace } from '../../lib/hubspot/sync.js';
+import { ensureConnectionWebhookSecret } from '../../lib/webhook-hmac.js';
 import { startCrmOAuth } from '../oauth/handlers.js';
 
 type StageMapping = {
@@ -33,6 +34,7 @@ type UserMapping = {
 
 type ConnectionSettings = {
   mode?: 'demo' | 'live';
+  webhookSecret?: string;
   imported?: Record<string, { companyId: string; dealId: string }>;
   stageMappings?: StageMapping[];
   userMappings?: UserMapping[];
@@ -99,9 +101,16 @@ export async function connectProvider(req: AuthedRequest, res: Response) {
   );
 
   if (providerKey === 'hubspot' && hubspotOAuthConfigured()) {
+    const pendingExisting = await IntegrationConnection.findOne({
+      workspaceId: req.tenant!.workspaceId,
+      providerKey,
+    });
+    const pendingSettings = ensureConnectionWebhookSecret(
+      (pendingExisting?.settings ?? {}) as Record<string, unknown>,
+    );
     await IntegrationConnection.findOneAndUpdate(
       { workspaceId: req.tenant!.workspaceId, providerKey },
-      { status: 'pending', settings: { mode: 'live' } },
+      { status: 'pending', settings: { ...pendingSettings, mode: 'live' } },
       { upsert: true },
     );
     const authUrl = startCrmOAuth(res, req.tenant!.workspaceId, req.tenant!.userId, providerKey);
@@ -129,12 +138,16 @@ export async function connectProvider(req: AuthedRequest, res: Response) {
   const priorSettings = (existing?.settings ?? {}) as ConnectionSettings;
   const priorImported = priorSettings.imported ?? {};
 
+  const settingsWithSecret = ensureConnectionWebhookSecret(
+    mergeSettings(priorSettings, { mode, imported: priorImported }) as Record<string, unknown>,
+  );
+
   const conn = await IntegrationConnection.findOneAndUpdate(
     { workspaceId: req.tenant!.workspaceId, providerKey },
     {
       status: 'connected',
       externalAccountId: hasCredentials ? `live-${providerKey}` : `demo-${providerKey}`,
-      settings: mergeSettings(priorSettings, { mode, imported: priorImported }),
+      settings: settingsWithSecret,
     },
     { upsert: true, new: true },
   );

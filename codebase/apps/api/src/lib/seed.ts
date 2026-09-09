@@ -6,7 +6,10 @@ import {
   Company,
   Deal,
   DealBlocker,
+  DealEvent,
   DealMeddpicc,
+  DealProject,
+  DealTeamRequest,
   Note,
   PipelineStage,
   Task,
@@ -106,6 +109,58 @@ export async function seedWorkspaceData(workspaceId: Types.ObjectId, ownerId: Ty
   await Task.insertMany([
     { workspaceId, dealId: deals[0]._id, title: 'Send revised proposal', assigneeId: ownerId, status: 'open' },
     { workspaceId, dealId: deals[2]._id, title: 'Schedule security questionnaire call', assigneeId: ownerId, status: 'open' },
+  ]);
+
+  await DealEvent.insertMany([
+    {
+      workspaceId,
+      dealId: deals[0]._id,
+      title: 'Discovery — stakeholder alignment',
+      startAt: new Date(now.getTime() - 2 * 86400000),
+      endAt: new Date(now.getTime() - 2 * 86400000 + 3600000),
+      type: 'call',
+      source: 'gong',
+    },
+    {
+      workspaceId,
+      dealId: deals[1]._id,
+      title: 'Technical deep-dive with IT',
+      startAt: new Date(now.getTime() - 5 * 86400000),
+      endAt: new Date(now.getTime() - 5 * 86400000 + 2700000),
+      type: 'call',
+      source: 'gong',
+    },
+    {
+      workspaceId,
+      dealId: deals[2]._id,
+      title: 'Executive sponsor check-in',
+      startAt: new Date(now.getTime() - 8 * 86400000),
+      endAt: new Date(now.getTime() - 8 * 86400000 + 1800000),
+      type: 'call',
+      source: 'gong',
+    },
+  ]);
+
+  await DealProject.insertMany([
+    { workspaceId, dealId: deals[0]._id, title: 'POC — workflow automation', status: 'active' },
+    { workspaceId, dealId: deals[1]._id, title: 'Pilot rollout', status: 'planning' },
+  ]);
+
+  await DealTeamRequest.insertMany([
+    {
+      workspaceId,
+      dealId: deals[0]._id,
+      title: 'Legal review of MSA',
+      department: 'Legal',
+      status: 'in_progress',
+    },
+    {
+      workspaceId,
+      dealId: deals[2]._id,
+      title: 'Security questionnaire support',
+      department: 'Security',
+      status: 'open',
+    },
   ]);
 
   await DealBlocker.insertMany([

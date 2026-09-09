@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  createAgent,
   createFromTemplate,
   deleteAgent,
   getAgent,
@@ -15,6 +16,7 @@ export const agentsRouter = Router();
 agentsRouter.get('/stats', getAgentStats);
 agentsRouter.get('/templates', listTemplates);
 agentsRouter.get('/', listAgents);
+agentsRouter.post('/', createAgent);
 agentsRouter.post('/from-template/:slug', createFromTemplate);
 agentsRouter.get('/:agentId', getAgent);
 agentsRouter.patch('/:agentId', updateAgent);

@@ -16,17 +16,29 @@
 | **1.0 Foundation** | ~85% | Monorepo, API, web, shadcn/ui (43 primitives), MongoDB job queue, demo seed |
 | **2.0 Core CRM** | ~90% | Kanban, list, CRUD, 12 deal tabs, accounts, home dashboard |
 | **3.0 Deal Intelligence** | ~75% | MEDDPICC API + SSE, citations, AI scoring; full RAG ingest pending |
-| **4.0 Agents** | ~80% | 10 executors, runs API, approvals; builder wizard pending |
-| **5.0 Integrations** | ~65% | HubSpot OAuth/sync, Gong webhook stub, Slack scaffold |
+| **4.0 Agents** | ~90% | 10 executors, runs API, approvals, `/agents/new` wizard |
+| **5.0 Integrations** | ~75% | HubSpot OAuth/sync, Gong HMAC + ingest, CRM webhook path |
 | **6.0 Insights** | ~70% | Funnel, loss, users tabs + APIs |
 | **7.0 Settings** | ~85% | Members, integrations, sales-process, workspace |
-| **8.0 QA / DevOps** | ~40% | typecheck + smoke pass; CI + Playwright E2E pending |
+| **8.0 QA / DevOps** | ~65% | typecheck + smoke + Playwright E2E (5 tests) + GitHub Actions CI |
 | **9.0 Marketing** | ~60% | Landing, pricing wizard, product pages; blog/about pending |
 | **UI (shadcn)** | ~75% | Shell, home, deals, agents, settings, marketing migrated |
 
 **Recent completions:** Redis removed → MongoDB `background_jobs`; shadcn/ui rollout; modular monolith only (microservices removed).
 
-**Remaining P0:** Playwright E2E, Gong HMAC + transcript worker, agent builder (`/agents/new`), CRM webhook path alignment.
+**Remaining P0:** Full Gong transcript fetch + RAG chunking, OAuth Teams/GChat/Calendar, NL agent builder.
+
+**Playwright E2E (local):** With `pnpm dev` running (API :4000 + web :3000) and MongoDB up:
+
+```bash
+cd codebase
+pnpm install
+pnpm exec playwright install chromium   # first time only
+pnpm test:e2e                           # from repo root
+# or: cd apps/web && pnpm test:e2e
+```
+
+Uses `POST /api/v1/auth/dev-login` for auth (no Google OAuth). Tests live in `apps/web/e2e/`.
 
 ---
 

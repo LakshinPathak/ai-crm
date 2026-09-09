@@ -2,6 +2,7 @@ import type { Response } from 'express';
 import { IntegrationConnection } from '@ai-crm/db';
 import type { AuthedRequest } from '../../lib/auth/index.js';
 import { gongOAuthConfigured } from '../../lib/integrations/gong-oauth.js';
+import { ensureWebhookSecret } from '../../lib/integrations/webhook-secret.js';
 import { startGongOAuth } from '../oauth/handlers.js';
 
 export async function listPlatformIntegrations(_req: AuthedRequest, res: Response) {
@@ -28,9 +29,20 @@ export async function connectGong(req: AuthedRequest, res: Response) {
     return;
   }
 
+  const existing = await IntegrationConnection.findOne({
+    workspaceId: req.tenant!.workspaceId,
+    providerKey: 'gong',
+  });
+  const settings = ensureWebhookSecret({
+    provider: 'gong',
+    ...(existing?.settings && typeof existing.settings === 'object'
+      ? (existing.settings as Record<string, unknown>)
+      : {}),
+  });
+
   await IntegrationConnection.findOneAndUpdate(
     { workspaceId: req.tenant!.workspaceId, providerKey: 'gong' },
-    { status: 'pending', settings: { provider: 'gong' } },
+    { status: 'pending', settings },
     { upsert: true },
   );
 

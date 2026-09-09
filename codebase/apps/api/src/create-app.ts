@@ -6,6 +6,7 @@ import { connectDb } from '@ai-crm/db';
 import { correlationIdMiddleware } from './lib/logger.js';
 import { jwtMiddleware, requireWorkspace } from './lib/auth/index.js';
 import { handleHubSpotWebhook } from './modules/webhooks/hubspot.js';
+import { handleGongWebhook } from './modules/webhooks/gong.js';
 import {
   authPublicRouter,
   authProtectedRouter,
@@ -29,6 +30,7 @@ import {
   insightsRouter,
   marketingRouter,
   internalRouter,
+  callsRouter,
 } from './routers.js';
 
 export function createApp(): Express {
@@ -44,6 +46,14 @@ export function createApp(): Express {
     express.raw({ type: 'application/json' }),
     handleHubSpotWebhook,
   );
+
+  app.post(
+    '/api/v1/webhooks/gong/:connectionId',
+    express.raw({ type: 'application/json' }),
+    handleGongWebhook,
+  );
+
+  app.use('/api/v1/webhooks', webhooksRouter);
 
   app.use(express.json());
 
@@ -62,7 +72,6 @@ export function createApp(): Express {
   app.use('/api/v1', authProtectedRouter);
   app.use('/api/v1/leads', marketingRouter);
   app.use('/api/v1/oauth', oauthRouter);
-  app.use('/api/v1/webhooks', webhooksRouter);
   app.use('/api/v1/internal', internalRouter);
 
   const protectedApi = express.Router();
@@ -84,6 +93,7 @@ export function createApp(): Express {
   protectedApi.use('/integrations/chat', integrationsChatRouter);
   protectedApi.use('/integrations', integrationsRouter);
   protectedApi.use('/insights', insightsRouter);
+  protectedApi.use('/calls', callsRouter);
   app.use('/api/v1', protectedApi);
 
   return app;

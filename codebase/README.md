@@ -39,6 +39,7 @@ pnpm dev:api          # API only
 pnpm dev:web          # Web only
 pnpm build            # Production build
 pnpm typecheck        # TypeScript check all packages
+pnpm test:e2e         # Playwright E2E (requires pnpm dev + MongoDB)
 pnpm populate-demo    # Seed demo workspace
 pnpm docker:up        # Start local MongoDB
 ```

@@ -1,7 +1,7 @@
 import type { Response } from 'express';
 import type { AuthedRequest } from '../../lib/auth/index.js';
 import { Agent, AgentRun } from '@ai-crm/db';
-import { RunAgentSchema, UpdateAgentSchema } from '@ai-crm/shared';
+import { CreateAgentSchema, RunAgentSchema, UpdateAgentSchema } from '@ai-crm/shared';
 import { enqueueAgentRun } from './executor.js';
 
 /** Opine-style template catalog — maps to docs/AGENT_AUTOMATIONS.md */
@@ -176,6 +176,7 @@ export async function updateAgent(req: AuthedRequest, res: Response) {
   }
 
   if (parsed.data.name !== undefined) agent.name = parsed.data.name;
+  if (parsed.data.category !== undefined) agent.category = parsed.data.category;
   if (parsed.data.enabled !== undefined) agent.isActive = parsed.data.enabled;
   if (parsed.data.config?.triggerConfig !== undefined) {
     agent.triggerConfig = parsed.data.config.triggerConfig;
@@ -206,6 +207,34 @@ export async function deleteAgent(req: AuthedRequest, res: Response) {
 
 export async function listTemplates(_req: AuthedRequest, res: Response) {
   res.json({ templates: TEMPLATES });
+}
+
+export async function createAgent(req: AuthedRequest, res: Response) {
+  const parsed = CreateAgentSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: parsed.error.message } });
+    return;
+  }
+
+  const { name, templateSlug, category, config } = parsed.data;
+  const template = templateSlug ? TEMPLATES.find((t) => t.slug === templateSlug) : undefined;
+  if (templateSlug && !template) {
+    res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Unknown template slug' } });
+    return;
+  }
+
+  const agent = await Agent.create({
+    workspaceId: req.tenant!.workspaceId,
+    templateSlug: template?.slug,
+    name,
+    category: category ?? template?.category ?? 'process',
+    ownerId: req.tenant!.userId,
+    isActive: true,
+    triggerConfig: config?.triggerConfig ?? {},
+    toolsConfig: config?.toolsConfig ?? {},
+  });
+
+  res.status(201).json({ agent: toAgentDto(agent) });
 }
 
 export async function createFromTemplate(req: AuthedRequest, res: Response) {

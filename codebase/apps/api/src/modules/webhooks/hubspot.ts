@@ -1,15 +1,11 @@
 import type { Request, Response } from 'express';
 import { verifyIncomingHubSpotWebhook } from '../../lib/hubspot-signature.js';
 import { log } from '../../lib/logger.js';
-
-type HubSpotEvent = {
-  subscriptionType?: string;
-  objectType?: string;
-  objectId?: number;
-  propertyName?: string;
-  propertyValue?: string;
-  portalId?: number;
-};
+import {
+  getWebhookRawBody,
+  parseHubSpotWebhookPayload,
+  partitionHubSpotEvents,
+} from './hubspot-events.js';
 
 export async function handleHubSpotWebhook(req: Request, res: Response) {
   const auth = verifyIncomingHubSpotWebhook(req);
@@ -19,42 +15,24 @@ export async function handleHubSpotWebhook(req: Request, res: Response) {
     return;
   }
 
-  const rawBody =
-    typeof req.body === 'string' || Buffer.isBuffer(req.body)
-      ? (Buffer.isBuffer(req.body) ? req.body.toString('utf8') : req.body)
-      : JSON.stringify(req.body ?? {});
-
-  let payload: { events?: HubSpotEvent[]; source?: string } | HubSpotEvent[];
-  try {
-    payload = JSON.parse(rawBody) as typeof payload;
-  } catch {
-    res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid JSON body' } });
+  const rawBody = getWebhookRawBody(req);
+  const parsed = parseHubSpotWebhookPayload(rawBody);
+  if (!parsed.ok) {
+    res.status(400).json({ error: { code: 'BAD_REQUEST', message: parsed.reason } });
     return;
   }
 
-  const events: HubSpotEvent[] = Array.isArray(payload)
-    ? payload
-    : Array.isArray(payload?.events)
-      ? payload.events
-      : [];
-
-  const dealEvents = events.filter(
-    (e) => e.objectType === 'deal' || e.subscriptionType?.includes('deal'),
-  );
-  const contactEvents = events.filter(
-    (e) => e.objectType === 'contact' || e.subscriptionType?.includes('contact'),
-  );
+  const { dealEvents, contactEvents } = partitionHubSpotEvents(parsed.events);
 
   log('webhooks', 'hubspot events received', {
-    total: events.length,
+    total: parsed.events.length,
     deals: dealEvents.length,
     contacts: contactEvents.length,
-    source: Array.isArray(payload) ? 'hubspot-direct' : payload?.source ?? 'hubspot-app-function',
     verified: req.header('x-hubspot-signature-v3') ? 'v3' : 'internal-secret',
   });
 
   res.json({
-    received: events.length,
+    received: parsed.events.length,
     dealEvents: dealEvents.length,
     contactEvents: contactEvents.length,
     status: 'accepted',

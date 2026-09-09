@@ -11,6 +11,7 @@
     "dev:frontend": "pnpm dev:web",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
+    "test:e2e": "pnpm --filter @ai-crm/web test:e2e",
     "populate-demo": "pnpm --filter @ai-crm/api populate-demo",
     "hubspot:seed": "pnpm --filter @ai-crm/api hubspot:seed",
     "hubspot:sync": "pnpm --filter @ai-crm/api hubspot:sync",

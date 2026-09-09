@@ -1,11 +1,15 @@
-import { Router } from 'express';
-import { handleGongWebhook } from './gong.js';
+import express, { Router } from 'express';
+import { handleCrmWebhook } from './crm.js';
 
-/** HubSpot POST is registered in create-app.ts with express.raw() for signature verification. */
+/** HubSpot and Gong POST routes are registered in create-app.ts with express.raw() for signature verification. */
 
 export const webhooksRouter = Router();
 
-webhooksRouter.post('/gong/:connectionId', handleGongWebhook);
+webhooksRouter.post(
+  '/crm/:connectionId',
+  express.raw({ type: 'application/json' }),
+  handleCrmWebhook,
+);
 
 webhooksRouter.get('/_stub', (_req, res) => {
   res.json({
@@ -14,7 +18,8 @@ webhooksRouter.get('/_stub', (_req, res) => {
     status: 'ok',
     endpoints: [
       'POST /hubspot (raw body, v3 signature)',
-      'POST /gong/:connectionId',
+      'POST /crm/:connectionId (raw body, X-CRM-Signature HMAC)',
+      'POST /gong/:connectionId (raw body, X-Gong-Signature HMAC)',
     ],
   });
 });
