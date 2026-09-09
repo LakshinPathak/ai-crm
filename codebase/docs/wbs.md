@@ -5,7 +5,7 @@
 **Stack:** Next.js 15 + shadcn/ui (web) · Express API · MongoDB only (no Redis)  
 **Duration:** 16 weeks (revised after staff review — 12 weeks was ~2× optimistic)  
 **Team assumption:** 1–2 full-stack engineers + AI-assisted development ("vibe coding")  
-**See:** `staff-review.md`, `crm-connectors.md`, `r6-roadmap.md`, `../TECH_STACK.md`, `../GETTING_STARTED.md`
+**See:** `staff-review.md`, `crm-connectors.md`, `r6-roadmap.md`, `future/README.md`, `../TECH_STACK.md`, `../GETTING_STARTED.md`
 
 ---
 

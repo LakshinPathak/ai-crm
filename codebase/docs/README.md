@@ -20,6 +20,7 @@ Everything lives under `codebase/docs/` — there is no separate `artifacts/plan
 | **20-min technical overview** | [`system-design.md`](system-design.md) |
 | **Stack truth** | [`stack.md`](stack.md) |
 | **Full product PRD** | [`prd.md`](prd.md) |
+| **Future development (vibe coding)** | [`future/README.md`](future/README.md) |
 
 ---
 
@@ -47,6 +48,7 @@ Everything lives under `codebase/docs/` — there is no separate `artifacts/plan
 | 5 | [`crm-connectors.md`](crm-connectors.md) | CRM adapter framework |
 | 6 | [`chat-channels.md`](chat-channels.md) | Chat adapter framework |
 | 7 | [`agent-platform.md`](agent-platform.md) | 10 agents |
+| 8 | [`future/README.md`](future/README.md) | AI roadmap, automations, analytics |
 
 ### Path C — Frontend (Next.js, shadcn)
 
@@ -77,6 +79,15 @@ Everything lives under `codebase/docs/` — there is no separate `artifacts/plan
 | [`design-system.md`](design-system.md) | Design System | shadcn/ui |
 | [`wbs.md`](wbs.md) | Work Breakdown | Delivery plan |
 | [`r6-roadmap.md`](r6-roadmap.md) | R6 Roadmap | Next 5 workstreams (Gong RAG, chat OAuth, NL builder, CRM sync, QA) |
+| [`future/README.md`](future/README.md) | Future Dev Index | Vibe coding reference library (8 docs) |
+| [`future/ai-capabilities-roadmap.md`](future/ai-capabilities-roadmap.md) | AI Capabilities | Full AI feature matrix — live vs planned |
+| [`future/custom-automations-guide.md`](future/custom-automations-guide.md) | Custom Automations | Agents, triggers, recipes |
+| [`future/analytics-expansion.md`](future/analytics-expansion.md) | Analytics Expansion | 30+ future metrics + SQL explorer |
+| [`future/ai-demo-playbook.md`](future/ai-demo-playbook.md) | Demo Playbook | 5/15/30 min demo scripts |
+| [`future/trigger-event-catalog.md`](future/trigger-event-catalog.md) | Event Catalog | Webhooks, queues, cron |
+| [`future/nl-agent-builder-spec.md`](future/nl-agent-builder-spec.md) | NL Agent Builder | R6 WS-3 API + UI spec |
+| [`future/integration-ai-patterns.md`](future/integration-ai-patterns.md) | Integration + AI | Gong, CRM, chat, RAG pipelines |
+| [`future/vibe-coding-patterns.md`](future/vibe-coding-patterns.md) | Vibe Coding | Repo conventions for AI dev |
 | [`staff-review.md`](staff-review.md) | Staff Review | Technical audit |
 | [`landing-page.md`](landing-page.md) | Landing Page | Marketing |
 | [`branding-guidelines.md`](branding-guidelines.md) | Branding | Visual identity |
@@ -108,6 +119,7 @@ Everything lives under `codebase/docs/` — there is no separate `artifacts/plan
 
 | Date | Change |
 |------|--------|
+| 2026-09-09 | v3.3 — added `future/` vibe coding library (8 docs) |
 | 2026-09-09 | v3.2 — added `r6-roadmap.md`; WBS v2.2 after R5 |
 | 2026-09-09 | v3.1 — consolidated docs; removed duplicate `artifacts/planning/` |
 | 2026-09-09 | v3.0 — monolith-only; removed microservices docs and gateway |
