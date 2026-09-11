@@ -21,7 +21,7 @@
 
 ---
 
-## Batch 2 (next 5 subagents — queue after batch 1 merges)
+## Batch 2 (5 subagents — ✅ shipped)
 
 | WS | Theme |
 |----|--------|
