@@ -32,7 +32,7 @@ export function BlogPage() {
               <CardHeader>
                 <p className="text-xs font-medium text-muted-foreground">{post.date}</p>
                 <CardTitle className="text-base">
-                  <Link href={post.href} className="hover:text-primary">
+                  <Link href={`/blog/${post.slug}`} className="hover:text-primary">
                     {post.title}
                   </Link>
                 </CardTitle>

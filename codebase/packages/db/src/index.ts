@@ -26,4 +26,5 @@ export { AuthExchangeCode } from './models/auth-exchange-code.js';
 export { WorkspaceInvite } from './models/workspace-invite.js';
 export { ExternalRecord } from './models/external-record.js';
 export { Artifact } from './models/artifact.js';
+export { ArtifactChunk } from './models/artifact-chunk.js';
 export { BackgroundJob } from './models/background-job.js';

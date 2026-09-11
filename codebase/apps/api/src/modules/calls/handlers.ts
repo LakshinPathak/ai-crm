@@ -1,5 +1,6 @@
 import type { Response } from 'express';
 import { Artifact, Deal, DealEvent } from '@ai-crm/db';
+import { PatchCallSchema } from '@ai-crm/shared';
 import type { AuthedRequest } from '../../lib/auth/index.js';
 
 const TRANSCRIPT_EXCERPT_MAX = 2000;
@@ -119,6 +120,69 @@ export async function getCallDetail(req: AuthedRequest, res: Response) {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Call not found' } });
     return;
   }
+
+  let dealTitle: string | null = null;
+  if (artifact.dealId) {
+    const deal = await Deal.findOne({ _id: artifact.dealId, workspaceId, deletedAt: null }).select(
+      'title',
+    );
+    dealTitle = deal?.title ?? null;
+  }
+
+  const rawText = artifact.rawText ?? '';
+  const occurredAt = artifact.occurredAt ?? artifact.createdAt;
+
+  res.json({
+    call: {
+      id: artifact.id,
+      title: artifact.title ?? `Call (${artifact.source})`,
+      source: artifact.source,
+      date: occurredAt.toISOString(),
+      dealId: artifact.dealId?.toString() ?? null,
+      dealTitle,
+      transcriptExcerpt: rawText.slice(0, TRANSCRIPT_EXCERPT_MAX),
+      hasFullTranscript: rawText.length > 0,
+    },
+  });
+}
+
+export async function patchCall(req: AuthedRequest, res: Response) {
+  const parsed = PatchCallSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: parsed.error.message } });
+    return;
+  }
+
+  const workspaceId = req.tenant!.workspaceId;
+  const { id } = req.params;
+
+  const artifact = await Artifact.findOne({
+    _id: id,
+    workspaceId,
+    type: 'call',
+  });
+
+  if (!artifact) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Call not found' } });
+    return;
+  }
+
+  if (parsed.data.dealId === null) {
+    artifact.dealId = undefined;
+  } else {
+    const deal = await Deal.findOne({
+      _id: parsed.data.dealId,
+      workspaceId,
+      deletedAt: null,
+    });
+    if (!deal) {
+      res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Deal not found' } });
+      return;
+    }
+    artifact.dealId = deal._id;
+  }
+
+  await artifact.save();
 
   let dealTitle: string | null = null;
   if (artifact.dealId) {

@@ -2,7 +2,9 @@ import type { Response } from 'express';
 import { IntegrationConnection } from '@ai-crm/db';
 import type { AuthedRequest } from '../../lib/auth/index.js';
 import { googleChatOAuthConfigured } from '../../lib/integrations/google-chat-oauth.js';
+import { listGoogleChatSpaces } from '../../lib/integrations/google-chat-api.js';
 import { slackOAuthConfigured } from '../../lib/integrations/slack-oauth.js';
+import { listTeamsChannels } from '../../lib/integrations/teams-api.js';
 import { teamsOAuthConfigured } from '../../lib/integrations/teams-oauth.js';
 import {
   startGoogleChatOAuth,
@@ -146,4 +148,32 @@ export async function disconnectTeams(req: AuthedRequest, res: Response) {
 
 export async function disconnectGoogleChat(req: AuthedRequest, res: Response) {
   await disconnectChatProvider(req, res, 'google_chat');
+}
+
+export async function listTeamsChannelsHandler(req: AuthedRequest, res: Response) {
+  if (!teamsOAuthConfigured()) {
+    res.status(400).json({
+      error: {
+        code: 'NOT_CONFIGURED',
+        message: CHAT_PROVIDER_CONFIG.teams.envMessage,
+      },
+    });
+    return;
+  }
+  const channels = await listTeamsChannels(req.tenant!.workspaceId);
+  res.json({ channels });
+}
+
+export async function listGoogleChatChannelsHandler(req: AuthedRequest, res: Response) {
+  if (!googleChatOAuthConfigured()) {
+    res.status(400).json({
+      error: {
+        code: 'NOT_CONFIGURED',
+        message: CHAT_PROVIDER_CONFIG.google_chat.envMessage,
+      },
+    });
+    return;
+  }
+  const channels = await listGoogleChatSpaces(req.tenant!.workspaceId);
+  res.json({ channels });
 }

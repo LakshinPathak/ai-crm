@@ -99,3 +99,49 @@ export async function dispatchDealStageChanged(payload: {
     toStageId: payload.toStageId,
   });
 }
+
+/** Fire agents subscribed to deal.closed (win/loss analysis, handoff, etc.). */
+export async function dispatchDealClosed(payload: {
+  workspaceId: string;
+  dealId: string;
+  outcome: 'won' | 'lost';
+}): Promise<void> {
+  const agents = await Agent.find({
+    workspaceId: payload.workspaceId,
+    isActive: true,
+    'triggerConfig.type': 'event',
+    'triggerConfig.event': 'deal.closed',
+  });
+
+  if (agents.length === 0) return;
+
+  for (const agent of agents) {
+    if (!agent.ownerId || !agent.templateSlug) continue;
+
+    const run = await AgentRun.create({
+      workspaceId: agent.workspaceId,
+      agentId: agent._id,
+      status: 'running',
+      triggerType: 'event',
+      dealId: payload.dealId,
+      startedAt: new Date(),
+      scope: { outcome: payload.outcome },
+    });
+
+    enqueueAgentRun({
+      runId: run.id,
+      workspaceId: payload.workspaceId,
+      userId: agent.ownerId.toString(),
+      agentId: agent.id,
+      templateSlug: agent.templateSlug,
+      dealId: payload.dealId,
+    });
+  }
+
+  log('agent-events', 'deal.closed dispatched', {
+    workspaceId: payload.workspaceId,
+    agentCount: agents.length,
+    dealId: payload.dealId,
+    outcome: payload.outcome,
+  });
+}

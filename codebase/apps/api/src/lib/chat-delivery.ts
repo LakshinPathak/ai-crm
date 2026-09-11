@@ -6,6 +6,8 @@ import {
   postSlackMessage,
   type SlackBlock,
 } from './integrations/slack-api.js';
+import { postGoogleChatMessage } from './integrations/google-chat-api.js';
+import { postTeamsMessage } from './integrations/teams-api.js';
 import { log } from './logger.js';
 
 export type DeliveryConfig = z.infer<typeof DeliveryConfigSchema>;
@@ -89,6 +91,114 @@ function buildSlackBlocks(
   return blocks;
 }
 
+function readDealId(output: Record<string, unknown>): string | undefined {
+  return typeof output.dealId === 'string' && output.dealId.trim() ? output.dealId.trim() : undefined;
+}
+
+function buildPlainDeliveryText(
+  agentName: string,
+  status: string,
+  summary: string,
+  dealId?: string,
+): string {
+  const lines = [`${agentName}`, `Status: ${status}`, '', summary];
+  if (dealId) {
+    const webUrl = process.env.WEB_URL ?? 'http://localhost:3000';
+    lines.push('', `View deal: ${webUrl}/deals/${dealId}`);
+  }
+  return lines.join('\n');
+}
+
+async function deliverToTeamsChannel(
+  workspaceId: string,
+  userId: string,
+  agent: DeliverAgentOutputParams['agent'],
+  deliveryConfig: DeliveryConfig,
+  result: DeliverAgentOutputParams['result'],
+): Promise<void> {
+  const channelId = deliveryConfig.channelId?.trim();
+  if (!channelId) {
+    log('chat-delivery', 'skip: no Teams channelId', {
+      agentId: agent.id,
+      workspaceId,
+      mode: deliveryConfig.mode ?? null,
+    });
+    return;
+  }
+
+  const summary = extractOutputSummary(result.output);
+  const dealId = readDealId(result.output);
+  const text = buildPlainDeliveryText(agent.name, result.status, summary, dealId);
+
+  const posted = await postTeamsMessage(workspaceId, channelId, text);
+  if (posted) {
+    log('chat-delivery', 'delivered agent output to Teams', {
+      workspaceId,
+      userId,
+      agentId: agent.id,
+      channelId,
+      runStatus: result.status,
+    });
+    return;
+  }
+
+  log('chat-delivery', 'Teams post failed — log-only fallback', {
+    workspaceId,
+    userId,
+    agentId: agent.id,
+    agentName: agent.name,
+    templateSlug: agent.templateSlug ?? null,
+    runStatus: result.status,
+    deliveryConfig,
+    outputKeys: Object.keys(result.output),
+  });
+}
+
+async function deliverToGoogleChatSpace(
+  workspaceId: string,
+  userId: string,
+  agent: DeliverAgentOutputParams['agent'],
+  deliveryConfig: DeliveryConfig,
+  result: DeliverAgentOutputParams['result'],
+): Promise<void> {
+  const channelId = deliveryConfig.channelId?.trim();
+  if (!channelId) {
+    log('chat-delivery', 'skip: no Google Chat space channelId', {
+      agentId: agent.id,
+      workspaceId,
+      mode: deliveryConfig.mode ?? null,
+    });
+    return;
+  }
+
+  const summary = extractOutputSummary(result.output);
+  const dealId = readDealId(result.output);
+  const text = buildPlainDeliveryText(agent.name, result.status, summary, dealId);
+
+  const posted = await postGoogleChatMessage(workspaceId, channelId, text);
+  if (posted) {
+    log('chat-delivery', 'delivered agent output to Google Chat', {
+      workspaceId,
+      userId,
+      agentId: agent.id,
+      channelId,
+      runStatus: result.status,
+    });
+    return;
+  }
+
+  log('chat-delivery', 'Google Chat post failed — log-only fallback', {
+    workspaceId,
+    userId,
+    agentId: agent.id,
+    agentName: agent.name,
+    templateSlug: agent.templateSlug ?? null,
+    runStatus: result.status,
+    deliveryConfig,
+    outputKeys: Object.keys(result.output),
+  });
+}
+
 function readDmUserId(deliveryConfig: DeliveryConfig): string | undefined {
   const raw = deliveryConfig as DeliveryConfig & { dmUserId?: string };
   const dmUserId = raw.dmUserId;
@@ -142,10 +252,7 @@ export async function deliverAgentOutput(params: DeliverAgentOutputParams): Prom
     }
 
     const summary = extractOutputSummary(result.output);
-    const dealId =
-      typeof result.output.dealId === 'string' && result.output.dealId.trim()
-        ? result.output.dealId.trim()
-        : undefined;
+    const dealId = readDealId(result.output);
     const fallbackText = `${agent.name} — ${result.status}: ${summary}`;
     const blocks = buildSlackBlocks(agent.name, result.status, summary, dealId);
 
@@ -171,6 +278,16 @@ export async function deliverAgentOutput(params: DeliverAgentOutputParams): Prom
       deliveryConfig,
       outputKeys: Object.keys(result.output),
     });
+    return;
+  }
+
+  if (deliveryConfig.provider === 'teams') {
+    await deliverToTeamsChannel(workspaceId, userId, agent, deliveryConfig, result);
+    return;
+  }
+
+  if (deliveryConfig.provider === 'google_chat') {
+    await deliverToGoogleChatSpace(workspaceId, userId, agent, deliveryConfig, result);
     return;
   }
 

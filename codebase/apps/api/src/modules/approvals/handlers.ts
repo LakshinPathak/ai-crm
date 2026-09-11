@@ -2,6 +2,7 @@ import type { Response } from 'express';
 import { createEventEnvelope, publishEvent } from '@ai-crm/events';
 import type { AuthedRequest } from '../../lib/auth/index.js';
 import { Agent, AgentRun, Approval, Deal } from '@ai-crm/db';
+import { pushCrmFieldUpdateToHubSpot } from '../../lib/hubspot/crm-field-write-back.js';
 import { applyProposedChange, parseProposedChange } from './write-back.js';
 
 function toDto(a: InstanceType<typeof Approval>, dealTitle?: string) {
@@ -94,6 +95,13 @@ export async function approveItem(req: AuthedRequest, res: Response) {
   let writeBack: { tasksCreated: number; notesCreated: number } | null = null;
   if (proposedChange) {
     writeBack = await applyProposedChange(req.tenant!.workspaceId, req.tenant!.userId, proposedChange);
+    if (proposedChange.type === 'crm_field_update') {
+      await pushCrmFieldUpdateToHubSpot(
+        req.tenant!.workspaceId,
+        proposedChange.dealId,
+        proposedChange.patch,
+      );
+    }
   }
 
   approval.status = 'approved';

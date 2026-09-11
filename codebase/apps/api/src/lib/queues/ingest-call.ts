@@ -4,6 +4,7 @@ import { Artifact, Company, Deal, DealParticipant, User } from '@ai-crm/db';
 import { fetchGongCallTranscript } from '../integrations/gong-api.js';
 import { log } from '../logger.js';
 import { dispatchActivityIngested } from '../agent-events.js';
+import { addEmbedArtifactJob } from './embed-artifact.js';
 import { enqueueJob } from './mongo-queue.js';
 
 export const INGEST_CALL_QUEUE = 'ingest-call';
@@ -255,6 +256,10 @@ export async function processIngestCall(data: IngestCallJobData): Promise<void> 
     if (transcript) {
       rawText = transcript;
       await Artifact.findByIdAndUpdate(artifact._id, { $set: { rawText } });
+      await addEmbedArtifactJob({
+        workspaceId: data.workspaceId,
+        artifactId: artifact.id,
+      });
     }
   }
 

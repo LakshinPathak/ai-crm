@@ -4,13 +4,21 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, Phone } from 'lucide-react';
-import { apiGet } from '@/lib/api-client';
+import { apiGet, apiPatch } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
+import type { DealCard } from '@/lib/types';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 type CallDetail = {
   id: string;
@@ -36,8 +44,11 @@ function CallDetailSkeleton() {
 export default function CallDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [call, setCall] = useState<CallDetail | null>(null);
+  const [deals, setDeals] = useState<DealCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [savingDeal, setSavingDeal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [linkError, setLinkError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = getToken();
@@ -46,11 +57,35 @@ export default function CallDetailPage() {
       return;
     }
 
-    apiGet<{ call: CallDetail }>(`/calls/${id}`, token)
-      .then((r) => setCall(r.call))
+    Promise.all([
+      apiGet<{ call: CallDetail }>(`/calls/${id}`, token),
+      apiGet<{ deals: DealCard[] }>('/deals?limit=50', token),
+    ])
+      .then(([callRes, dealsRes]) => {
+        setCall(callRes.call);
+        setDeals(dealsRes.deals);
+      })
       .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load call'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  async function onDealLinkChange(value: string) {
+    const token = getToken();
+    if (!token || !id) return;
+
+    setLinkError(null);
+    setSavingDeal(true);
+    const dealId = value === '__none__' ? null : value;
+
+    try {
+      const res = await apiPatch<{ call: CallDetail }>(`/calls/${id}`, token, { dealId });
+      setCall(res.call);
+    } catch (e) {
+      setLinkError(e instanceof Error ? e.message : 'Failed to update deal link');
+    } finally {
+      setSavingDeal(false);
+    }
+  }
 
   if (loading) return <CallDetailSkeleton />;
   if (error) return <p className="text-sm text-destructive">{error}</p>;
@@ -82,15 +117,36 @@ export default function CallDetailPage() {
               <span className="text-muted-foreground">Date</span>
               <span>{new Date(call.date).toLocaleString()}</span>
             </div>
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-muted-foreground">Deal</span>
-              {call.dealId && call.dealTitle ? (
-                <Link href={`/deals/${call.dealId}`} className="font-medium hover:underline">
-                  {call.dealTitle}
-                </Link>
-              ) : (
-                <span className="text-muted-foreground">Not linked</span>
-              )}
+              <div className="flex min-w-0 flex-col items-end gap-1">
+                <Select
+                  value={call.dealId ?? '__none__'}
+                  onValueChange={onDealLinkChange}
+                  disabled={savingDeal}
+                >
+                  <SelectTrigger className="w-full min-w-[200px] sm:w-[260px]">
+                    <SelectValue placeholder="Link to deal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Not linked</SelectItem>
+                    {deals.map((deal) => (
+                      <SelectItem key={deal.id} value={deal.id}>
+                        {deal.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {call.dealId && call.dealTitle ? (
+                  <Link
+                    href={`/deals/${call.dealId}`}
+                    className="text-xs font-medium text-primary hover:underline"
+                  >
+                    Open deal
+                  </Link>
+                ) : null}
+                {linkError ? <p className="text-xs text-destructive">{linkError}</p> : null}
+              </div>
             </div>
           </CardContent>
         </Card>

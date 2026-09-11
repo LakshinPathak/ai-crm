@@ -1,5 +1,6 @@
 import type { Response } from 'express';
 import type { AuthedRequest } from '../../lib/auth/index.js';
+import { dispatchDealClosed } from '../../lib/agent-events.js';
 import { Company, Deal } from '@ai-crm/db';
 import { CloseDealSchema } from '@ai-crm/shared';
 
@@ -62,6 +63,12 @@ export async function closeDeal(req: AuthedRequest, res: Response) {
     deal.lostReason = undefined;
   }
   await deal.save();
+
+  void dispatchDealClosed({
+    workspaceId: req.tenant!.workspaceId,
+    dealId: deal.id,
+    outcome: parsed.data.outcome,
+  });
 
   const company = await Company.findById(deal.companyId);
   res.json({ deal: dealCard(deal, company) });

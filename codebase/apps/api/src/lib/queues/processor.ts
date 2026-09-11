@@ -6,6 +6,11 @@ import {
   processCrmIncremental,
   type CrmIncrementalJobData,
 } from './crm-incremental.js';
+import {
+  EMBED_ARTIFACT_QUEUE,
+  processEmbedArtifact,
+  type EmbedArtifactJobData,
+} from './embed-artifact.js';
 import { INGEST_CALL_QUEUE, processIngestCall, type IngestCallJobData } from './ingest-call.js';
 import { startQueuePoller } from './mongo-queue.js';
 import { startScheduledAgentTicker } from './scheduled-agents.js';
@@ -41,18 +46,27 @@ export function startBackgroundJobProcessors(): void {
     { concurrency: 3 },
   );
 
+  const stopEmbedArtifact = startQueuePoller(
+    EMBED_ARTIFACT_QUEUE,
+    async (payload) => {
+      await processEmbedArtifact(payload as EmbedArtifactJobData);
+    },
+    { concurrency: 2 },
+  );
+
   const stopScheduled = startScheduledAgentTicker();
 
   stopPollers = () => {
     stopAgent();
     stopIngest();
     stopCrmIncremental();
+    stopEmbedArtifact();
     stopScheduled();
     stopPollers = null;
   };
 
   log('mongo-queue', 'background processors started', {
-    queues: [AGENT_RUNS_QUEUE, INGEST_CALL_QUEUE, CRM_INCREMENTAL_QUEUE],
+    queues: [AGENT_RUNS_QUEUE, INGEST_CALL_QUEUE, CRM_INCREMENTAL_QUEUE, EMBED_ARTIFACT_QUEUE],
   });
 }
 

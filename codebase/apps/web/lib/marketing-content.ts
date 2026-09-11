@@ -474,7 +474,12 @@ export const BLOG_POSTS = [
     date: 'September 5, 2026',
     excerpt:
       'Technical sellers lose hours jumping between Slack, Gong, and CRM updates. Here is how a context layer changes the presales workflow.',
-    href: '/blog/unified-deal-context',
+    body: [
+      'Every presales leader has seen the same pattern: a deal looks healthy in the CRM, but the Slack thread tells a different story. Gong captured the objection. Calendar notes from the SE never made it into HubSpot. By the time leadership asks for a MEDDPICC update, someone is rebuilding context from five tabs.',
+      'Adding another custom field does not fix this. Fields capture snapshots; they do not connect signals. A context layer sits alongside your CRM and merges CRM stages, conversation transcripts, chat threads, and calendar activity into one cited record per opportunity.',
+      'When summaries link back to source moments — a Gong clip, a Slack message, a CRM field change — sellers trust the AI output and spend less time in “context archaeology.” RevOps keeps the CRM as the system of record while SEs work from a single presales workbench.',
+      'Teams adopting this model report shorter handoffs between SE and AE, faster QBR prep, and fewer surprises in late-stage evals. The win is not more data entry; it is one trustworthy view of why the deal is moving — or stalling.',
+    ],
   },
   {
     slug: 'event-triggered-agents',
@@ -482,6 +487,17 @@ export const BLOG_POSTS = [
     date: 'August 28, 2026',
     excerpt:
       'Stage-change automations can draft kickoff plans, tasks, and stakeholder summaries — with human approval before anything writes back.',
-    href: '/blog/event-triggered-agents',
+    body: [
+      'Stage changes are high-leverage moments. A deal moving into technical evaluation should trigger more than a CRM timestamp — it should kick off a POC plan, stakeholder map, and task list aligned to your presales playbook.',
+      'Event-triggered agents listen for domain events such as `deal.stage_changed` or `evaluation.started`. When criteria match, they draft artifacts: kickoff email outlines, Jira tasks, internal Slack briefs, and suggested CRM field updates — each with citations to recent calls and threads.',
+      'The critical guardrail is human approval. Nothing writes back to HubSpot, Salesforce, or Slack until a seller reviews the proposed actions. That keeps automation fast without sacrificing accountability or compliance.',
+      'Start with one workflow — for example, POC kickoff when a deal enters your eval stage — measure time-to-first-customer-touch, then expand to risk monitors and renewal prep. Plain-language rules and approval queues make agents operable for RevOps without a custom integration project.',
+    ],
   },
 ] as const;
+
+export type BlogPostSlug = (typeof BLOG_POSTS)[number]['slug'];
+
+export function getBlogPost(slug: string) {
+  return BLOG_POSTS.find((post) => post.slug === slug);
+}
