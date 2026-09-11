@@ -1,7 +1,7 @@
 # Work Breakdown Structure (WBS)
 # AI-Native Presales CRM
 
-**Version:** 2.3  
+**Version:** 2.4  
 **Stack:** Next.js 15 + shadcn/ui (web) · Express API · MongoDB only (no Redis)  
 **Duration:** 16 weeks (revised after staff review — 12 weeks was ~2× optimistic)  
 **Team assumption:** 1–2 full-stack engineers + AI-assisted development ("vibe coding")  
@@ -20,7 +20,7 @@
 | **5.0 Integrations** | ~90% | HubSpot sync + **write-back on approve**, Gong transcript + chunks, Slack/Teams/GChat |
 | **6.0 Insights** | ~78% | Funnel, loss, users tabs; responsive charts |
 | **7.0 Settings** | ~90% | Members, integrations connect flows, sales-process |
-| **8.0 QA / DevOps** | ~84% | typecheck + smoke + Playwright E2E (10 tests) + E2E in CI |
+| **8.0 QA / DevOps** | ~86% | typecheck + smoke + Playwright E2E (10 tests) + E2E in CI; beta deploy checklist → [`deploy-beta.md`](deploy-beta.md) |
 | **9.0 Marketing** | ~90% | Landing, pricing, product, why, **blog index + `/blog/[slug]`**, about; responsive |
 | **UI (shadcn + responsive)** | ~98% | 32 routes; mobile-first pass — see `responsive-ui-plan.md` |
 
@@ -34,10 +34,12 @@
 | **R7** | Integrations | Gong Gemini, Slack delivery, CRM sync, Teams/GChat OAuth, triggers |
 | **R7.1** | Responsive UI | Mobile-first pass all routes — [`responsive-ui-plan.md`](responsive-ui-plan.md) |
 | **R8 batch 1** | Beta depth | Teams/GChat delivery, HubSpot write-back, `deal.closed`, call link UI, embed worker, blog slugs — [`r8-roadmap.md`](r8-roadmap.md) |
+| **R8 batch 2** | Agents + RAG API | Slack interactive approvals · per-agent webhook · `deal.created` · `POST /deals/:id/ask` · docs/E2E — [`r8-roadmap.md`](r8-roadmap.md) |
+| **R9** | Beta polish | In progress — [`r9-roadmap.md`](r9-roadmap.md) · status [`future/implementation-status.md`](future/implementation-status.md) |
 
-**Recent completions (R8 batch 1):** HubSpot PATCH on approval · `dispatchDealClosed` · manual call→deal link on `/calls/[id]` · `embed-artifact` queue · `/blog/[slug]` · [`trigger-event-catalog.md`](future/trigger-event-catalog.md) refresh.
+**Recent completions (R8):** Full R8 roadmap shipped (both batches). **R9 WS-10:** [`deploy-beta.md`](deploy-beta.md) + implementation status v1.3 refresh.
 
-**Next batch (R8 batch 2):** Slack approval buttons · per-agent webhooks · `deal.created` · deal RAG Q&A — see [`r8-roadmap.md`](r8-roadmap.md) and [`future/implementation-status.md`](future/implementation-status.md).
+**Next batch (R9 batch 1):** Slack approve polish · `dmUserId` · CRM `deal.stage_changed` · MEDDPICC chunk cites · Gong settings UI — see [`r9-roadmap.md`](r9-roadmap.md).
 
 **Playwright E2E (local):** With `pnpm dev` running (API :4000 + web :3000) and MongoDB up:
 
@@ -287,7 +289,7 @@ Uses `POST /api/v1/auth/dev-login` for auth (no Google OAuth). Tests live in `ap
 | 8.3 | E2E tests: pipeline + deal detail (Playwright) | 4 | 2.6, 3.13 | 🟡 5 tests (R5); expand + CI → R6 |
 | 8.4 | E2E: agent flow (post-call → approval) | 2 | 4.21, 4.17 | Agent E2E |
 | 8.5 | Load test: deals board (50 deals/stage) | 1 | 2.2 | Performance baseline |
-| 8.6 | Staging environment setup (MongoDB Atlas + Vercel web + API host) | 1 | 1.2 | Staging deploy |
+| 8.6 | Staging environment setup (MongoDB Atlas + Vercel web + API host) | 1 | 1.2 | Checklist: [`deploy-beta.md`](deploy-beta.md) |
 | 8.7 | Production deployment + DNS | 1 | 8.6 | Production URL |
 | 8.8 | Seed demo workspace for sales demos | 1 | 1.11 | Demo data |
 | 8.9 | Security review (tokens, RBAC, webhooks) | 2 | 5.x | Security checklist |

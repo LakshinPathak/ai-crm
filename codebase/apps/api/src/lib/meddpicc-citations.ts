@@ -6,6 +6,7 @@ type MeddpiccLetters = ReturnType<typeof buildDefaultMeddpicc>;
 
 type MeddpiccSection = MeddpiccLetters[keyof MeddpiccLetters] & {
   artifactId?: string;
+  chunkId?: string;
   excerpt?: string;
 };
 
@@ -33,6 +34,10 @@ export async function upsertMeddpiccCitations(params: {
 
       if (section.artifactId && Types.ObjectId.isValid(section.artifactId)) {
         update.artifactId = section.artifactId;
+      }
+
+      if (section.chunkId && Types.ObjectId.isValid(section.chunkId)) {
+        update.chunkId = section.chunkId;
       }
 
       await MeddpiccCitation.findOneAndUpdate(

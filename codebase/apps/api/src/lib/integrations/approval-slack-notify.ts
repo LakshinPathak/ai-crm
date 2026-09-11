@@ -40,14 +40,22 @@ export function buildApprovalSlackBlocks(
       elements: [
         {
           type: 'button',
-          text: { type: 'plain_text', text: 'Review & approve', emoji: true },
-          url: approvalReviewUrl(item.id),
+          text: { type: 'plain_text', text: 'Approve', emoji: true },
+          action_id: 'approve',
+          value: item.id,
           style: 'primary',
         },
         {
           type: 'button',
-          text: { type: 'plain_text', text: 'Open approvals', emoji: true },
-          url: `${webBaseUrl()}/approvals`,
+          text: { type: 'plain_text', text: 'Reject', emoji: true },
+          action_id: 'reject',
+          value: item.id,
+          style: 'danger',
+        },
+        {
+          type: 'button',
+          text: { type: 'plain_text', text: 'Open in app', emoji: true },
+          url: approvalReviewUrl(item.id),
         },
       ],
     });
@@ -83,9 +91,9 @@ async function resolveSlackChannelId(
   if (deliveryConfig?.provider !== 'slack') return null;
   if (deliveryConfig.channelId?.trim()) return deliveryConfig.channelId.trim();
 
-  const dmUserId = (deliveryConfig as DeliveryConfig & { dmUserId?: string }).dmUserId;
-  if (typeof dmUserId === 'string' && dmUserId.trim()) {
-    return openSlackDmChannel(workspaceId, dmUserId.trim());
+  const dmUserId = deliveryConfig.dmUserId?.trim();
+  if (dmUserId) {
+    return openSlackDmChannel(workspaceId, dmUserId);
   }
 
   return null;

@@ -200,8 +200,7 @@ async function deliverToGoogleChatSpace(
 }
 
 function readDmUserId(deliveryConfig: DeliveryConfig): string | undefined {
-  const raw = deliveryConfig as DeliveryConfig & { dmUserId?: string };
-  const dmUserId = raw.dmUserId;
+  const dmUserId = deliveryConfig.dmUserId;
   return typeof dmUserId === 'string' && dmUserId.trim() ? dmUserId.trim() : undefined;
 }
 
@@ -209,13 +208,13 @@ async function resolveSlackChannelId(
   workspaceId: string,
   deliveryConfig: DeliveryConfig,
 ): Promise<string | null> {
-  if (deliveryConfig.channelId?.trim()) {
-    return deliveryConfig.channelId.trim();
-  }
-
   const dmUserId = readDmUserId(deliveryConfig);
   if (dmUserId) {
     return openSlackDmChannel(workspaceId, dmUserId);
+  }
+
+  if (deliveryConfig.channelId?.trim()) {
+    return deliveryConfig.channelId.trim();
   }
 
   return null;

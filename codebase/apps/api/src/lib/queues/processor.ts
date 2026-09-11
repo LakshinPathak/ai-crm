@@ -11,6 +11,11 @@ import {
   processEmbedArtifact,
   type EmbedArtifactJobData,
 } from './embed-artifact.js';
+import {
+  GOOGLE_CALENDAR_SYNC_QUEUE,
+  processGoogleCalendarSync,
+  type GoogleCalendarSyncJobData,
+} from './google-calendar-sync.js';
 import { INGEST_CALL_QUEUE, processIngestCall, type IngestCallJobData } from './ingest-call.js';
 import { startQueuePoller } from './mongo-queue.js';
 import { startScheduledAgentTicker } from './scheduled-agents.js';
@@ -54,6 +59,14 @@ export function startBackgroundJobProcessors(): void {
     { concurrency: 2 },
   );
 
+  const stopGoogleCalendarSync = startQueuePoller(
+    GOOGLE_CALENDAR_SYNC_QUEUE,
+    async (payload) => {
+      await processGoogleCalendarSync(payload as GoogleCalendarSyncJobData);
+    },
+    { concurrency: 2 },
+  );
+
   const stopScheduled = startScheduledAgentTicker();
 
   stopPollers = () => {
@@ -61,12 +74,19 @@ export function startBackgroundJobProcessors(): void {
     stopIngest();
     stopCrmIncremental();
     stopEmbedArtifact();
+    stopGoogleCalendarSync();
     stopScheduled();
     stopPollers = null;
   };
 
   log('mongo-queue', 'background processors started', {
-    queues: [AGENT_RUNS_QUEUE, INGEST_CALL_QUEUE, CRM_INCREMENTAL_QUEUE, EMBED_ARTIFACT_QUEUE],
+    queues: [
+      AGENT_RUNS_QUEUE,
+      INGEST_CALL_QUEUE,
+      CRM_INCREMENTAL_QUEUE,
+      EMBED_ARTIFACT_QUEUE,
+      GOOGLE_CALENDAR_SYNC_QUEUE,
+    ],
   });
 }
 

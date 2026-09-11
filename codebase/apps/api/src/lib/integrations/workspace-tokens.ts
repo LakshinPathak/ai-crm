@@ -1,3 +1,4 @@
+import { refreshGoogleCalendarToken } from './google-calendar-oauth.js';
 import { refreshGoogleChatToken } from './google-chat-oauth.js';
 import { refreshGongToken } from './gong-oauth.js';
 import { refreshHubSpotToken } from './hubspot-oauth.js';
@@ -20,6 +21,8 @@ export async function resolveWorkspaceAccessToken(
       return refreshIfNeeded(workspaceId, providerKey, refreshTeamsToken);
     case 'google_chat':
       return refreshIfNeeded(workspaceId, providerKey, refreshGoogleChatToken);
+    case 'google_calendar':
+      return refreshIfNeeded(workspaceId, providerKey, refreshGoogleCalendarToken);
     default:
       return null;
   }

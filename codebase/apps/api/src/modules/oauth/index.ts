@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   handleCrmOAuthCallback,
   handleGongOAuthCallback,
+  handleGoogleCalendarOAuthCallback,
   handleGoogleChatOAuthCallback,
   handleSlackOAuthCallback,
   handleTeamsOAuthCallback,
@@ -27,4 +28,8 @@ oauthRouter.get('/callback/chat/google_chat', (req, res) => {
 
 oauthRouter.get('/callback/gong', (req, res) => {
   void handleGongOAuthCallback(req, res);
+});
+
+oauthRouter.get('/callback/calendar/google_calendar', (req, res) => {
+  void handleGoogleCalendarOAuthCallback(req, res);
 });

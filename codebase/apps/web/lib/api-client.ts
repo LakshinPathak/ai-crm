@@ -49,3 +49,44 @@ export function apiPatch<T>(path: string, token: string | null, body: unknown) {
 export function apiDelete<T>(path: string, token: string | null) {
   return request<T>(path, token, { method: 'DELETE' });
 }
+
+function filenameFromContentDisposition(header: string | null, fallback: string): string {
+  if (!header) return fallback;
+  const match = header.match(/filename="([^"]+)"/);
+  return match?.[1] ?? fallback;
+}
+
+async function requestDownload(
+  path: string,
+  fallbackFilename: string,
+  token: string | null,
+  retried = false,
+): Promise<void> {
+  const authToken = token ?? getToken();
+  const res = await fetch(`${API_BASE}/api/v1${path}`, {
+    credentials: 'include',
+    headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+  });
+
+  if (res.status === 401 && !retried) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      return requestDownload(path, fallbackFilename, newToken, true);
+    }
+    clearToken();
+  }
+
+  if (!res.ok) throw new ApiError(res.status, await res.text());
+
+  const blob = await res.blob();
+  const filename = filenameFromContentDisposition(res.headers.get('Content-Disposition'), fallbackFilename);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+export function apiDownload(path: string, fallbackFilename: string, token?: string | null) {
+  return requestDownload(path, fallbackFilename, token ?? getToken());
+}

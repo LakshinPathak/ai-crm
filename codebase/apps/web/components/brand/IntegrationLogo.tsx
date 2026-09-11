@@ -158,6 +158,7 @@ const PROVIDER_ALIASES: Record<string, IntegrationId> = {
   'microsoft-teams': 'teams',
   'ms-teams': 'teams',
   'google_chat': 'google-chat',
+  google_calendar: 'google-calendar',
   'google-calendar': 'google-calendar',
   'google-drive': 'google-drive',
 };

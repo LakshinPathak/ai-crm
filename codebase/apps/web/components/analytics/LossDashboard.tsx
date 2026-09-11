@@ -1,5 +1,10 @@
 'use client';
 
+import { useState } from 'react';
+import { Download } from 'lucide-react';
+import { apiDownload } from '@/lib/api-client';
+import { getToken } from '@/lib/auth';
+import { Button } from '@/components/ui/button';
 import {
   Bar,
   BarChart,
@@ -33,8 +38,24 @@ const OUTCOME_COLORS = { won: '#14b8a6', lost: '#ef4444' };
 const REASON_COLORS = ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#06b6d4', '#8b5cf6', '#94a3b8'];
 
 export function LossDashboard({ data }: { data: LossData }) {
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const closedCount = data.won.count + data.lost.count;
   const isEmpty = closedCount === 0;
+
+  async function exportCsv() {
+    const token = getToken();
+    if (!token) return;
+    setExportError(null);
+    setExporting(true);
+    try {
+      await apiDownload('/insights/loss/export', 'win-loss-export.csv', token);
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : 'Export failed');
+    } finally {
+      setExporting(false);
+    }
+  }
   const outcomeData = [
     { name: 'Won', count: data.won.count, value: data.won.value, color: OUTCOME_COLORS.won },
     { name: 'Lost', count: data.lost.count, value: data.lost.value, color: OUTCOME_COLORS.lost },
@@ -47,6 +68,13 @@ export function LossDashboard({ data }: { data: LossData }) {
 
   return (
     <div className="analytics-loss min-w-0 overflow-hidden">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        <Button size="sm" variant="secondary" onClick={exportCsv} disabled={exporting}>
+          <Download size={14} />
+          {exporting ? 'Exporting…' : 'Export CSV'}
+        </Button>
+        {exportError ? <p className="w-full text-right text-sm text-destructive">{exportError}</p> : null}
+      </div>
       <div className="analytics-kpi-row">
         <KpiCard label="Won deals" value={data.won.count} sub={formatMoney(data.won.value, true)} accent="green" />
         <KpiCard label="Lost deals" value={data.lost.count} sub={formatMoney(data.lost.value, true)} accent="blue" />

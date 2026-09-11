@@ -24,7 +24,29 @@ import { IntegrationLogo, IntegrationLogoOrFallback, resolveIntegrationId } from
 type Provider = { id: string; name: string; status: string; mode?: string };
 type CrmStatus = { connected: boolean; provider: string | null; lastSyncAt: string | null; mode?: string | null };
 type ChatStatus = { connected: boolean; provider: string; externalAccountId: string | null; lastSyncAt: string | null };
+type GongStatus = {
+  connected: boolean;
+  provider: string;
+  externalAccountId: string | null;
+  apiBaseUrl: string | null;
+};
+type PlatformIntegration = { id: string; name: string; category: string; status: string };
+type CalendarStatus = {
+  connected: boolean;
+  provider: string;
+  externalAccountId: string | null;
+  lastSyncAt: string | null;
+  mode?: string | null;
+};
 type SyncResult = { imported: { companies: number; deals: number; notes: number; tasks?: number; skipped?: number }; mode?: string };
+
+const CALENDAR_UI_ID = 'google-calendar';
+const CALENDAR_API_PROVIDER = 'google_calendar';
+
+const STATIC_RECORDING_PROVIDERS: Provider[] = [
+  { id: 'zoom', name: 'Zoom', status: 'warning' },
+  { id: 'chorus', name: 'Chorus', status: 'coming_soon' },
+];
 
 const CHAT_PROVIDER_IDS = ['slack', 'teams', 'google_chat'] as const;
 type ChatProviderId = (typeof CHAT_PROVIDER_IDS)[number];
@@ -86,7 +108,9 @@ function IntegrationSection({
               <CardContent>
                 <CardDescription>
                   {p.status === 'available' || p.status === 'enabled'
-                    ? `Connect ${p.name} to receive agent notifications and deal updates.`
+                    ? p.id === CALENDAR_UI_ID
+                      ? `Connect ${p.name} to sync meetings onto linked deals.`
+                      : `Connect ${p.name} to receive agent notifications and deal updates.`
                     : p.status === 'needs_config'
                       ? `${p.name} OAuth is not configured on the server yet.`
                     : p.status === 'coming_soon'
@@ -143,7 +167,12 @@ export default function IntegrationsPage() {
   const [status, setStatus] = useState<CrmStatus | null>(null);
   const [chatProviders, setChatProviders] = useState<Provider[]>([]);
   const [chatStatus, setChatStatus] = useState<Record<string, ChatStatus>>({});
+  const [recordingProviders, setRecordingProviders] = useState<Provider[]>([]);
+  const [gongStatus, setGongStatus] = useState<GongStatus | null>(null);
+  const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(null);
+  const [calendarProviders, setCalendarProviders] = useState<Provider[]>([]);
   const [syncing, setSyncing] = useState(false);
+  const [calendarSyncing, setCalendarSyncing] = useState(false);
 
   function load() {
     const token = getToken();
@@ -153,7 +182,15 @@ export default function IntegrationsPage() {
       apiGet<CrmStatus>('/integrations/crm/status', token),
       apiGet<{ providers: Provider[] }>('/integrations/chat/providers', token),
       ...CHAT_PROVIDER_IDS.map((id) => apiGet<ChatStatus>(`/integrations/chat/${id}/status`, token)),
-    ]).then(([p, s, chat, ...chatStatuses]) => {
+      apiGet<{ integrations: PlatformIntegration[] }>('/integrations/providers', token),
+      apiGet<GongStatus>('/integrations/gong/status', token),
+      apiGet<CalendarStatus>(`/integrations/calendar/${CALENDAR_API_PROVIDER}/status`, token),
+    ]).then(([p, s, chat, ...rest]) => {
+      const chatStatuses = rest.slice(0, CHAT_PROVIDER_IDS.length) as ChatStatus[];
+      const platform = rest[CHAT_PROVIDER_IDS.length] as { integrations: PlatformIntegration[] };
+      const gong = rest[CHAT_PROVIDER_IDS.length + 1] as GongStatus;
+      const calStatus = rest[CHAT_PROVIDER_IDS.length + 2] as CalendarStatus;
+
       setProviders(p.providers);
       setStatus(s);
       setChatProviders(
@@ -165,6 +202,29 @@ export default function IntegrationsPage() {
       setChatStatus(
         Object.fromEntries(CHAT_PROVIDER_IDS.map((id, index) => [id, chatStatuses[index]])),
       );
+
+      const gongMeta = platform.integrations.find((i) => i.id === 'gong');
+      const gongProvider: Provider = {
+        id: 'gong',
+        name: gongMeta?.name ?? 'Gong',
+        status: gongMeta
+          ? gongMeta.status === 'available'
+            ? 'enabled'
+            : gongMeta.status
+          : 'enabled',
+      };
+      setRecordingProviders([gongProvider, ...STATIC_RECORDING_PROVIDERS]);
+      setGongStatus(gong);
+
+      const calMeta = platform.integrations.find((i) => i.id === CALENDAR_API_PROVIDER);
+      const calCardStatus =
+        calMeta?.status === 'available'
+          ? 'enabled'
+          : calMeta?.status === 'needs_config'
+            ? 'needs_config'
+            : 'coming_soon';
+      setCalendarProviders([{ id: CALENDAR_UI_ID, name: 'Google Calendar', status: calCardStatus }]);
+      setCalendarStatus(calStatus);
     });
   }
 
@@ -222,6 +282,88 @@ export default function IntegrationsPage() {
     }
   }
 
+  async function connectRecording(providerId: string) {
+    if (providerId !== 'gong') return;
+    const token = getToken();
+    if (!token) return;
+    try {
+      const result = await apiPost<{ authUrl?: string }>('/integrations/gong/connect', token, {});
+      if (result.authUrl) {
+        window.location.href = result.authUrl;
+        return;
+      }
+      load();
+      toast('Gong connected', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Connect failed', 'error');
+    }
+  }
+
+  async function disconnectRecording(providerId: string) {
+    if (providerId !== 'gong') return;
+    const token = getToken();
+    if (!token) return;
+    try {
+      await apiDelete('/integrations/gong', token);
+      load();
+      toast('Disconnected', 'info');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Disconnect failed', 'error');
+    }
+  }
+
+  async function connectCalendar(providerId: string) {
+    if (providerId !== CALENDAR_UI_ID) {
+      toast('Coming soon', 'info');
+      return;
+    }
+    const token = getToken();
+    if (!token) return;
+    try {
+      const result = await apiPost<{ authUrl?: string }>(
+        `/integrations/calendar/${CALENDAR_API_PROVIDER}/connect`,
+        token,
+        {},
+      );
+      if (result.authUrl) {
+        window.location.href = result.authUrl;
+        return;
+      }
+      load();
+      toast('Google Calendar connected', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Connect failed', 'error');
+    }
+  }
+
+  async function disconnectCalendar(providerId: string) {
+    if (providerId !== CALENDAR_UI_ID) return;
+    const token = getToken();
+    if (!token) return;
+    try {
+      await apiDelete(`/integrations/calendar/${CALENDAR_API_PROVIDER}`, token);
+      load();
+      toast('Disconnected', 'info');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Disconnect failed', 'error');
+    }
+  }
+
+  async function syncCalendar() {
+    const token = getToken();
+    if (!token) return;
+    setCalendarSyncing(true);
+    try {
+      await apiPost(`/integrations/calendar/${CALENDAR_API_PROVIDER}/sync`, token, {});
+      load();
+      toast('Calendar sync queued (demo — check API logs)', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Calendar sync failed', 'error');
+    } finally {
+      setCalendarSyncing(false);
+    }
+  }
+
   async function sync() {
     const token = getToken();
     if (!token) return;
@@ -250,15 +392,20 @@ export default function IntegrationsPage() {
           name: CHAT_PROVIDER_LABELS[id],
           status: 'enabled',
         }));
-  const recording: Provider[] = [
-    { id: 'gong', name: 'Gong', status: 'coming_soon' },
-    { id: 'zoom', name: 'Zoom', status: 'warning' },
-    { id: 'chorus', name: 'Chorus', status: 'coming_soon' },
-  ];
-  const calendar: Provider[] = [
-    { id: 'google-calendar', name: 'Google Calendar', status: 'coming_soon' },
-    { id: 'outlook', name: 'Outlook', status: 'coming_soon' },
-  ];
+  const recording: Provider[] =
+    recordingProviders.length > 0
+      ? recordingProviders
+      : [{ id: 'gong', name: 'Gong', status: 'enabled' }, ...STATIC_RECORDING_PROVIDERS];
+  const calendar: Provider[] =
+    calendarProviders.length > 0
+      ? [
+          ...calendarProviders,
+          { id: 'outlook', name: 'Outlook', status: 'coming_soon' },
+        ]
+      : [
+          { id: CALENDAR_UI_ID, name: 'Google Calendar', status: 'coming_soon' },
+          { id: 'outlook', name: 'Outlook', status: 'coming_soon' },
+        ];
   const platform: Provider[] = [
     { id: 'jira', name: 'Jira', status: 'coming_soon' },
     { id: 'linear', name: 'Linear', status: 'coming_soon' },
@@ -305,8 +452,45 @@ export default function IntegrationsPage() {
         onConnect={connectChat}
         onDisconnect={disconnectChat}
       />
-      <IntegrationSection title="Call recording" providers={recording} onConnect={() => toast('Coming soon', 'info')} />
-      <IntegrationSection title="Calendar" providers={calendar} onConnect={() => toast('Coming soon', 'info')} />
+      <IntegrationSection
+        title="Call recording"
+        providers={recording}
+        connectedProvider={gongStatus?.connected ? 'gong' : null}
+        onConnect={connectRecording}
+        onDisconnect={disconnectRecording}
+      />
+
+      {calendarStatus?.connected && (
+        <Card className="mb-6">
+          <CardContent className="flex flex-wrap items-center gap-3 py-4">
+            <Badge variant="default">Connected</Badge>
+            <IntegrationLogo id="google-calendar" size={28} />
+            <strong className="min-w-0">Google Calendar</strong>
+            {calendarStatus.mode === 'demo' && <Badge variant="outline">Demo ingest</Badge>}
+            {calendarStatus.lastSyncAt && (
+              <span className="text-sm text-muted-foreground">
+                Last sync {new Date(calendarStatus.lastSyncAt).toLocaleString()}
+              </span>
+            )}
+            <Button
+              size="sm"
+              onClick={syncCalendar}
+              disabled={calendarSyncing}
+              className="w-full sm:ml-auto sm:w-auto"
+            >
+              {calendarSyncing ? 'Syncing…' : 'Sync calendar'}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      <IntegrationSection
+        title="Calendar"
+        providers={calendar}
+        connectedProvider={calendarStatus?.connected ? CALENDAR_UI_ID : null}
+        onConnect={connectCalendar}
+        onDisconnect={disconnectCalendar}
+      />
       <IntegrationSection title="Platform" providers={platform} onConnect={() => toast('Coming soon', 'info')} />
     </div>
   );

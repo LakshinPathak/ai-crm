@@ -15,6 +15,11 @@ import {
 } from '../../lib/integrations/hubspot-oauth.js';
 import { saveTokens } from '../../lib/integrations/tokens.js';
 import {
+  buildGoogleCalendarAuthUrl,
+  exchangeGoogleCalendarCode,
+  googleCalendarOAuthConfigured,
+} from '../../lib/integrations/google-calendar-oauth.js';
+import {
   buildGoogleChatAuthUrl,
   exchangeGoogleChatCode,
   googleChatOAuthConfigured,
@@ -29,6 +34,7 @@ import {
   exchangeTeamsCode,
   teamsOAuthConfigured,
 } from '../../lib/integrations/teams-oauth.js';
+import { enqueueGoogleCalendarSync } from '../../lib/queues/google-calendar-sync.js';
 import { log } from '../../lib/logger.js';
 
 export function startCrmOAuth(
@@ -99,6 +105,23 @@ export function startGongOAuth(res: Response, workspaceId: string, userId: strin
     kind: 'gong',
   });
   return buildGongAuthUrl(state);
+}
+
+export function startGoogleCalendarOAuth(
+  res: Response,
+  workspaceId: string,
+  userId: string,
+): string | null {
+  if (!googleCalendarOAuthConfigured()) {
+    return null;
+  }
+  const state = issueIntegrationOAuthContext(res, {
+    workspaceId,
+    userId,
+    provider: 'google_calendar',
+    kind: 'calendar',
+  });
+  return buildGoogleCalendarAuthUrl(state);
 }
 
 export async function handleCrmOAuthCallback(req: Request, res: Response): Promise<void> {
@@ -223,6 +246,57 @@ export async function handleTeamsOAuthCallback(req: Request, res: Response): Pro
 
 export async function handleGoogleChatOAuthCallback(req: Request, res: Response): Promise<void> {
   await handleChatOAuthCallback(req, res, 'google_chat');
+}
+
+export async function handleGoogleCalendarOAuthCallback(req: Request, res: Response): Promise<void> {
+  const code = typeof req.query.code === 'string' ? req.query.code : undefined;
+  const state = typeof req.query.state === 'string' ? req.query.state : undefined;
+  const oauthError = typeof req.query.error === 'string' ? req.query.error : undefined;
+
+  if (oauthError || !code || !state) {
+    res.redirect(integrationOAuthRedirectUrl(false, 'google_calendar'));
+    return;
+  }
+
+  const ctx = consumeIntegrationOAuthContext(res, req.headers.cookie, state);
+  if (!ctx || ctx.kind !== 'calendar' || ctx.provider !== 'google_calendar') {
+    res.redirect(integrationOAuthRedirectUrl(false, 'google_calendar'));
+    return;
+  }
+
+  try {
+    const tokens = await exchangeGoogleCalendarCode(code);
+    const conn = await IntegrationConnection.findOneAndUpdate(
+      { workspaceId: ctx.workspaceId, providerKey: 'google_calendar' },
+      {
+        status: 'connected',
+        externalAccountId: tokens.externalAccountId ?? 'google-calendar',
+        settings: { mode: 'demo', provider: 'google_calendar' },
+      },
+      { upsert: true, new: true },
+    );
+    await saveTokens(ctx.workspaceId, 'google_calendar', {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresAt: tokens.expiresAt,
+    });
+    if (conn) {
+      void enqueueGoogleCalendarSync({
+        workspaceId: ctx.workspaceId,
+        connectionId: String(conn._id),
+      }).catch((err) => {
+        log('oauth', 'google_calendar initial sync enqueue failed', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
+    }
+    res.redirect(integrationOAuthRedirectUrl(true, 'google_calendar'));
+  } catch (err) {
+    log('oauth', 'google_calendar callback failed', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    res.redirect(integrationOAuthRedirectUrl(false, 'google_calendar'));
+  }
 }
 
 export async function handleGongOAuthCallback(req: Request, res: Response): Promise<void> {

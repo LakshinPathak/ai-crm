@@ -43,6 +43,7 @@ type WizardState = {
   deliveryProvider: DeliveryProvider;
   deliveryMode: DeliveryMode;
   deliveryChannelId: string;
+  deliveryDmUserId: string;
   systemPrompt: string;
   tools: string[];
   skills: string[];
@@ -150,6 +151,7 @@ export default function NewAgentPage() {
     deliveryProvider: 'slack',
     deliveryMode: 'dm',
     deliveryChannelId: '',
+    deliveryDmUserId: '',
     systemPrompt: '',
     tools: [],
     skills: [],
@@ -196,6 +198,7 @@ export default function NewAgentPage() {
           : 'slack',
       deliveryMode: delivery?.mode === 'channel' ? 'channel' : 'dm',
       deliveryChannelId: typeof delivery?.channelId === 'string' ? delivery.channelId : '',
+      deliveryDmUserId: typeof delivery?.dmUserId === 'string' ? delivery.dmUserId : '',
       systemPrompt: typeof toolsCfg.systemPrompt === 'string' ? toolsCfg.systemPrompt : '',
       tools: Array.isArray(toolsCfg.tools) ? (toolsCfg.tools as string[]) : [],
       skills: Array.isArray(toolsCfg.skills) ? (toolsCfg.skills as string[]) : [],
@@ -242,8 +245,11 @@ export default function NewAgentPage() {
         provider: form.deliveryProvider,
         mode: form.deliveryMode,
       };
-      if (form.deliveryChannelId.trim()) {
+      if (form.deliveryMode === 'channel' && form.deliveryChannelId.trim()) {
         deliveryConfig.channelId = form.deliveryChannelId.trim();
+      }
+      if (form.deliveryMode === 'dm' && form.deliveryDmUserId.trim()) {
+        deliveryConfig.dmUserId = form.deliveryDmUserId.trim();
       }
       config.deliveryConfig = deliveryConfig;
     } else {
@@ -632,6 +638,20 @@ export default function NewAgentPage() {
                           </SelectContent>
                         </Select>
                       </div>
+                      {form.deliveryMode === 'dm' && form.deliveryProvider === 'slack' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="delivery-dm-user-id">Slack user ID</Label>
+                          <Input
+                            id="delivery-dm-user-id"
+                            value={form.deliveryDmUserId}
+                            onChange={(e) => setForm((p) => ({ ...p, deliveryDmUserId: e.target.value }))}
+                            placeholder="e.g. U0123456789"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Member ID from Slack profile — used to open a DM for agent output.
+                          </p>
+                        </div>
+                      )}
                       {form.deliveryMode === 'channel' && (
                         <div className="space-y-2">
                           <Label htmlFor="delivery-channel-id">Channel ID (optional)</Label>
@@ -744,7 +764,13 @@ export default function NewAgentPage() {
                   <p className="font-medium">Chat delivery</p>
                   <p className="text-muted-foreground">
                     {form.deliverEnabled
-                      ? `${form.deliveryProvider.replace('_', ' ')} — ${form.deliveryMode}${form.deliveryChannelId ? ` (${form.deliveryChannelId})` : ''}`
+                      ? `${form.deliveryProvider.replace('_', ' ')} — ${form.deliveryMode}${
+                          form.deliveryMode === 'channel' && form.deliveryChannelId
+                            ? ` (${form.deliveryChannelId})`
+                            : form.deliveryMode === 'dm' && form.deliveryDmUserId
+                              ? ` (user ${form.deliveryDmUserId})`
+                              : ''
+                        }`
                       : 'Disabled'}
                   </p>
                 </div>

@@ -4,7 +4,7 @@ import type { Response } from 'express';
 const COOKIE = 'ai_crm_oauth_ctx';
 const MAX_AGE_MS = 10 * 60 * 1000;
 
-export type IntegrationOAuthKind = 'crm' | 'chat' | 'gong';
+export type IntegrationOAuthKind = 'crm' | 'chat' | 'gong' | 'calendar';
 
 export type IntegrationOAuthContext = {
   state: string;

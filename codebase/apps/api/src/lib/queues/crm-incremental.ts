@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { BackgroundJob, Deal, ExternalRecord, IntegrationConnection } from '@ai-crm/db';
 import type { HubSpotEvent } from '../../modules/webhooks/hubspot-events.js';
-import { dispatchDealCreated } from '../agent-events.js';
+import { dispatchDealCreated, dispatchDealStageChanged } from '../agent-events.js';
 import { log } from '../logger.js';
 import { enqueueJob } from './mongo-queue.js';
 
@@ -225,6 +225,7 @@ export async function processCrmIncremental(data: CrmIncrementalJobData): Promis
   const patch: Record<string, unknown> = { lastActivityAt: new Date() };
   const propertyName = event.propertyName;
   const propertyValue = event.propertyValue;
+  let stageChange: { fromStageId: string; toStageId: string } | null = null;
 
   if (propertyName === 'dealstage' && propertyValue) {
     const internalStageId = resolveStageId(propertyValue, stageMappings);
@@ -235,6 +236,10 @@ export async function processCrmIncremental(data: CrmIncrementalJobData): Promis
         stageExternalId: propertyValue,
       });
       return;
+    }
+    const fromStageId = deal.stageId.toString();
+    if (fromStageId !== internalStageId) {
+      stageChange = { fromStageId, toStageId: internalStageId };
     }
     patch.stageId = internalStageId;
   } else if (propertyName === 'amount' && propertyValue != null) {
@@ -259,6 +264,15 @@ export async function processCrmIncremental(data: CrmIncrementalJobData): Promis
   }
 
   await Deal.findByIdAndUpdate(deal._id, { $set: patch });
+
+  if (stageChange) {
+    void dispatchDealStageChanged({
+      workspaceId,
+      dealId: deal.id,
+      fromStageId: stageChange.fromStageId,
+      toStageId: stageChange.toStageId,
+    });
+  }
 
   await upsertExternalRecord(workspaceId, providerKey, externalId, deal.id, {
     lastEvent: {

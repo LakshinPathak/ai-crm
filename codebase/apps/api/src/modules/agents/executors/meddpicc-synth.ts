@@ -1,6 +1,10 @@
 import { Company, Deal, DealMeddpicc, Note } from '@ai-crm/db';
 import { generateMeddpiccWithGemini } from '../../../lib/gemini.js';
 import { buildDefaultMeddpicc, MEDDPICC_LETTERS } from '../../../lib/meddpicc-defaults.js';
+import {
+  attachChunkCitationsToLetters,
+  fetchMeddpiccArtifactChunksByLetter,
+} from '../../../lib/meddpicc-artifact-citations.js';
 import { upsertMeddpiccCitations } from '../../../lib/meddpicc-citations.js';
 import type { AgentRunContext, AgentRunResult } from '../executor.js';
 
@@ -66,12 +70,13 @@ export async function runMeddpiccSynth(ctx: AgentRunContext): Promise<AgentRunRe
     };
   }
 
-  const [company, notes, existingDoc] = await Promise.all([
+  const [company, notes, existingDoc, artifactChunksByLetter] = await Promise.all([
     Company.findById(deal.companyId),
     Note.find({ dealId: deal._id, workspaceId: ctx.workspaceId })
       .sort({ createdAt: -1 })
       .limit(5),
     DealMeddpicc.findOne({ dealId: deal._id, workspaceId: ctx.workspaceId }),
+    fetchMeddpiccArtifactChunksByLetter(ctx.workspaceId, ctx.dealId),
   ]);
 
   const context = {
@@ -81,13 +86,15 @@ export async function runMeddpiccSynth(ctx: AgentRunContext): Promise<AgentRunRe
     winProbability: deal.winProbability,
     sentiment: deal.sentiment,
     noteSnippets: notes.map((n) => n.body),
+    artifactChunksByLetter,
   };
 
   const rawLetters = useGemini
     ? await generateMeddpiccWithGemini(context)
     : buildDefaultMeddpicc(deal.title);
 
-  const { letters, sectionsUpdated } = mergeLetters(rawLetters, existingDoc);
+  const citedLetters = attachChunkCitationsToLetters(rawLetters, artifactChunksByLetter);
+  const { letters, sectionsUpdated } = mergeLetters(citedLetters, existingDoc);
 
   const confidences = MEDDPICC_LETTERS.map((l) => letters[l]?.confidence ?? 0);
   const overallConfidence = confidences.reduce((a, b) => a + b, 0) / confidences.length;

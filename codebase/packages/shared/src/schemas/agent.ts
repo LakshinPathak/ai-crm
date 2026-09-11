@@ -21,6 +21,7 @@ export const DeliveryConfigSchema = z.object({
   provider: z.enum(['slack', 'google_chat', 'teams']).optional(),
   mode: z.enum(['dm', 'channel', 'deal_channel']).optional(),
   channelId: z.string().max(200).optional(),
+  dmUserId: z.string().max(200).optional(),
   mentionUser: z.boolean().optional(),
   includeApproveButtons: z.boolean().optional(),
 });

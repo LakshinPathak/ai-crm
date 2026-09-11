@@ -248,9 +248,21 @@ export async function getFunnelInsights(req: AuthedRequest, res: Response) {
 
 type OutcomeAggRow = { _id: string; count: number; value: number };
 
-export async function getLossInsights(req: AuthedRequest, res: Response) {
-  const workspaceId = new Types.ObjectId(req.tenant!.workspaceId);
+export type LossInsightsPayload = {
+  won: { count: number; value: number };
+  lost: { count: number; value: number };
+  winRate: number;
+  totalLost: number;
+  totalLostValue: number;
+  reasons: Array<{
+    reason: string;
+    count: number;
+    value: number;
+    percent: number;
+  }>;
+};
 
+async function loadLossInsights(workspaceId: Types.ObjectId): Promise<LossInsightsPayload> {
   const [outcomeAgg, reasonAgg] = await Promise.all([
     Deal.aggregate<OutcomeAggRow>([
       { $match: { workspaceId, deletedAt: null, status: { $in: ['won', 'lost'] } } },
@@ -296,14 +308,57 @@ export async function getLossInsights(req: AuthedRequest, res: Response) {
     }))
     .sort((a, b) => b.count - a.count);
 
-  res.json({
+  return {
     won: { count: won.count, value: won.value },
     lost: { count: lost.count, value: lost.value },
     winRate,
     totalLost: lost.count,
     totalLostValue: lost.value,
     reasons,
-  });
+  };
+}
+
+function csvCell(value: string | number): string {
+  const s = String(value);
+  if (/[",\n\r]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
+function lossInsightsToCsv(data: LossInsightsPayload): string {
+  const lines: string[] = [
+    'section,metric,value',
+    `summary,won_deals,${data.won.count}`,
+    `summary,won_value,${data.won.value}`,
+    `summary,lost_deals,${data.lost.count}`,
+    `summary,lost_value,${data.lost.value}`,
+    `summary,win_rate_percent,${data.winRate}`,
+    `summary,total_lost_deals,${data.totalLost}`,
+    `summary,total_lost_value,${data.totalLostValue}`,
+    '',
+    'loss_reason,deals,value,percent_of_losses',
+    ...data.reasons.map((row) =>
+      [csvCell(row.reason), row.count, row.value, row.percent].join(','),
+    ),
+  ];
+  return `${lines.join('\n')}\n`;
+}
+
+export async function getLossInsights(req: AuthedRequest, res: Response) {
+  const workspaceId = new Types.ObjectId(req.tenant!.workspaceId);
+  const payload = await loadLossInsights(workspaceId);
+  res.json(payload);
+}
+
+export async function exportLossInsights(req: AuthedRequest, res: Response) {
+  const workspaceId = new Types.ObjectId(req.tenant!.workspaceId);
+  const payload = await loadLossInsights(workspaceId);
+  const csv = lossInsightsToCsv(payload);
+  const date = new Date().toISOString().slice(0, 10);
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="win-loss-export-${date}.csv"`);
+  res.send(csv);
 }
 
 export async function getActivityAnalytics(req: AuthedRequest, res: Response) {

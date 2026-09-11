@@ -4,6 +4,10 @@ import type { AuthedRequest } from '../../lib/auth/index.js';
 import { Company, Deal, DealMeddpicc, MeddpiccCitation, Note } from '@ai-crm/db';
 import { generateMeddpiccWithGemini } from '../../lib/gemini.js';
 import { buildDefaultMeddpicc, MEDDPICC_LETTERS } from '../../lib/meddpicc-defaults.js';
+import {
+  attachChunkCitationsToLetters,
+  fetchMeddpiccArtifactChunksByLetter,
+} from '../../lib/meddpicc-artifact-citations.js';
 import { upsertMeddpiccCitations } from '../../lib/meddpicc-citations.js';
 
 const MEDDPICC_STEP_META: Record<string, { label: string; loadingMessage: string }> = {
@@ -115,11 +119,12 @@ export async function streamMeddpicc(req: AuthedRequest, res: Response) {
   });
 
   try {
-    const [company, notes] = await Promise.all([
+    const [company, notes, artifactChunksByLetter] = await Promise.all([
       Company.findById(deal.companyId),
       Note.find({ dealId: deal._id, workspaceId })
         .sort({ createdAt: -1 })
         .limit(5),
+      fetchMeddpiccArtifactChunksByLetter(workspaceId, dealId),
     ]);
 
     for (let i = 0; i < MEDDPICC_LETTERS.length; i++) {
@@ -139,17 +144,22 @@ export async function streamMeddpicc(req: AuthedRequest, res: Response) {
       winProbability: deal.winProbability,
       sentiment: deal.sentiment,
       noteSnippets: notes.map((n) => n.body),
+      artifactChunksByLetter,
     };
 
     let letters: ReturnType<typeof buildDefaultMeddpicc>;
     if (useGemini) {
       letters = await generateMeddpiccWithGemini(context);
+      letters = attachChunkCitationsToLetters(letters, artifactChunksByLetter);
       if (closed) return;
       for (const letter of MEDDPICC_LETTERS) {
         writeSse(res, 'section.completed', { letter, section: letters[letter] });
       }
     } else {
-      letters = buildDefaultMeddpicc(deal.title);
+      letters = attachChunkCitationsToLetters(
+        buildDefaultMeddpicc(deal.title),
+        artifactChunksByLetter,
+      );
       for (let i = 0; i < MEDDPICC_LETTERS.length; i++) {
         if (closed) return;
         const letter = MEDDPICC_LETTERS[i];
