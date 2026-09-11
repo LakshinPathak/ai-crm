@@ -49,6 +49,50 @@ export async function dispatchActivityIngested(payload: {
   });
 }
 
+/** Fire agents subscribed to deal.created (CRM sync, manual create, etc.). */
+export async function dispatchDealCreated(payload: {
+  workspaceId: string;
+  dealId: string;
+}): Promise<void> {
+  const agents = await Agent.find({
+    workspaceId: payload.workspaceId,
+    isActive: true,
+    'triggerConfig.type': 'event',
+    'triggerConfig.event': 'deal.created',
+  });
+
+  if (agents.length === 0) return;
+
+  for (const agent of agents) {
+    if (!agent.ownerId || !agent.templateSlug) continue;
+
+    const run = await AgentRun.create({
+      workspaceId: agent.workspaceId,
+      agentId: agent._id,
+      status: 'running',
+      triggerType: 'event',
+      dealId: payload.dealId,
+      startedAt: new Date(),
+      scope: {},
+    });
+
+    enqueueAgentRun({
+      runId: run.id,
+      workspaceId: payload.workspaceId,
+      userId: agent.ownerId.toString(),
+      agentId: agent.id,
+      templateSlug: agent.templateSlug,
+      dealId: payload.dealId,
+    });
+  }
+
+  log('agent-events', 'deal.created dispatched', {
+    workspaceId: payload.workspaceId,
+    agentCount: agents.length,
+    dealId: payload.dealId,
+  });
+}
+
 /** Fire agents subscribed to deal.stage_changed (POC kickoff, stage automations, etc.). */
 export async function dispatchDealStageChanged(payload: {
   workspaceId: string;

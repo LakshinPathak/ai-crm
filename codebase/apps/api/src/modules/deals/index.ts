@@ -32,6 +32,7 @@ import { createDealFile, deleteDealFile, listDealFiles } from './handlers-files.
 import { listDealEvents } from './handlers-events.js';
 import { createDealProject, listDealProjects } from './handlers-projects.js';
 import { createDealTeamRequest, listDealTeamRequests } from './handlers-team-requests.js';
+import { askDeal } from './handlers-ask.js';
 
 export const dealsRouter = Router();
 
@@ -54,6 +55,7 @@ dealsRouter.delete('/:dealId/files/:fileId', deleteDealFile);
 dealsRouter.post('/:dealId/participants', createDealParticipant);
 dealsRouter.get('/:dealId/team-requests', listDealTeamRequests);
 dealsRouter.post('/:dealId/team-requests', createDealTeamRequest);
+dealsRouter.post('/:dealId/ask', askDeal);
 dealsRouter.get('/:dealId/blockers', getDealBlockers);
 dealsRouter.get('/:dealId/notes', getDealNotes);
 dealsRouter.get('/:dealId/tasks', getDealTasks);

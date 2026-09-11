@@ -1,11 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { apiGet } from '@/lib/api-client';
+import { apiGet, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { sentimentLabel } from '@/lib/format';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/Toast';
 
 type DealHeaderInsights = {
   winProbability: number;
@@ -47,6 +49,8 @@ function isDealInsightsSummary(data: InsightsSummaryResponse): data is DealInsig
   );
 }
 
+type DealAskCitation = { chunkId: string; excerpt: string };
+
 export function InsightsTab({
   dealId,
   header,
@@ -54,8 +58,13 @@ export function InsightsTab({
   dealId: string;
   header: DealHeaderInsights;
 }) {
+  const { toast } = useToast();
   const [insights, setInsights] = useState<DealInsights | null>(null);
   const [loading, setLoading] = useState(true);
+  const [question, setQuestion] = useState('');
+  const [askLoading, setAskLoading] = useState(false);
+  const [askAnswer, setAskAnswer] = useState<string | null>(null);
+  const [askCitations, setAskCitations] = useState<DealAskCitation[]>([]);
 
   const load = useCallback(async () => {
     const token = getToken();
@@ -94,6 +103,28 @@ export function InsightsTab({
   useEffect(() => {
     load().finally(() => setLoading(false));
   }, [load]);
+
+  async function submitAsk() {
+    const trimmed = question.trim();
+    if (!trimmed) return;
+    const token = getToken();
+    if (!token) return;
+
+    setAskLoading(true);
+    try {
+      const res = await apiPost<{ answer: string; citations: DealAskCitation[] }>(
+        `/deals/${dealId}/ask`,
+        token,
+        { question: trimmed },
+      );
+      setAskAnswer(res.answer);
+      setAskCitations(res.citations ?? []);
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Ask failed', 'error');
+    } finally {
+      setAskLoading(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -180,6 +211,50 @@ export function InsightsTab({
             </div>
           )}
         </div>
+      </Card>
+
+      <Card style={{ marginTop: 16 }}>
+        <h4 style={{ margin: '0 0 0.75rem', fontSize: '0.8125rem', fontWeight: 700 }}>
+          Ask about this deal
+        </h4>
+        <textarea
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          placeholder="e.g. What objections came up on recent calls?"
+          rows={3}
+          style={{
+            width: '100%',
+            resize: 'vertical',
+            fontSize: '0.8125rem',
+            padding: '0.5rem 0.625rem',
+            borderRadius: 6,
+            border: '1px solid var(--border)',
+            background: 'var(--background)',
+            color: 'inherit',
+            boxSizing: 'border-box',
+          }}
+        />
+        <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button size="sm" onClick={submitAsk} disabled={askLoading || !question.trim()}>
+            {askLoading ? 'Asking…' : 'Ask'}
+          </Button>
+        </div>
+        {askAnswer && (
+          <div style={{ marginTop: 12 }}>
+            <p style={{ margin: '0 0 0.5rem', fontSize: '0.8125rem', lineHeight: 1.6 }}>{askAnswer}</p>
+            {askCitations.length > 0 && (
+              <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.75rem', color: 'var(--muted)' }}>
+                {askCitations.map((c) => (
+                  <li key={c.chunkId} style={{ marginBottom: 4 }}>
+                    <span style={{ fontFamily: 'monospace', fontSize: '0.7rem' }}>{c.chunkId}</span>
+                    {' — '}
+                    {c.excerpt}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </Card>
     </>
   );

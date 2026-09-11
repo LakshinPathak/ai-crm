@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Date:** 2026-09-11  
-**Status:** Batch 1 shipped · Batch 2 in flight  
+**Status:** Batch 1–2 shipped  
 **Parent:** [`future/implementation-status.md`](future/implementation-status.md) · [`wbs.md`](wbs.md)
 
 ---

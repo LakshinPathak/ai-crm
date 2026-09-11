@@ -96,3 +96,7 @@ export const OnboardingStepSchema = z.object({
   step: z.number().int().min(1).max(5),
   selectedProvider: z.string().optional(),
 });
+
+export const DealAskSchema = z.object({
+  question: z.string().min(1).max(2000),
+});

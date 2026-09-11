@@ -20,6 +20,7 @@ webhooksRouter.get('/_stub', (_req, res) => {
       'POST /hubspot (raw body, v3 signature)',
       'POST /crm/:connectionId (raw body, X-CRM-Signature HMAC)',
       'POST /gong/:connectionId (raw body, X-Gong-Signature HMAC)',
+      'POST /slack/interactions (raw body, X-Slack-Signature HMAC)',
     ],
   });
 });

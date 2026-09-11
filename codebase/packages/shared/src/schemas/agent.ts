@@ -25,6 +25,10 @@ export const DeliveryConfigSchema = z.object({
   includeApproveButtons: z.boolean().optional(),
 });
 
+export const AgentSettingsSchema = z.object({
+  webhookSecret: z.string().max(200).optional(),
+});
+
 export const AgentConfigSchema = z.object({
   triggerConfig: TriggerConfigSchema.optional(),
   toolsConfig: ToolsConfigSchema.optional(),
@@ -36,6 +40,7 @@ export const CreateAgentSchema = z.object({
   templateSlug: z.string().max(100).optional(),
   category: AgentCategorySchema.optional(),
   config: AgentConfigSchema.optional(),
+  settings: AgentSettingsSchema.optional(),
 });
 
 export const UpdateAgentSchema = z.object({
@@ -43,6 +48,7 @@ export const UpdateAgentSchema = z.object({
   category: AgentCategorySchema.optional(),
   enabled: z.boolean().optional(),
   config: AgentConfigSchema.optional(),
+  settings: AgentSettingsSchema.optional(),
 });
 
 export const RunAgentSchema = z.object({

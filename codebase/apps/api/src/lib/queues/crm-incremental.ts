@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { BackgroundJob, Deal, ExternalRecord, IntegrationConnection } from '@ai-crm/db';
 import type { HubSpotEvent } from '../../modules/webhooks/hubspot-events.js';
+import { dispatchDealCreated } from '../agent-events.js';
 import { log } from '../logger.js';
 import { enqueueJob } from './mongo-queue.js';
 
@@ -64,9 +65,17 @@ export async function addCrmIncrementalJob(data: CrmIncrementalJobData): Promise
   return true;
 }
 
+function isDealEvent(event: HubSpotEvent): boolean {
+  return event.objectType === 'deal' || event.subscriptionType?.includes('deal') === true;
+}
+
+function isDealCreationEvent(event: HubSpotEvent): boolean {
+  if (!isDealEvent(event)) return false;
+  return event.subscriptionType?.includes('creation') === true;
+}
+
 function isDealPropertyChangeEvent(event: HubSpotEvent): boolean {
-  const isDeal = event.objectType === 'deal' || event.subscriptionType?.includes('deal');
-  if (!isDeal) return false;
+  if (!isDealEvent(event)) return false;
   return (
     event.subscriptionType?.includes('propertyChange') === true ||
     Boolean(event.propertyName)
@@ -151,14 +160,6 @@ export async function processCrmIncremental(data: CrmIncrementalJobData): Promis
     return;
   }
 
-  if (!isDealPropertyChangeEvent(event)) {
-    log('crm-incremental', 'non-deal property event — skipped', {
-      connectionId,
-      subscriptionType: event.subscriptionType,
-    });
-    return;
-  }
-
   const externalId = event.objectId != null ? String(event.objectId) : null;
   if (!externalId) {
     log('crm-incremental', 'missing objectId — skipped', { connectionId });
@@ -168,6 +169,42 @@ export async function processCrmIncremental(data: CrmIncrementalJobData): Promis
   const connection = await IntegrationConnection.findById(connectionId);
   if (!connection || connection.status === 'disconnected') {
     log('crm-incremental', 'connection not found — skipped', { connectionId });
+    return;
+  }
+
+  if (isDealCreationEvent(event)) {
+    const { deal } = await findDealForExternalId(workspaceId, providerKey, externalId);
+    if (!deal) {
+      log('crm-incremental', 'deal.creation — not mapped locally', {
+        connectionId,
+        workspaceId,
+        externalId,
+      });
+      return;
+    }
+
+    await upsertExternalRecord(workspaceId, providerKey, externalId, deal.id, {
+      lastEvent: {
+        subscriptionType: event.subscriptionType,
+      },
+    });
+
+    void dispatchDealCreated({ workspaceId, dealId: deal.id });
+
+    log('crm-incremental', 'deal.creation dispatched', {
+      connectionId,
+      workspaceId,
+      dealId: deal.id,
+      externalId,
+    });
+    return;
+  }
+
+  if (!isDealPropertyChangeEvent(event)) {
+    log('crm-incremental', 'non-deal property event — skipped', {
+      connectionId,
+      subscriptionType: event.subscriptionType,
+    });
     return;
   }
 

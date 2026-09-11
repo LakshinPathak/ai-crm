@@ -7,6 +7,8 @@ import { correlationIdMiddleware } from './lib/logger.js';
 import { jwtMiddleware, requireWorkspace } from './lib/auth/index.js';
 import { handleHubSpotWebhook } from './modules/webhooks/hubspot.js';
 import { handleGongWebhook } from './modules/webhooks/gong.js';
+import { handleSlackInteractions } from './modules/webhooks/slack-interactions.js';
+import { handleAgentWebhook } from './modules/agents/webhook.js';
 import {
   authPublicRouter,
   authProtectedRouter,
@@ -51,6 +53,20 @@ export function createApp(): Express {
     '/api/v1/webhooks/gong/:connectionId',
     express.raw({ type: 'application/json' }),
     handleGongWebhook,
+  );
+
+  app.post(
+    '/api/v1/agents/:agentId/webhook',
+    express.raw({ type: 'application/json' }),
+    handleAgentWebhook,
+  );
+
+  app.post(
+    '/api/v1/webhooks/slack/interactions',
+    express.raw({ type: 'application/x-www-form-urlencoded' }),
+    (req, res) => {
+      void handleSlackInteractions(req, res);
+    },
   );
 
   app.use('/api/v1/webhooks', webhooksRouter);

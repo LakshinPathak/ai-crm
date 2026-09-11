@@ -11,6 +11,7 @@ const AgentSchema = new Schema(
     triggerConfig: { type: Schema.Types.Mixed, default: {} },
     toolsConfig: { type: Schema.Types.Mixed, default: {} },
     deliveryConfig: { type: Schema.Types.Mixed, default: null },
+    settings: { type: Schema.Types.Mixed, default: {} },
   },
   { timestamps: true },
 );

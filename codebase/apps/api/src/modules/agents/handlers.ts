@@ -2,6 +2,7 @@ import type { Response } from 'express';
 import type { AuthedRequest } from '../../lib/auth/index.js';
 import { Agent, AgentRun } from '@ai-crm/db';
 import { CreateAgentSchema, DraftAgentSchema, DraftFromNlRequestSchema, RunAgentSchema, UpdateAgentSchema } from '@ai-crm/shared';
+import { ensureConnectionWebhookSecret } from '../../lib/webhook-hmac.js';
 import { enqueueAgentRun } from './executor.js';
 import { draftFromKeywords, generateDraftWithGemini } from './draft-from-nl.js';
 
@@ -124,6 +125,7 @@ function toAgentDto(a: InstanceType<typeof Agent>) {
       toolsConfig: (a.toolsConfig as Record<string, unknown> | undefined) ?? {},
       deliveryConfig: (a.deliveryConfig as Record<string, unknown> | null | undefined) ?? null,
     },
+    settings: (a.settings as Record<string, unknown> | undefined) ?? {},
     createdAt: a.createdAt,
     updatedAt: a.updatedAt,
   };
@@ -212,6 +214,12 @@ export async function updateAgent(req: AuthedRequest, res: Response) {
   if (parsed.data.config?.deliveryConfig !== undefined) {
     agent.deliveryConfig = parsed.data.config.deliveryConfig;
   }
+  if (parsed.data.settings !== undefined) {
+    agent.settings = {
+      ...((agent.settings as Record<string, unknown> | undefined) ?? {}),
+      ...parsed.data.settings,
+    };
+  }
   await agent.save();
 
   res.json({ agent: toAgentDto(agent) });
@@ -299,6 +307,10 @@ export async function createAgent(req: AuthedRequest, res: Response) {
     return;
   }
 
+  const settings = ensureConnectionWebhookSecret(
+    (parsed.data.settings as Record<string, unknown> | undefined) ?? {},
+  );
+
   const agent = await Agent.create({
     workspaceId: req.tenant!.workspaceId,
     templateSlug: template?.slug,
@@ -309,6 +321,7 @@ export async function createAgent(req: AuthedRequest, res: Response) {
     triggerConfig: config?.triggerConfig ?? {},
     toolsConfig: config?.toolsConfig ?? {},
     deliveryConfig: config?.deliveryConfig ?? null,
+    settings,
   });
 
   res.status(201).json({ agent: toAgentDto(agent) });
@@ -328,6 +341,7 @@ export async function createFromTemplate(req: AuthedRequest, res: Response) {
     category: template.category,
     ownerId: req.tenant!.userId,
     isActive: true,
+    settings: ensureConnectionWebhookSecret({}),
   });
 
   res.status(201).json({

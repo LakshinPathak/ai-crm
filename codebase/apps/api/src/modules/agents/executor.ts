@@ -1,5 +1,6 @@
 import { Agent, AgentRun, Approval, Deal } from '@ai-crm/db';
 import { deliverAgentOutput, type DeliveryConfig } from '../../lib/chat-delivery.js';
+import { notifyPendingApprovalsSlack } from '../../lib/integrations/approval-slack-notify.js';
 import type { Types } from 'mongoose';
 import { addAgentRunJob } from '../../lib/queues/agent-runs.js';
 import { runClosedWonHandoff } from './executors/closed-won-handoff.js';
@@ -42,6 +43,7 @@ export async function processAgentRun(ctx: AgentRunContext): Promise<void> {
 
     if (result.status !== 'failed') {
       const agent = await Agent.findById(ctx.agentId);
+
       if (agent?.deliveryConfig) {
         await deliverAgentOutput({
           workspaceId: ctx.workspaceId,
@@ -53,6 +55,15 @@ export async function processAgentRun(ctx: AgentRunContext): Promise<void> {
             deliveryConfig: agent.deliveryConfig as DeliveryConfig,
           },
           result: { status: result.status, output: result.output },
+        });
+      }
+
+      if (result.status === 'awaiting_approval') {
+        await notifyPendingApprovalsSlack({
+          workspaceId: ctx.workspaceId,
+          agentRunId: ctx.runId,
+          agentName: agent?.name ?? null,
+          deliveryConfig: (agent?.deliveryConfig as DeliveryConfig | undefined) ?? null,
         });
       }
     }

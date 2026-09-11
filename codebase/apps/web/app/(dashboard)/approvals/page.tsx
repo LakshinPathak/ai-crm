@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { CheckSquare } from 'lucide-react';
 import { apiGet, apiPost } from '@/lib/api-client';
@@ -67,6 +68,7 @@ function formatJsonPreview(value: unknown) {
 }
 
 export default function ApprovalsPage() {
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [items, setItems] = useState<Approval[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,6 +113,12 @@ export default function ApprovalsPage() {
       })
       .finally(() => setDetailLoading(false));
   }
+
+  useEffect(() => {
+    const id = searchParams.get('id');
+    if (id) openDetail(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deep-link once when ?id= changes
+  }, [searchParams]);
 
   async function approve(id: string) {
     const token = getToken();

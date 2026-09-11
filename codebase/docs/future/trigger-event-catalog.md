@@ -13,9 +13,9 @@ AI CRM has four trigger mechanisms:
 | Type | Config field | Dispatcher status |
 |------|--------------|-------------------|
 | **Manual** | `triggerConfig.type = 'manual'` | ✅ Live |
-| **Schedule** | `triggerConfig.schedule` (cron) | 🔲 Worker needed (R7) |
-| **Event** | `triggerConfig.event` | 🟡 Partial emitters |
-| **Webhook** | Per-agent secret | 🔲 Route needed (R7) |
+| **Schedule** | `triggerConfig.schedule` (cron) | ✅ Live — `scheduled-agents.ts` 60s ticker (API worker) |
+| **Event** | `triggerConfig.event` | ✅ Live dispatchers; emitters below |
+| **Webhook** | Per-agent secret | 🔲 Route needed (R8 WS-7) |
 
 Background processing uses **MongoDB `background_jobs`** collection (no Redis).
 
@@ -27,32 +27,40 @@ Background processing uses **MongoDB `background_jobs`** collection (no Redis).
 
 | Event name | Payload | Emitted from | Subscribers (agents) |
 |------------|---------|--------------|----------------------|
-| `activity.ingested` | `{ dealId?, artifactId, source }` | Gong webhook, note sync | post-call, buying-signals, objection-tracker |
-| `deal.stage_changed` | `{ dealId, fromStageId, toStageId }` | CRM webhook, manual patch | poc-kickoff |
-| `deal.closed` | `{ dealId, outcome: won\|lost }` | Close deal handler | win-loss-analysis |
+| `activity.ingested` | `{ dealId?, artifactId, source }` | Gong ingest worker (`ingest-call.ts`) when call linked to deal | post-call, buying-signals, objection-tracker |
+| `deal.stage_changed` | `{ dealId, fromStageId, toStageId }` | PATCH deal stage (`deals/handlers.ts`) | poc-kickoff |
+| `deal.closed` | `{ dealId, outcome: won\|lost }` | Close deal (`deals/handlers-close.ts`) | win-loss-analysis, closed-won-handoff |
 | `deal.created` | `{ dealId }` | CRM sync, manual create | — |
 | `approval.resolved` | `{ approvalId, status }` | Approvals handler | — |
 | `meddpicc.completed` | `{ dealId, runId }` | MEDDPICC executor | — (future: risk re-score) |
 
-### 2.2 Emitter implementation (target)
+### 2.2 Event dispatcher (live)
 
-```typescript
-// packages/events/src/bus.ts (WBS 11.1)
-export async function emit(event: string, payload: Record<string, unknown>, workspaceId: string) {
-  // 1. Persist to activity_events (audit)
-  // 2. Find agents where triggerConfig.event === event && isActive
-  // 3. enqueueAgentRun for each
-}
-```
+`apps/api/src/lib/agent-events.ts` — for each event, finds active agents with `triggerConfig.type = 'event'` and matching `triggerConfig.event`, creates an `agent_runs` row, and calls `enqueueAgentRun`.
 
-### 2.3 Current emitters (grep targets)
+| Function | Event |
+|----------|-------|
+| `dispatchActivityIngested` | `activity.ingested` |
+| `dispatchDealStageChanged` | `deal.stage_changed` |
+| `dispatchDealClosed` | `deal.closed` |
+
+**Note:** `activity.ingested` skips agents when `dealId` is null (call not linked to a deal).
+
+### 2.3 Live emitters
+
+| File | Emits | When |
+|------|-------|------|
+| `lib/queues/ingest-call.ts` | `activity.ingested` | After Gong transcript ingest + artifact save (deal-linked calls) |
+| `modules/deals/handlers.ts` | `deal.stage_changed` | PATCH changes `stageId` (kanban / API) |
+| `modules/deals/handlers-close.ts` | `deal.closed` | POST close won/lost |
+
+### 2.4 Planned emitters
 
 | File | Should emit |
 |------|-------------|
-| `modules/webhooks/gong.ts` | `activity.ingested` after artifact upsert |
-| `modules/webhooks/crm.ts` | `deal.stage_changed` on dealstage change |
-| `modules/deals/handlers-close.ts` | `deal.closed` |
-| `lib/queues/ingest-call.ts` | `activity.ingested` |
+| `modules/webhooks/crm.ts` / HubSpot sync | `deal.stage_changed` on inbound dealstage change |
+| `modules/webhooks/gong.ts` | Optional early `activity.ingested` before transcript (today: ingest worker only) |
+| CRM sync on create | `deal.created` (R8 WS-8) |
 
 ---
 
@@ -86,7 +94,7 @@ From `webhooks/hubspot-events.ts`:
 | `metaData.scheduled` | Call date |
 | `metaData.primaryUserId` | Owner mapping |
 
-**R6:** After ingest → fetch transcript → `activity.ingested`.
+**R7+:** Webhook upserts artifact → `ingest-call` job → transcript → `dispatchActivityIngested`.
 
 ### 3.4 Planned routes
 
@@ -107,7 +115,7 @@ From `webhooks/hubspot-events.ts`:
 | `agent-run` | `addAgentRunJob` | `processAgentRun` |
 | `ingest-call` | `addIngestCallJob` | `processIngestCall` |
 | `crm-incremental` | (R6) | HubSpot deal patch |
-| `embed-artifact` | (R6) | Chunk + embed |
+| `embed-artifact` | `addEmbedArtifactJob` | Chunk + embed (`artifact_chunks`) |
 | `crm-full-sync` | HubSpot connect | Initial import |
 
 **Collection:** `background_jobs`  
@@ -147,7 +155,9 @@ From `webhooks/hubspot-events.ts`:
 | Weekly Digest | `0 8 * * 1` | Workspace |
 | CRM Hygiene | `0 2 * * *` | Workspace |
 
-**Cron parser:** Use `cron-parser` npm package with `workspace.timezone`.
+**Cron parser:** `cron-parser` in `scheduled-agents.ts`; timezone from `workspace.timezone` (fallback `America/New_York`).
+
+**Worker:** `startScheduledAgentTicker()` from `processor.ts` — 60s poll, per-agent per-minute dedup.
 
 ---
 
@@ -245,4 +255,5 @@ db.agent_runs.find().sort({ createdAt: -1 }).limit(5)
 
 | Date | Change |
 |------|--------|
+| 2026-09-11 | v1.1 — Cron live; document `agent-events` emitters (activity, stage, closed) |
 | 2026-09-09 | v1.0 — Initial catalog |

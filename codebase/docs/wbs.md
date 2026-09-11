@@ -9,19 +9,19 @@
 
 ---
 
-## Implementation status (2026-09-10)
+## Implementation status (2026-09-11)
 
 | Area | Done | Notes |
 |------|------|-------|
 | **1.0 Foundation** | ~92% | Monorepo, JWT auth, shadcn/ui, MongoDB job queue, demo seed, CI + E2E in CI |
 | **2.0 Core CRM** | ~95% | Kanban, list, CRUD, 12 deal tabs, accounts, home; **responsive UI ✅** |
-| **3.0 Deal Intelligence** | ~85% | MEDDPICC SSE; Gong transcript + direct Gemini; **RAG chunking → R8** |
-| **4.0 Agents** | ~96% | 14 templates, NL builder, cron, event triggers, Slack delivery |
-| **5.0 Integrations** | ~88% | HubSpot incremental sync, Gong transcript, Slack/Teams/GChat OAuth |
+| **3.0 Deal Intelligence** | ~88% | MEDDPICC SSE; Gong transcript + Gemini; **`artifact_chunks` embed worker (R8)** |
+| **4.0 Agents** | ~97% | 14 templates, NL builder, cron ticker, activity/stage/**closed** events, multi-channel delivery |
+| **5.0 Integrations** | ~90% | HubSpot sync + **write-back on approve**, Gong transcript + chunks, Slack/Teams/GChat |
 | **6.0 Insights** | ~78% | Funnel, loss, users tabs; responsive charts |
 | **7.0 Settings** | ~90% | Members, integrations connect flows, sales-process |
-| **8.0 QA / DevOps** | ~82% | typecheck + smoke + Playwright E2E (8 tests) + E2E in CI |
-| **9.0 Marketing** | ~85% | Landing, pricing, product, why, blog, about; responsive |
+| **8.0 QA / DevOps** | ~84% | typecheck + smoke + Playwright E2E (10 tests) + E2E in CI |
+| **9.0 Marketing** | ~90% | Landing, pricing, product, why, **blog index + `/blog/[slug]`**, about; responsive |
 | **UI (shadcn + responsive)** | ~98% | 32 routes; mobile-first pass — see `responsive-ui-plan.md` |
 
 ### Release history
@@ -33,10 +33,11 @@
 | **R6** | Agent platform | NL builder, deliveryConfig, cron, Opine parity |
 | **R7** | Integrations | Gong Gemini, Slack delivery, CRM sync, Teams/GChat OAuth, triggers |
 | **R7.1** | Responsive UI | Mobile-first pass all routes — [`responsive-ui-plan.md`](responsive-ui-plan.md) |
+| **R8 batch 1** | Beta depth | Teams/GChat delivery, HubSpot write-back, `deal.closed`, call link UI, embed worker, blog slugs — [`r8-roadmap.md`](r8-roadmap.md) |
 
-**Recent completions (R7):** Gong transcript + direct Gemini · call detail UI · Slack post · CRM incremental sync · Teams/GChat OAuth · `deal.stage_changed` triggers · `/blog` `/about` · E2E in CI · responsive UI.
+**Recent completions (R8 batch 1):** HubSpot PATCH on approval · `dispatchDealClosed` · manual call→deal link on `/calls/[id]` · `embed-artifact` queue · `/blog/[slug]` · [`trigger-event-catalog.md`](future/trigger-event-catalog.md) refresh.
 
-**Next batch (R8):** See [`future/implementation-status.md`](future/implementation-status.md) — Teams/GChat delivery · Gong RAG · HubSpot write-back · blog slugs.
+**Next batch (R8 batch 2):** Slack approval buttons · per-agent webhooks · `deal.created` · deal RAG Q&A — see [`r8-roadmap.md`](r8-roadmap.md) and [`future/implementation-status.md`](future/implementation-status.md).
 
 **Playwright E2E (local):** With `pnpm dev` running (API :4000 + web :3000) and MongoDB up:
 
