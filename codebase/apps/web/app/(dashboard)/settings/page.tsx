@@ -105,17 +105,31 @@ export default function SettingsPage() {
         </Card>
       </div>
 
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle>Integrations</CardTitle>
-          <CardDescription>Connect CRM, chat, and recording tools.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="ghost" asChild>
-            <Link href="/settings/integrations">Manage integrations →</Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Integrations</CardTitle>
+            <CardDescription>Connect CRM, chat, and recording tools.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="ghost" asChild>
+              <Link href="/settings/integrations">Manage integrations →</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>MCP servers</CardTitle>
+            <CardDescription>Register external tool servers for agents (preview).</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="ghost" asChild>
+              <Link href="/settings/mcp">View MCP servers →</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

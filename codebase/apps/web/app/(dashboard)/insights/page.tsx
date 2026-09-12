@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Download } from 'lucide-react';
 import { apiGet } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
@@ -129,12 +130,17 @@ export default function InsightsPage() {
         title="Insights"
         subtitle="Pipeline, activity, funnel & loss analytics"
         actions={
-          mainTab === 'performance' ? (
-            <Button size="sm" variant="secondary" onClick={exportCsv}>
-              <Download size={14} />
-              Export
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" variant="secondary" asChild>
+              <Link href="/insights/sql">SQL explorer</Link>
             </Button>
-          ) : undefined
+            {mainTab === 'performance' ? (
+              <Button size="sm" variant="secondary" onClick={exportCsv}>
+                <Download size={14} />
+                Export
+              </Button>
+            ) : null}
+          </div>
         }
       />
 

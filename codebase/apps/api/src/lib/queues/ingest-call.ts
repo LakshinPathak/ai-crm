@@ -66,6 +66,14 @@ function extractCallFields(payload: Record<string, unknown>) {
   };
 }
 
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function isGenericGongTitle(title: string): boolean {
+  return /^Gong call /i.test(title.trim());
+}
+
 function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
 }
@@ -114,15 +122,58 @@ async function pickBestDeal(
   if (unique.length === 0) return null;
   if (unique.length === 1) return unique[0];
 
-  const deal = await Deal.findOne({
+  const deals = await Deal.find({
     workspaceId,
     _id: { $in: unique },
     deletedAt: null,
-  })
-    .sort({ lastActivityAt: -1, updatedAt: -1 })
-    .select('_id');
+  }).select('_id status lastActivityAt updatedAt');
 
-  return deal?._id ?? unique[0];
+  deals.sort((a, b) => {
+    const openRank = (status: string) => (status === 'open' ? 0 : 1);
+    const byOpen = openRank(a.status) - openRank(b.status);
+    if (byOpen !== 0) return byOpen;
+    const aTime = (a.lastActivityAt ?? a.updatedAt)?.getTime() ?? 0;
+    const bTime = (b.lastActivityAt ?? b.updatedAt)?.getTime() ?? 0;
+    return bTime - aTime;
+  });
+
+  return deals[0]?._id ?? unique[0];
+}
+
+async function resolveDealIdFromGongTitle(
+  workspaceId: string,
+  title: string,
+): Promise<Types.ObjectId | null> {
+  const trimmed = title.trim();
+  if (trimmed.length < 3 || isGenericGongTitle(trimmed)) return null;
+
+  const escaped = escapeRegex(trimmed.slice(0, 120));
+  const wsId = new Types.ObjectId(workspaceId);
+
+  const companies = await Company.find({
+    workspaceId: wsId,
+    deletedAt: null,
+    name: { $regex: escaped, $options: 'i' },
+  })
+    .select('_id')
+    .limit(10);
+
+  const companyIds = companies.map((c) => c._id);
+  const orFilter = [
+    { title: { $regex: escaped, $options: 'i' } },
+    ...(companyIds.length ? [{ companyId: { $in: companyIds } }] : []),
+  ];
+
+  const base = { workspaceId: wsId, deletedAt: null, $or: orFilter };
+  let matches = await Deal.find({ ...base, status: 'open' }).select('_id').limit(10);
+  if (matches.length === 0) {
+    matches = await Deal.find(base).select('_id').limit(10);
+  }
+
+  return pickBestDeal(
+    workspaceId,
+    matches.map((d) => d._id),
+  );
 }
 
 async function resolveDealIdFromGongParticipants(
@@ -210,11 +261,14 @@ export async function processIngestCall(data: IngestCallJobData): Promise<void> 
         ? new Date(occurredAt)
         : new Date();
 
-  const resolvedDealId = await resolveDealIdFromGongParticipants(
+  let resolvedDealId = await resolveDealIdFromGongParticipants(
     data.workspaceId,
     metaData,
     data.payload,
   );
+  if (!resolvedDealId) {
+    resolvedDealId = await resolveDealIdFromGongTitle(data.workspaceId, title);
+  }
 
   const artifact = await Artifact.findOneAndUpdate(
     {

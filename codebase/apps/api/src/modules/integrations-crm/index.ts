@@ -3,6 +3,7 @@ import {
   connectProvider,
   disconnectProvider,
   getConnectionStatus,
+  getSalesforceStatus,
   getStageMappings,
   getIncrementalSyncStatus,
   getSyncStatus,
@@ -19,6 +20,7 @@ import {
 export const integrationsCrmRouter = Router();
 integrationsCrmRouter.get('/providers', listProviders);
 integrationsCrmRouter.get('/status', getConnectionStatus);
+integrationsCrmRouter.get('/salesforce/status', getSalesforceStatus);
 integrationsCrmRouter.get('/mappings/stages', getStageMappings);
 integrationsCrmRouter.patch('/mappings/stages', updateStageMappings);
 integrationsCrmRouter.get('/mappings/users', getUserMappings);

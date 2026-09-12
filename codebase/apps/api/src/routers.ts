@@ -19,6 +19,7 @@ import { insightsRouter } from './modules/insights/index.js';
 import { marketingRouter } from './modules/marketing/index.js';
 import { internalRouter } from './modules/internal/index.js';
 import { callsRouter } from './modules/calls/index.js';
+import { settingsRouter } from './modules/settings/index.js';
 
 export {
   authPublicRouter,
@@ -44,4 +45,5 @@ export {
   marketingRouter,
   internalRouter,
   callsRouter,
+  settingsRouter,
 };

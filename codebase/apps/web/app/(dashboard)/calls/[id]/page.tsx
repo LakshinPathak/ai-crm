@@ -1,24 +1,31 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Phone } from 'lucide-react';
+import { ArrowLeft, ChevronsUpDown, Phone } from 'lucide-react';
 import { apiGet, apiPatch } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
-import type { DealCard } from '@/lib/types';
+import type { DealCard, DealSearchResponse } from '@/lib/types';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Command,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+
+const UNLINKED_VALUE = '__none__';
 
 type CallDetail = {
   id: string;
@@ -37,6 +44,133 @@ function CallDetailSkeleton() {
       <Skeleton className="h-4 w-32" />
       <Skeleton className="h-10 w-full max-w-xl" />
       <Skeleton className="h-48 w-full rounded-xl" />
+    </div>
+  );
+}
+
+function DealLinkPicker({
+  call,
+  deals,
+  savingDeal,
+  onDealLinkChange,
+}: {
+  call: CallDetail;
+  deals: DealCard[];
+  savingDeal: boolean;
+  onDealLinkChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<DealCard[] | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  useEffect(() => {
+    const token = getToken();
+    const q = query.trim();
+    if (!token || !q) {
+      setSearchResults(null);
+      setSearchLoading(false);
+      return;
+    }
+
+    setSearchLoading(true);
+    const timer = window.setTimeout(() => {
+      apiGet<DealSearchResponse>(`/deals/search?q=${encodeURIComponent(q)}&limit=20`, token)
+        .then((r) => setSearchResults(r.deals))
+        .catch(() => setSearchResults([]))
+        .finally(() => setSearchLoading(false));
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [query]);
+
+  const searching = query.trim().length > 0;
+  const localMatches = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return deals;
+    return deals.filter(
+      (d) =>
+        d.title.toLowerCase().includes(q) ||
+        (d.companyName?.toLowerCase().includes(q) ?? false),
+    );
+  }, [deals, query]);
+  const options =
+    searching && searchResults && searchResults.length > 0 ? searchResults : searching ? localMatches : deals;
+
+  const triggerLabel = useMemo(() => {
+    if (call.dealId && call.dealTitle) return call.dealTitle;
+    return 'Unlinked';
+  }, [call.dealId, call.dealTitle]);
+
+  function selectDeal(value: string) {
+    setOpen(false);
+    setQuery('');
+    void onDealLinkChange(value);
+  }
+
+  return (
+    <div className="flex min-w-0 flex-col items-end gap-1">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            disabled={savingDeal}
+            className="w-full min-w-[200px] justify-between sm:w-[260px]"
+          >
+            <span className="truncate">{savingDeal ? 'Saving…' : triggerLabel}</span>
+            <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-[260px] p-0">
+          <Command shouldFilter={false}>
+            <CommandInput
+              placeholder="Search deals…"
+              value={query}
+              onValueChange={setQuery}
+            />
+            <CommandList>
+              <CommandGroup>
+                <CommandItem
+                  value={UNLINKED_VALUE}
+                  data-checked={!call.dealId || undefined}
+                  onSelect={() => selectDeal(UNLINKED_VALUE)}
+                >
+                  Unlinked
+                </CommandItem>
+                {options.map((deal) => (
+                  <CommandItem
+                    key={deal.id}
+                    value={deal.id}
+                    data-checked={call.dealId === deal.id || undefined}
+                    onSelect={() => selectDeal(deal.id)}
+                  >
+                    <span className="truncate">{deal.title}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+              {searching && searchLoading ? (
+                <p className="px-2 py-3 text-center text-xs text-muted-foreground">Searching…</p>
+              ) : null}
+              {searching && !searchLoading && options.length === 0 ? (
+                <p className="px-2 py-3 text-center text-sm text-muted-foreground">No matching deals</p>
+              ) : null}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      {!call.dealId ? (
+        <Badge variant="outline">Unlinked</Badge>
+      ) : call.dealTitle ? (
+        <Link
+          href={`/deals/${call.dealId}`}
+          className="text-xs font-medium text-primary hover:underline"
+        >
+          Open deal
+        </Link>
+      ) : null}
     </div>
   );
 }
@@ -75,7 +209,7 @@ export default function CallDetailPage() {
 
     setLinkError(null);
     setSavingDeal(true);
-    const dealId = value === '__none__' ? null : value;
+    const dealId = value === UNLINKED_VALUE ? null : value;
 
     try {
       const res = await apiPatch<{ call: CallDetail }>(`/calls/${id}`, token, { dealId });
@@ -120,31 +254,12 @@ export default function CallDetailPage() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-muted-foreground">Deal</span>
               <div className="flex min-w-0 flex-col items-end gap-1">
-                <Select
-                  value={call.dealId ?? '__none__'}
-                  onValueChange={onDealLinkChange}
-                  disabled={savingDeal}
-                >
-                  <SelectTrigger className="w-full min-w-[200px] sm:w-[260px]">
-                    <SelectValue placeholder="Link to deal" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">Not linked</SelectItem>
-                    {deals.map((deal) => (
-                      <SelectItem key={deal.id} value={deal.id}>
-                        {deal.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {call.dealId && call.dealTitle ? (
-                  <Link
-                    href={`/deals/${call.dealId}`}
-                    className="text-xs font-medium text-primary hover:underline"
-                  >
-                    Open deal
-                  </Link>
-                ) : null}
+                <DealLinkPicker
+                  call={call}
+                  deals={deals}
+                  savingDeal={savingDeal}
+                  onDealLinkChange={onDealLinkChange}
+                />
                 {linkError ? <p className="text-xs text-destructive">{linkError}</p> : null}
               </div>
             </div>

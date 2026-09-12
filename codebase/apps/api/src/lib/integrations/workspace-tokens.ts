@@ -2,6 +2,7 @@ import { refreshGoogleCalendarToken } from './google-calendar-oauth.js';
 import { refreshGoogleChatToken } from './google-chat-oauth.js';
 import { refreshGongToken } from './gong-oauth.js';
 import { refreshHubSpotToken } from './hubspot-oauth.js';
+import { refreshSalesforceToken } from './salesforce-oauth.js';
 import { refreshSlackToken } from './slack-oauth.js';
 import { refreshTeamsToken } from './teams-oauth.js';
 import { refreshIfNeeded } from './tokens.js';
@@ -13,6 +14,8 @@ export async function resolveWorkspaceAccessToken(
   switch (providerKey) {
     case 'hubspot':
       return refreshIfNeeded(workspaceId, providerKey, refreshHubSpotToken);
+    case 'salesforce':
+      return refreshIfNeeded(workspaceId, providerKey, refreshSalesforceToken);
     case 'slack':
       return refreshIfNeeded(workspaceId, providerKey, refreshSlackToken);
     case 'gong':

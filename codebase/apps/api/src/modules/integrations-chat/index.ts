@@ -11,6 +11,7 @@ import {
   getTeamsStatus,
   listChatProviders,
   listGoogleChatChannelsHandler,
+  listSlackChannelsHandler,
   listTeamsChannelsHandler,
 } from './handlers.js';
 
@@ -19,6 +20,7 @@ export const integrationsChatRouter = Router();
 integrationsChatRouter.get('/providers', listChatProviders);
 integrationsChatRouter.post('/slack/connect', connectSlack);
 integrationsChatRouter.get('/slack/status', getSlackStatus);
+integrationsChatRouter.get('/slack/channels', listSlackChannelsHandler);
 integrationsChatRouter.delete('/slack', disconnectSlack);
 integrationsChatRouter.post('/teams/connect', connectTeams);
 integrationsChatRouter.get('/teams/status', getTeamsStatus);

@@ -1,18 +1,9 @@
 import type { Request, Response } from 'express';
-import { Approval, IntegrationConnection } from '@ai-crm/db';
+import { Approval } from '@ai-crm/db';
 import { verifySlackRequestSignature } from '../../lib/integrations/slack-signature.js';
 import { log } from '../../lib/logger.js';
 import { decideApproveApproval, decideRejectApproval } from '../approvals/decide.js';
-
-function getRawBody(req: Request): string {
-  if (Buffer.isBuffer(req.body)) {
-    return req.body.toString('utf8');
-  }
-  if (typeof req.body === 'string') {
-    return req.body;
-  }
-  return '';
-}
+import { getRawBody, sendEphemeral, workspaceIdForSlackTeam } from './slack-common.js';
 
 type SlackBlockActionPayload = {
   type?: string;
@@ -20,22 +11,6 @@ type SlackBlockActionPayload = {
   user?: { id?: string };
   actions?: Array<{ action_id?: string; value?: string }>;
 };
-
-function sendEphemeral(res: Response, text: string): void {
-  res.status(200).json({
-    response_type: 'ephemeral',
-    text,
-  });
-}
-
-async function workspaceIdForSlackTeam(teamId: string): Promise<string | null> {
-  const conn = await IntegrationConnection.findOne({
-    providerKey: 'slack',
-    externalAccountId: teamId,
-    status: 'connected',
-  });
-  return conn?.workspaceId?.toString() ?? null;
-}
 
 export async function handleSlackInteractions(req: Request, res: Response): Promise<void> {
   const signingSecret = process.env.SLACK_SIGNING_SECRET ?? '';

@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { apiGet } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
-import type { HomeResponse, MeResponse } from '@/lib/types';
+import type { ForecastInsightsResponse, HomeResponse, MeResponse } from '@/lib/types';
 import { formatMoney, initials } from '@/lib/format';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { KpiCard } from '@/components/ui/KpiCard';
@@ -122,17 +122,22 @@ function UserAvatar({ name }: { name: string }) {
 export default function DashboardHomePage() {
   const [me, setMe] = useState<MeResponse | null>(null);
   const [home, setHome] = useState<HomeResponse | null>(null);
+  const [forecast, setForecast] = useState<ForecastInsightsResponse | null>(null);
 
   useEffect(() => {
     const token = getToken();
     if (!token) return;
-    Promise.all([
-      apiGet<MeResponse>('/me', token),
-      apiGet<HomeResponse>('/home', token),
-    ]).then(([meData, homeData]) => {
-      setMe(meData);
-      setHome(homeData);
-    });
+    Promise.all([apiGet<MeResponse>('/me', token), apiGet<HomeResponse>('/home', token)]).then(
+      ([meData, homeData]) => {
+        setMe(meData);
+        setHome(homeData);
+      },
+    );
+
+    // Fetched independently so a forecast failure never blocks the core dashboard.
+    apiGet<ForecastInsightsResponse>('/insights/forecast', token)
+      .then(setForecast)
+      .catch(() => setForecast(null));
   }, []);
 
   if (!me || !home) return <HomeDashboardSkeleton />;
@@ -162,6 +167,57 @@ export default function DashboardHomePage() {
             </Button>
           }
         />
+
+        {forecast && forecast.kpis.length >= 3 && (
+          <section className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <TrendingUp className="size-4" />
+                </div>
+                <h2 className="text-base font-bold tracking-tight">Forecast</h2>
+                {forecast.stub && (
+                  <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
+                    Demo
+                  </Badge>
+                )}
+              </div>
+              <Button variant="ghost" size="sm" className="text-muted-foreground" asChild>
+                <Link href="/insights">Insights</Link>
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {forecast.kpis.slice(0, 3).map((kpi, index) => {
+                const displayValue =
+                  kpi.format === 'currency'
+                    ? formatMoney(kpi.value)
+                    : kpi.format === 'percent'
+                      ? `${kpi.value}%`
+                      : String(kpi.value);
+                const change =
+                  kpi.changePct !== undefined
+                    ? `${kpi.changePct > 0 ? '+' : ''}${kpi.changePct}% vs prior period`
+                    : undefined;
+                const sub = kpi.sub ?? change;
+                const accents: Array<'purple' | 'blue' | 'green'> = ['purple', 'blue', 'green'];
+                const sparkline =
+                  kpi.id === 'winRate'
+                    ? forecast.winRateTrend.map((p) => p.winRate)
+                    : undefined;
+                return (
+                  <KpiCard
+                    key={kpi.id}
+                    label={kpi.label}
+                    value={displayValue}
+                    sub={sub}
+                    accent={accents[index % accents.length]}
+                    sparkline={sparkline}
+                  />
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard

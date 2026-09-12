@@ -8,6 +8,7 @@ import { jwtMiddleware, requireWorkspace } from './lib/auth/index.js';
 import { handleHubSpotWebhook } from './modules/webhooks/hubspot.js';
 import { handleGongWebhook } from './modules/webhooks/gong.js';
 import { handleSlackInteractions } from './modules/webhooks/slack-interactions.js';
+import { handleSlackCommands } from './modules/webhooks/slack-commands.js';
 import { handleAgentWebhook } from './modules/agents/webhook.js';
 import {
   authPublicRouter,
@@ -33,6 +34,7 @@ import {
   marketingRouter,
   internalRouter,
   callsRouter,
+  settingsRouter,
 } from './routers.js';
 
 export function createApp(): Express {
@@ -66,6 +68,14 @@ export function createApp(): Express {
     express.raw({ type: 'application/x-www-form-urlencoded' }),
     (req, res) => {
       void handleSlackInteractions(req, res);
+    },
+  );
+
+  app.post(
+    '/api/v1/webhooks/slack/commands',
+    express.raw({ type: 'application/x-www-form-urlencoded' }),
+    (req, res) => {
+      void handleSlackCommands(req, res);
     },
   );
 
@@ -110,6 +120,7 @@ export function createApp(): Express {
   protectedApi.use('/integrations', integrationsRouter);
   protectedApi.use('/insights', insightsRouter);
   protectedApi.use('/calls', callsRouter);
+  protectedApi.use('/settings', settingsRouter);
   app.use('/api/v1', protectedApi);
 
   return app;

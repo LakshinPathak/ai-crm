@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { RefreshCw } from 'lucide-react';
 import {
   consumeMeddpiccStream,
@@ -11,6 +12,7 @@ import {
 import { apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { formatMoney, fitScore, sentimentLabel } from '@/lib/format';
+import type { MeddpiccLetter } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -28,9 +30,42 @@ type DealHeader = {
   blockerCount?: number;
 };
 
-type MeddpiccLetter = { label: string; summary: string; confidence: number };
 type Stage = { id: string; name: string };
 type Task = { id: string; title: string; status: string };
+
+function citationHref(letter: MeddpiccLetter): string | null {
+  const callId = letter.callId?.trim();
+  if (callId) return `/calls/${callId}`;
+  return null;
+}
+
+function MeddpiccLetterCitation({ letter }: { letter: MeddpiccLetter }) {
+  const excerpt = letter.excerpt?.trim();
+  if (!excerpt) return null;
+
+  const href = citationHref(letter);
+
+  return (
+    <div className="mt-3 min-w-0 border-t border-border pt-2">
+      <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="text-[0.6875rem] font-semibold uppercase tracking-wide text-muted-foreground">
+          Source
+        </span>
+        {href ? (
+          <Link
+            href={href}
+            className="text-[0.6875rem] font-medium text-primary underline-offset-2 hover:underline"
+          >
+            View call
+          </Link>
+        ) : null}
+      </div>
+      <p className="m-0 min-w-0 break-words text-xs italic leading-relaxed text-muted-foreground">
+        “{excerpt}”
+      </p>
+    </div>
+  );
+}
 
 export function OverviewTab({
   dealId,
@@ -208,12 +243,13 @@ export function OverviewTab({
           <h3 style={{ margin: '0 0 1rem', fontSize: '0.9375rem', fontWeight: 700 }}>MEDDPICC Breakdown</h3>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {Object.entries(meddpicc).map(([key, letter]) => (
-              <Card key={key} className="transition-shadow hover:shadow-md">
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <strong>{key} — {letter.label}</strong>
-                  <Badge variant="default">{Math.round(letter.confidence * 100)}%</Badge>
+              <Card key={key} className="min-w-0 transition-shadow hover:shadow-md">
+                <div className="mb-2 flex min-w-0 items-start justify-between gap-2">
+                  <strong className="min-w-0 break-words">{key} — {letter.label}</strong>
+                  <Badge variant="default" className="shrink-0">{Math.round(letter.confidence * 100)}%</Badge>
                 </div>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--muted)', margin: 0, lineHeight: 1.6 }}>{letter.summary}</p>
+                <p className="m-0 min-w-0 break-words text-[0.8125rem] leading-relaxed text-muted-foreground">{letter.summary}</p>
+                <MeddpiccLetterCitation letter={letter} />
               </Card>
             ))}
           </div>

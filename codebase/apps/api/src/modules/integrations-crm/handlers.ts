@@ -14,8 +14,11 @@ import { ensurePipelineStages } from '../../lib/seed.js';
 import { IntegrationConnection, PipelineStage, User } from '@ai-crm/db';
 import { getAccessToken } from '../../lib/integrations/tokens.js';
 import { hubspotOAuthConfigured } from '../../lib/integrations/hubspot-oauth.js';
+import { salesforceOAuthConfigured } from '../../lib/integrations/salesforce-oauth.js';
+import { resolveWorkspaceAccessToken } from '../../lib/integrations/workspace-tokens.js';
 import { hasHubSpotAccessToken } from '../../lib/hubspot/client.js';
 import { syncHubSpotToWorkspace } from '../../lib/hubspot/sync.js';
+import { syncSalesforceToWorkspace } from '../../lib/salesforce/sync.js';
 import { getCrmIncrementalQueueStats } from '../../lib/queues/crm-incremental.js';
 import { ensureConnectionWebhookSecret } from '../../lib/webhook-hmac.js';
 import { startCrmOAuth } from '../oauth/handlers.js';
@@ -45,6 +48,7 @@ type ConnectionSettings = {
     total: number;
   };
   lastHubSpotSync?: unknown;
+  lastSalesforceSync?: unknown;
   incrementalSyncErrorCount?: number;
 };
 
@@ -65,15 +69,17 @@ function mergeSettings(existing: ConnectionSettings | undefined, patch: Connecti
   };
 }
 
-const PROVIDERS = [
-  { id: 'hubspot', name: 'HubSpot', status: 'available', mode: 'demo' },
-  { id: 'salesforce', name: 'Salesforce', status: 'available', mode: 'demo' },
-  { id: 'zoho', name: 'Zoho CRM', status: 'available', mode: 'demo' },
-  { id: 'pipedrive', name: 'Pipedrive', status: 'available', mode: 'demo' },
-];
+function crmProviderCatalog() {
+  return [
+    { id: 'hubspot', name: 'HubSpot', status: 'available', mode: 'demo' },
+    { id: 'salesforce', name: 'Salesforce', status: 'available', mode: 'demo' },
+    { id: 'zoho', name: 'Zoho CRM', status: 'available', mode: 'demo' },
+    { id: 'pipedrive', name: 'Pipedrive', status: 'available', mode: 'demo' },
+  ];
+}
 
 export function listProviders(_req: AuthedRequest, res: Response) {
-  res.json({ providers: PROVIDERS });
+  res.json({ providers: crmProviderCatalog() });
 }
 
 export async function getConnectionStatus(req: AuthedRequest, res: Response) {
@@ -89,9 +95,26 @@ export async function getConnectionStatus(req: AuthedRequest, res: Response) {
   });
 }
 
+export async function getSalesforceStatus(req: AuthedRequest, res: Response) {
+  const conn = await IntegrationConnection.findOne({
+    workspaceId: req.tenant!.workspaceId,
+    providerKey: 'salesforce',
+  });
+  const settings = (conn?.settings ?? {}) as { mode?: string; instanceUrl?: string };
+  res.json({
+    connected: conn?.status === 'connected',
+    provider: 'salesforce',
+    externalAccountId: conn?.externalAccountId ?? null,
+    instanceUrl: settings.instanceUrl ?? null,
+    lastSyncAt: conn?.lastSyncAt ?? null,
+    mode: settings.mode ?? null,
+    oauthConfigured: salesforceOAuthConfigured(),
+  });
+}
+
 export async function connectProvider(req: AuthedRequest, res: Response) {
   const providerKey = req.params.provider as string;
-  const provider = PROVIDERS.find((p) => p.id === providerKey);
+  const provider = crmProviderCatalog().find((p) => p.id === providerKey);
   if (!provider || provider.status !== 'available') {
     res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Provider not available' } });
     return;
@@ -102,7 +125,10 @@ export async function connectProvider(req: AuthedRequest, res: Response) {
     { status: 'disconnected' },
   );
 
-  if (providerKey === 'hubspot' && hubspotOAuthConfigured()) {
+  if (
+    (providerKey === 'hubspot' && hubspotOAuthConfigured()) ||
+    (providerKey === 'salesforce' && salesforceOAuthConfigured())
+  ) {
     const pendingExisting = await IntegrationConnection.findOne({
       workspaceId: req.tenant!.workspaceId,
       providerKey,
@@ -126,7 +152,7 @@ export async function connectProvider(req: AuthedRequest, res: Response) {
     providerKey === 'hubspot'
       ? hasHubSpotAccessToken() || Boolean(await getAccessToken(req.tenant!.workspaceId, 'hubspot'))
       : providerKey === 'salesforce'
-        ? Boolean(process.env.SALESFORCE_CLIENT_ID && process.env.SALESFORCE_CLIENT_SECRET)
+        ? Boolean(await getAccessToken(req.tenant!.workspaceId, 'salesforce'))
         : providerKey === 'zoho'
           ? Boolean(process.env.ZOHO_CLIENT_ID && process.env.ZOHO_CLIENT_SECRET)
           : false;
@@ -242,6 +268,53 @@ export async function syncCrm(req: AuthedRequest, res: Response) {
     return;
   }
 
+  const salesforceToken = Boolean(
+    await resolveWorkspaceAccessToken(req.tenant!.workspaceId, 'salesforce'),
+  );
+
+  if (conn.providerKey === 'salesforce' && salesforceToken) {
+    let result;
+    try {
+      result = await syncSalesforceToWorkspace({
+        workspaceId: new Types.ObjectId(req.tenant!.workspaceId),
+        ownerId: user._id,
+      });
+    } catch (err) {
+      res.status(502).json({
+        error: {
+          code: 'SALESFORCE_SYNC_FAILED',
+          message: err instanceof Error ? err.message : 'Salesforce sync failed',
+        },
+      });
+      return;
+    }
+    const priorSettings = (conn.settings ?? {}) as ConnectionSettings;
+    conn.set('settings', mergeSettings(priorSettings, {
+      mode: 'live',
+      lastSalesforceSync: result,
+      syncProgress: {
+        status: 'completed',
+        processed: result.dealsCreated + result.dealsUpdated,
+        total: result.dealsCreated + result.dealsUpdated + result.skipped,
+      },
+    }));
+    conn.lastSyncAt = new Date();
+    conn.markModified('settings');
+    await conn.save();
+    res.json({
+      status: 'completed',
+      provider: 'salesforce',
+      mode: 'live',
+      imported: {
+        companies: result.companiesCreated + result.companiesUpdated,
+        deals: result.dealsCreated + result.dealsUpdated,
+        skipped: result.skipped,
+      },
+      lastSyncAt: conn.lastSyncAt,
+    });
+    return;
+  }
+
   const priorSettings = JSON.parse(JSON.stringify(conn.settings ?? {})) as ConnectionSettings;
   const totalDeals = getDemoCrmRecords(conn.providerKey).length;
 
@@ -287,7 +360,7 @@ export async function syncCrm(req: AuthedRequest, res: Response) {
 
 export async function listCrmPipelines(req: AuthedRequest, res: Response) {
   const providerKey = req.params.provider as string;
-  if (!PROVIDERS.some((p) => p.id === providerKey)) {
+  if (!crmProviderCatalog().some((p) => p.id === providerKey)) {
     res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Unknown provider' } });
     return;
   }
@@ -318,7 +391,7 @@ export async function listCrmPipelines(req: AuthedRequest, res: Response) {
 
 export async function listCrmStages(req: AuthedRequest, res: Response) {
   const providerKey = req.params.provider as string;
-  if (!PROVIDERS.some((p) => p.id === providerKey)) {
+  if (!crmProviderCatalog().some((p) => p.id === providerKey)) {
     res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Unknown provider' } });
     return;
   }
@@ -345,7 +418,7 @@ export async function listCrmStages(req: AuthedRequest, res: Response) {
 
 export async function listCrmOwners(req: AuthedRequest, res: Response) {
   const providerKey = req.params.provider as string;
-  if (!PROVIDERS.some((p) => p.id === providerKey)) {
+  if (!crmProviderCatalog().some((p) => p.id === providerKey)) {
     res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Unknown provider' } });
     return;
   }

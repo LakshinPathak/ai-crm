@@ -31,6 +31,19 @@ type Template = { slug: string; name: string; category: string; description: str
 type TriggerType = 'schedule' | 'event' | 'manual' | 'webhook';
 type DeliveryProvider = 'slack' | 'google_chat' | 'teams';
 type DeliveryMode = 'dm' | 'channel';
+type ChatChannel = { id: string; name: string };
+
+const CHANNEL_NONE = '__none__';
+
+function channelIdPlaceholder(provider: DeliveryProvider): string {
+  if (provider === 'teams') {
+    return 'teamId/channelId or teams/{id}/channels/{id}';
+  }
+  if (provider === 'google_chat') {
+    return 'spaces/{spaceId}';
+  }
+  return 'e.g. C0123456789 or #pipeline';
+}
 
 type WizardState = {
   name: string;
@@ -139,6 +152,9 @@ export default function NewAgentPage() {
   const [nlLoading, setNlLoading] = useState(false);
   const [nlDescription, setNlDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [channelOptions, setChannelOptions] = useState<ChatChannel[]>([]);
+  const [channelsLoading, setChannelsLoading] = useState(false);
+  const [channelsFailed, setChannelsFailed] = useState(false);
 
   const [form, setForm] = useState<WizardState>({
     name: '',
@@ -210,6 +226,43 @@ export default function NewAgentPage() {
     loadTemplates();
     if (editAgentId) void loadAgent().catch((e) => setError(parseApiError(e)));
   }, [loadTemplates, loadAgent, editAgentId]);
+
+  useEffect(() => {
+    if (!form.deliverEnabled || form.deliveryMode !== 'channel') {
+      return;
+    }
+    const token = getToken();
+    if (!token) return;
+
+    let cancelled = false;
+    setChannelsLoading(true);
+    setChannelsFailed(false);
+    setChannelOptions([]);
+
+    apiGet<{ channels: ChatChannel[] }>(
+      `/integrations/chat/${form.deliveryProvider}/channels`,
+      token,
+    )
+      .then((res) => {
+        if (cancelled) return;
+        const list = Array.isArray(res.channels)
+          ? res.channels.filter((c): c is ChatChannel => Boolean(c?.id && c?.name))
+          : [];
+        setChannelOptions(list);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setChannelsFailed(true);
+        setChannelOptions([]);
+      })
+      .finally(() => {
+        if (!cancelled) setChannelsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [form.deliverEnabled, form.deliveryMode, form.deliveryProvider]);
 
   useEffect(() => {
     if (!templateParam || editAgentId) return;
@@ -654,13 +707,58 @@ export default function NewAgentPage() {
                       )}
                       {form.deliveryMode === 'channel' && (
                         <div className="space-y-2">
-                          <Label htmlFor="delivery-channel-id">Channel ID (optional)</Label>
-                          <Input
-                            id="delivery-channel-id"
-                            value={form.deliveryChannelId}
-                            onChange={(e) => setForm((p) => ({ ...p, deliveryChannelId: e.target.value }))}
-                            placeholder="e.g. C0123456789 or #pipeline"
-                          />
+                          <Label htmlFor="delivery-channel-id">Channel (optional)</Label>
+                          {channelsLoading && (
+                            <p className="text-xs text-muted-foreground">Loading channels…</p>
+                          )}
+                          {!channelsLoading && channelOptions.length > 0 ? (
+                            <Select
+                              value={form.deliveryChannelId || CHANNEL_NONE}
+                              onValueChange={(v) =>
+                                setForm((p) => ({
+                                  ...p,
+                                  deliveryChannelId: v === CHANNEL_NONE ? '' : v,
+                                }))
+                              }
+                            >
+                              <SelectTrigger id="delivery-channel-id">
+                                <SelectValue placeholder="Select a channel" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={CHANNEL_NONE}>None</SelectItem>
+                                {form.deliveryChannelId &&
+                                  !channelOptions.some((c) => c.id === form.deliveryChannelId) && (
+                                    <SelectItem value={form.deliveryChannelId}>
+                                      {form.deliveryChannelId}
+                                    </SelectItem>
+                                  )}
+                                {channelOptions.map((channel) => (
+                                  <SelectItem key={channel.id} value={channel.id}>
+                                    {form.deliveryProvider === 'slack' ? `#${channel.name}` : channel.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <>
+                              <Input
+                                id="delivery-channel-id"
+                                value={form.deliveryChannelId}
+                                onChange={(e) => setForm((p) => ({ ...p, deliveryChannelId: e.target.value }))}
+                                placeholder={channelIdPlaceholder(form.deliveryProvider)}
+                              />
+                              {!channelsLoading && (
+                                <p className="text-xs text-muted-foreground">
+                                  {channelsFailed
+                                    ? 'Could not load channels — paste a channel ID instead.'
+                                    : 'No channels found — paste a channel ID.'}
+                                  {form.deliveryProvider === 'teams'
+                                    ? ' Teams: teamId/channelId or teams/{id}/channels/{id}.'
+                                    : ''}
+                                </p>
+                              )}
+                            </>
+                          )}
                         </div>
                       )}
                     </div>

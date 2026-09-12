@@ -7,6 +7,7 @@ import {
   getLossInsights,
   getPerformanceAnalytics,
   getUsersInsights,
+  getForecastInsights,
 } from './handlers.js';
 import { postInsightsSql } from './sql.js';
 
@@ -19,4 +20,5 @@ insightsRouter.get('/users', getUsersInsights);
 insightsRouter.get('/funnel', getFunnelInsights);
 insightsRouter.get('/loss/export', exportLossInsights);
 insightsRouter.get('/loss', getLossInsights);
+insightsRouter.get('/forecast', getForecastInsights);
 insightsRouter.post('/sql', postInsightsSql);

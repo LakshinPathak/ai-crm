@@ -9,6 +9,7 @@ const WorkspaceSchema = new Schema(
       defaultCurrency: { type: String, default: 'USD' },
       aiCreditsMonthly: { type: Number, default: 10000 },
       aiCreditsUsed: { type: Number, default: 0 },
+      mcpServers: { type: Schema.Types.Mixed, default: [] },
     },
     primaryCrmConnectionId: { type: Schema.Types.ObjectId, ref: 'IntegrationConnection' },
     onboardingStep: { type: Number, default: 1 },

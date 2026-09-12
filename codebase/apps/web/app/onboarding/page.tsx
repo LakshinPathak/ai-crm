@@ -25,10 +25,48 @@ import type {
   MeResponse,
   OnboardingStatus,
   StageMappingsResponse,
+  CrmIncrementalSyncStatusResponse,
   SyncStatusResponse,
   UserMappingRow,
   UserMappingsResponse,
 } from '@/lib/types';
+
+const CRM_SYNC_POLL_MS = 750;
+
+function buildImportProgressText(
+  sync: SyncStatusResponse,
+  incremental: CrmIncrementalSyncStatusResponse,
+  providerLabel: string,
+): string {
+  if (sync.status === 'failed') return 'Import failed';
+  if (!incremental.connected) return 'Waiting for CRM connection…';
+
+  if (sync.status === 'running') {
+    if (sync.total > 0) {
+      return `Importing ${sync.processed} of ${sync.total} deals from ${providerLabel}…`;
+    }
+    if (incremental.pendingJobs > 0) {
+      const jobs = incremental.pendingJobs === 1 ? 'job' : 'jobs';
+      return `Syncing ${providerLabel} (${incremental.pendingJobs} pending ${jobs})…`;
+    }
+    return `Importing deals from ${providerLabel}…`;
+  }
+
+  if (sync.status === 'completed') {
+    const count = sync.total > 0 ? sync.total : sync.processed;
+    if (incremental.errorCount > 0) {
+      const errLabel = incremental.errorCount === 1 ? 'error' : 'errors';
+      return `Import complete — ${count} deals (${incremental.errorCount} sync ${errLabel})`;
+    }
+    return `Import complete — ${sync.processed} of ${sync.total || count} deals`;
+  }
+
+  if (incremental.pendingJobs > 0) {
+    return `Finishing sync (${incremental.pendingJobs} pending)…`;
+  }
+
+  return `Preparing import from ${providerLabel}…`;
+}
 
 type CrmProviderOption = {
   id: string;
@@ -81,6 +119,7 @@ export default function OnboardingPage() {
   const [members, setMembers] = useState<UserMappingsResponse['workspaceMembers']>([]);
 
   const [importProgress, setImportProgress] = useState({ processed: 0, total: 0, status: 'idle' as SyncStatusResponse['status'] });
+  const [importProgressText, setImportProgressText] = useState('');
   const [importDone, setImportDone] = useState(false);
 
   const skippedCrm = provider === 'none';
@@ -204,45 +243,60 @@ export default function OnboardingPage() {
     let cancelled = false;
     setImportDone(false);
     setImportProgress({ processed: 0, total: 0, status: 'running' });
+    setImportProgressText(`Importing deals from ${providerMeta?.name ?? provider}…`);
+
+    const providerLabel = providerMeta?.name ?? provider;
+
+    const pollSyncProgress = async () => {
+      const [sync, incremental] = await Promise.all([
+        apiGet<SyncStatusResponse>('/integrations/crm/sync/status', token),
+        apiGet<CrmIncrementalSyncStatusResponse>('/integrations/crm/sync-status', token),
+      ]);
+      if (cancelled) return;
+
+      setImportProgress({
+        processed: sync.processed,
+        total: sync.total,
+        status: sync.status === 'idle' && sync.processed === 0 ? 'running' : sync.status,
+      });
+      setImportProgressText(buildImportProgressText(sync, incremental, providerLabel));
+
+      if (sync.status === 'completed') {
+        setImportDone(true);
+      } else if (sync.status === 'failed') {
+        setImportProgress((prev) => ({ ...prev, status: 'failed' }));
+      }
+    };
+
+    let pollTimer: ReturnType<typeof setInterval> | undefined;
 
     (async () => {
       try {
-        const preview = await apiGet<SyncStatusResponse>('/integrations/crm/sync/status', token);
-        const total = preview.total || 4;
-        if (cancelled) return;
-
-        setImportProgress({ processed: 0, total, status: 'running' });
-        const tick = window.setInterval(() => {
-          setImportProgress((prev) => {
-            if (prev.status !== 'running') return prev;
-            const next = Math.min(prev.total - 1, prev.processed + 1);
-            return { ...prev, processed: next };
-          });
-        }, 350);
+        await pollSyncProgress();
+        pollTimer = setInterval(() => {
+          pollSyncProgress().catch(() => undefined);
+        }, CRM_SYNC_POLL_MS);
 
         await apiPost('/integrations/crm/sync', token, {});
-        window.clearInterval(tick);
         if (cancelled) return;
 
-        const finalStatus = await apiGet<SyncStatusResponse>('/integrations/crm/sync/status', token);
-        setImportProgress({
-          processed: finalStatus.processed || total,
-          total: finalStatus.total || total,
-          status: 'completed',
-        });
-        setImportDone(true);
+        await pollSyncProgress();
       } catch (err) {
         if (!cancelled) {
           setError(parseApiError(err));
           setImportProgress((prev) => ({ ...prev, status: 'failed' }));
+          setImportProgressText('Import failed');
         }
+      } finally {
+        if (pollTimer) clearInterval(pollTimer);
       }
     })();
 
     return () => {
       cancelled = true;
+      if (pollTimer) clearInterval(pollTimer);
     };
-  }, [step, skippedCrm]);
+  }, [step, skippedCrm, provider, providerMeta?.name]);
 
   async function createWorkspace(e: React.FormEvent) {
     e.preventDefault();
@@ -296,6 +350,10 @@ export default function OnboardingPage() {
     setError(null);
     try {
       const result = await apiPost<CrmConnectResult>(`/integrations/crm/connect/${provider}`, token, {});
+      if (result.authUrl) {
+        window.location.href = result.authUrl;
+        return false;
+      }
       setConnectResult(result);
       setConnected(true);
       toast(result.mode === 'live' ? 'Live CRM connected' : 'Demo mode connected', 'success');
@@ -633,18 +691,19 @@ export default function OnboardingPage() {
               <>
                 <p style={{ color: 'var(--muted)', fontSize: 14, marginTop: 0 }}>
                   {importDone
-                    ? 'Import complete — your pipeline is ready.'
-                    : `Importing deals from ${providerMeta?.name ?? provider}…`}
+                    ? 'Your pipeline is ready — open the dashboard when you are.'
+                    : 'We are pulling deals and matching them to your pipeline stages.'}
                 </p>
                 <div className="onboarding-progress">
                   <Progress value={progressPct} className="h-2" />
                   <div className="onboarding-progress__label">
                     <span>
-                      {importProgress.status === 'failed'
-                        ? 'Import failed'
-                        : importDone
-                          ? `Imported ${importProgress.processed} of ${importProgress.total} deals`
-                          : `Importing ${importProgress.processed}/${importProgress.total || '…'} deals`}
+                      {importProgressText ||
+                        (importProgress.status === 'failed'
+                          ? 'Import failed'
+                          : importDone
+                            ? `Imported ${importProgress.processed} of ${importProgress.total} deals`
+                            : `Importing ${importProgress.processed}/${importProgress.total || '…'} deals`)}
                     </span>
                     <span>{progressPct}%</span>
                   </div>

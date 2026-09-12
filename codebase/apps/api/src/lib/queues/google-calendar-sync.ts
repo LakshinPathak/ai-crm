@@ -1,4 +1,4 @@
-import { Deal, IntegrationConnection } from '@ai-crm/db';
+import { Deal, DealEvent, IntegrationConnection } from '@ai-crm/db';
 import { log } from '../logger.js';
 import { enqueueJob } from './mongo-queue.js';
 
@@ -47,7 +47,7 @@ function planDemoMeetingEventsForDeals(
   });
 }
 
-/** Demo stub: logs planned meeting DealEvents; no Google API or DB writes yet. */
+/** Demo persist: upserts planned meeting DealEvents (no Google Calendar REST). */
 export async function processGoogleCalendarSync(data: GoogleCalendarSyncJobData): Promise<void> {
   const conn = await IntegrationConnection.findOne({
     _id: data.connectionId,
@@ -70,37 +70,73 @@ export async function processGoogleCalendarSync(data: GoogleCalendarSyncJobData)
     crmExternalId: { $exists: true, $ne: null },
   })
     .select('_id title')
+    .sort({ _id: 1 })
     .limit(25)
     .lean();
 
   const linked = deals.map((d) => ({ id: String(d._id), title: d.title }));
   const planned = planDemoMeetingEventsForDeals(linked);
 
-  for (const event of planned) {
-    log('google-calendar-sync', 'demo: would create DealEvent', {
-      workspaceId: data.workspaceId,
-      dealId: event.dealId,
-      type: event.type,
-      source: event.source,
-      title: event.title,
-      startAt: event.startAt.toISOString(),
-      endAt: event.endAt.toISOString(),
-    });
-  }
+  const { created, skipped } = await persistPlannedDemoMeetings(data.workspaceId, planned);
 
   if (planned.length === 0) {
     log('google-calendar-sync', 'demo: no CRM-linked open deals to match', {
       workspaceId: data.workspaceId,
     });
-  } else {
-    log('google-calendar-sync', 'demo sync complete', {
-      workspaceId: data.workspaceId,
-      plannedMeetings: planned.length,
-    });
   }
+
+  log('google-calendar-sync', 'demo sync complete', {
+    workspaceId: data.workspaceId,
+    plannedMeetings: planned.length,
+    created,
+    skipped,
+  });
 
   await IntegrationConnection.updateOne(
     { _id: conn._id },
     { $set: { lastSyncAt: new Date() } },
   );
+}
+
+/**
+ * Demo meetings use wall-clock startAt on first insert. Re-sync matches
+ * workspace + deal + source + title (not startAt) so Date.now() offsets stay idempotent.
+ */
+async function persistPlannedDemoMeetings(
+  workspaceId: string,
+  planned: PlannedMeetingEvent[],
+): Promise<{ created: number; skipped: number }> {
+  let created = 0;
+  let skipped = 0;
+
+  for (const event of planned) {
+    const result = await DealEvent.updateOne(
+      {
+        workspaceId,
+        dealId: event.dealId,
+        source: event.source,
+        title: event.title,
+      },
+      {
+        $setOnInsert: {
+          workspaceId,
+          dealId: event.dealId,
+          title: event.title,
+          startAt: event.startAt,
+          endAt: event.endAt,
+          type: event.type,
+          source: event.source,
+        },
+      },
+      { upsert: true },
+    );
+
+    if (result.upsertedCount === 1) {
+      created += 1;
+    } else {
+      skipped += 1;
+    }
+  }
+
+  return { created, skipped };
 }

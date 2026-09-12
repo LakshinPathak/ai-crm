@@ -99,8 +99,44 @@ async function main() {
         throw new Error(`Unexpected response shape: ${JSON.stringify(data)}`);
       }
     });
+
+    await test('POST /api/v1/agents/:id/webhook rejects unsigned request (401)', async () => {
+      const createRes = await fetch(`${API}/api/v1/agents`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: 'Smoke Webhook Agent',
+          templateSlug: 'deal-focus',
+        }),
+      });
+      const createData = (await createRes.json().catch(() => ({}))) as {
+        agent?: { id: string };
+        error?: { message?: string };
+      };
+      if (!createRes.ok) {
+        throw new Error(
+          `Create agent HTTP ${createRes.status}: ${createData.error?.message ?? JSON.stringify(createData)}`,
+        );
+      }
+      const agentId = createData.agent?.id;
+      if (!agentId) throw new Error('No agent id in create response');
+
+      const res = await fetch(`${API}/api/v1/agents/${agentId}/webhook`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scope: {} }),
+      });
+      if (res.status !== 401) {
+        const body = await res.text().catch(() => '');
+        throw new Error(`Expected HTTP 401, got ${res.status}: ${body}`);
+      }
+    });
   } else {
     console.log('  ○ GET /deals/board (skipped — no auth token)');
+    console.log('  ○ POST /api/v1/agents/:id/webhook 401 (skipped — no auth token)');
   }
 
   const failed = results.filter((r) => !r.ok);

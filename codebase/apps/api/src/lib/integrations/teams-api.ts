@@ -3,12 +3,23 @@ import { teamsOAuthConfigured } from './teams-oauth.js';
 import { resolveWorkspaceAccessToken } from './workspace-tokens.js';
 
 const GRAPH_API_BASE = 'https://graph.microsoft.com/v1.0';
+const MAX_TEAMS = 20;
+const MAX_CHANNELS_PER_TEAM = 50;
 
 export type TeamsChannel = { id: string; name: string };
 
-type GraphPostMessageResponse = {
+type GraphErrorBody = { error?: { code?: string; message?: string } };
+
+type GraphCollectionResponse<T> = GraphErrorBody & {
+  value?: T[];
+  '@odata.nextLink'?: string;
+};
+
+type GraphTeam = { id?: string; displayName?: string };
+type GraphChannel = { id?: string; displayName?: string };
+
+type GraphPostMessageResponse = GraphErrorBody & {
   id?: string;
-  error?: { code?: string; message?: string };
 };
 
 /** Build Graph path segment `teams/{teamId}/channels/{channelId}` from deliveryConfig.channelId. */
@@ -25,9 +36,80 @@ export function resolveTeamsChannelPath(channelId: string): string | null {
   return null;
 }
 
-export async function listTeamsChannels(_workspaceId: string): Promise<TeamsChannel[]> {
-  // TODO: list channels via Graph (e.g. GET /teams/{id}/channels) — needs extra OAuth scopes beyond MVP.
-  return [];
+async function collectGraphPages<T>(
+  initialUrl: string,
+  accessToken: string,
+  maxItems: number,
+  logCtx: { workspaceId: string; operation: string; teamId?: string },
+): Promise<T[]> {
+  const items: T[] = [];
+  let nextUrl: string | undefined = initialUrl;
+
+  while (nextUrl && items.length < maxItems) {
+    const res = await fetch(nextUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = (await res.json()) as GraphCollectionResponse<T>;
+    if (!res.ok) {
+      log('teams-api', `${logCtx.operation} failed`, {
+        workspaceId: logCtx.workspaceId,
+        teamId: logCtx.teamId,
+        status: res.status,
+        error: data.error?.message ?? data.error?.code ?? 'unknown',
+      });
+      break;
+    }
+
+    const page = data.value ?? [];
+    const remaining = maxItems - items.length;
+    items.push(...page.slice(0, remaining));
+    nextUrl = items.length < maxItems ? data['@odata.nextLink'] : undefined;
+  }
+
+  return items;
+}
+
+export async function listTeamsChannels(workspaceId: string): Promise<TeamsChannel[]> {
+  const accessToken = await resolveWorkspaceAccessToken(workspaceId, 'teams');
+  if (!accessToken) {
+    return [];
+  }
+
+  const channels: TeamsChannel[] = [];
+
+  try {
+    const teams = await collectGraphPages<GraphTeam>(
+      `${GRAPH_API_BASE}/me/joinedTeams?$select=id,displayName`,
+      accessToken,
+      MAX_TEAMS,
+      { workspaceId, operation: 'joinedTeams' },
+    );
+
+    for (const team of teams) {
+      if (!team.id) continue;
+
+      const teamChannels = await collectGraphPages<GraphChannel>(
+        `${GRAPH_API_BASE}/teams/${encodeURIComponent(team.id)}/channels?$select=id,displayName`,
+        accessToken,
+        MAX_CHANNELS_PER_TEAM,
+        { workspaceId, operation: 'team channels', teamId: team.id },
+      );
+
+      const teamName = team.displayName?.trim() || team.id;
+      for (const channel of teamChannels) {
+        if (!channel.id) continue;
+        const channelName = channel.displayName?.trim() || channel.id;
+        channels.push({
+          id: `teams/${team.id}/channels/${channel.id}`,
+          name: `${teamName} / ${channelName}`,
+        });
+      }
+    }
+  } catch (err) {
+    log('teams-api', 'list channels error', { workspaceId, error: String(err) });
+  }
+
+  return channels;
 }
 
 export async function postTeamsMessage(

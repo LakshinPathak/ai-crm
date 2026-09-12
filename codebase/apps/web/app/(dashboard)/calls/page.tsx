@@ -115,7 +115,7 @@ export default function CallsPage() {
                         {call.dealTitle}
                       </Link>
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <Badge variant="outline">Unlinked</Badge>
                     )}
                   </TableCell>
                 </TableRow>

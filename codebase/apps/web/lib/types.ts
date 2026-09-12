@@ -12,8 +12,9 @@ export type OnboardingStatus = {
 export type CrmConnectResult = {
   connected: boolean;
   provider: string;
-  mode: 'demo' | 'live';
-  message: string;
+  mode: 'demo' | 'live' | 'oauth';
+  message?: string;
+  authUrl?: string;
 };
 
 export type CrmStageMappingRow = {
@@ -48,6 +49,15 @@ export type SyncStatusResponse = {
   processed: number;
   total: number;
   lastSyncAt?: string | null;
+};
+
+/** GET /integrations/crm/sync-status — incremental queue + connection health */
+export type CrmIncrementalSyncStatusResponse = {
+  connected: boolean;
+  provider?: string;
+  lastSyncAt?: string | null;
+  errorCount: number;
+  pendingJobs: number;
 };
 
 export type DealCard = {
@@ -93,6 +103,29 @@ export type DealSearchResponse = {
 };
 
 export type HomeDealCard = DealCard & { riskReason?: 'stalled' | 'red_sentiment' };
+
+export type ForecastInsightsResponse = {
+  stub: boolean;
+  message: string;
+  kpis: Array<{
+    id: string;
+    label: string;
+    value: number;
+    format?: 'percent' | 'currency' | 'number';
+    changePct?: number;
+    sub?: string;
+  }>;
+  winRateTrend: Array<{ period: string; winRate: number }>;
+};
+
+/** POST /insights/sql — read-only SELECT stub (workspace overview metrics). */
+export type InsightsSqlResponse = {
+  stub: boolean;
+  message: string;
+  columns: string[];
+  rows: Array<Array<string | number | boolean | null>>;
+  rowCount: number;
+};
 
 export type HomeResponse = {
   focusDeals: HomeDealCard[];
@@ -143,4 +176,16 @@ export type CompaniesListResponse = { companies: CompanySummary[] };
 export type CompanyDetailResponse = {
   company: CompanyDetail;
   deals: CompanyDeal[];
+};
+
+/** GET /deals/:dealId/meddpicc letter section */
+export type MeddpiccLetter = {
+  label: string;
+  summary: string;
+  confidence: number;
+  chunkId?: string;
+  artifactId?: string;
+  excerpt?: string;
+  /** Present only when the API includes a call id; used to link `/calls/[id]`. */
+  callId?: string;
 };

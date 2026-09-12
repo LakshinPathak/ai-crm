@@ -1,6 +1,7 @@
 'use client';
 
 import { Check, Circle, Loader2 } from 'lucide-react';
+import type { MeddpiccLetter } from '@/lib/types';
 
 export const MEDDPICC_STREAM_STEPS = [
   { letter: 'M', label: 'Metrics', message: 'Gathering quantified outcomes…' },
@@ -22,7 +23,7 @@ export type MeddpiccStreamStep = {
   status: MeddpiccStepStatus;
 };
 
-export type MeddpiccLetter = { label: string; summary: string; confidence: number };
+export type { MeddpiccLetter };
 
 export type MeddpiccStreamHandlers = {
   onStepStarted?: (letter: string) => void;

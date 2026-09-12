@@ -76,6 +76,8 @@ Set on Railway (mirror [`codebase/.env.example`](../.env.example) and [`ENV.md`]
 | `GEMINI_API_KEY` | Required for MEDDPICC / agents |
 | `INTERNAL_SERVICE_TOKEN` | Rotate from dev default |
 | Integration vars | HubSpot, Slack, Gong, etc. as needed |
+| `SLACK_SIGNING_SECRET` | Slack app **Signing Secret** (app settings → Basic Information). Required to verify `POST /api/v1/webhooks/slack/interactions` (in-chat Approve/Reject) and `POST /api/v1/webhooks/slack/commands` (`/focus`, `/deal`, `/approve`). Without it, Slack requests get **401**. |
+| `SLACK_APPROVALS_CHANNEL_ID` | Optional Slack **channel ID** (e.g. `C0123456789`) used as the default destination for agent approval notifications when the agent’s delivery config does not specify a channel or DM. Workspace Slack OAuth (`SLACK_CLIENT_*`) must still be connected. |
 
 - [ ] Add Google OAuth **authorized redirect URI** = `GOOGLE_CALLBACK_URL`
 - [ ] CORS: `WEB_URL` must match the Vercel origin the browser uses
@@ -84,6 +86,8 @@ Set on Railway (mirror [`codebase/.env.example`](../.env.example) and [`ENV.md`]
 
 - [ ] HubSpot / Gong / Slack app URLs point at `https://<api-host>/api/v1/webhooks/...`
 - [ ] Set `HUBSPOT_WEBHOOK_PUBLIC_HOST` (and provider secrets) per [`ENV.md`](../ENV.md)
+- [ ] Slack **Interactivity & Shortcuts** request URL → `https://<api-host>/api/v1/webhooks/slack/interactions`; **Slash Commands** request URL → `https://<api-host>/api/v1/webhooks/slack/commands`; set `SLACK_SIGNING_SECRET` on Railway to match the Slack app
+- [ ] Per-agent inbound triggers: `POST https://<api-host>/api/v1/agents/<agentId>/webhook` with `x-agent-signature` (HMAC); secret is on the agent after creation
 
 ### Health check
 

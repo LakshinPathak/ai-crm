@@ -260,10 +260,63 @@ export type LossInsightsPayload = {
     value: number;
     percent: number;
   }>;
+  monthly: Array<{ period: string; won: number; lost: number }>;
 };
 
+type DealPeriodFields = {
+  status: string;
+  amount?: number | null;
+  winProbability?: number | null;
+  isHot?: boolean | null;
+  expectedCloseDate?: Date | null;
+  closedAt?: Date | null;
+  updatedAt?: Date | null;
+};
+
+function utcMonthKey(d: Date): string {
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+function lastSixUtcMonthKeys(now: Date): string[] {
+  const keys: string[] = [];
+  for (let i = 5; i >= 0; i--) {
+    keys.push(utcMonthKey(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1))));
+  }
+  return keys;
+}
+
+function winRateFromCounts(won: number, lost: number): number {
+  const closed = won + lost;
+  return closed > 0 ? Math.round((won / closed) * 100) : 0;
+}
+
+/** Bucket month for win-rate trend: expectedCloseDate, else updatedAt. */
+function trendBucketDate(deal: DealPeriodFields): Date | null {
+  const raw = deal.expectedCloseDate ?? deal.updatedAt;
+  return raw ? new Date(raw) : null;
+}
+
+function closedInWindowDate(deal: DealPeriodFields): Date | null {
+  const raw = deal.closedAt ?? deal.expectedCloseDate ?? deal.updatedAt;
+  return raw ? new Date(raw) : null;
+}
+
+function monthlyClosedTrend(closed: DealPeriodFields[], now: Date): Array<{ period: string; won: number; lost: number }> {
+  const months = lastSixUtcMonthKeys(now);
+  const buckets = new Map(months.map((period) => [period, { won: 0, lost: 0 }]));
+  for (const deal of closed) {
+    const dt = trendBucketDate(deal);
+    if (!dt) continue;
+    const bucket = buckets.get(utcMonthKey(dt));
+    if (!bucket) continue;
+    if (deal.status === 'won') bucket.won += 1;
+    else if (deal.status === 'lost') bucket.lost += 1;
+  }
+  return months.map((period) => ({ period, ...buckets.get(period)! }));
+}
+
 async function loadLossInsights(workspaceId: Types.ObjectId): Promise<LossInsightsPayload> {
-  const [outcomeAgg, reasonAgg] = await Promise.all([
+  const [outcomeAgg, reasonAgg, closedDeals] = await Promise.all([
     Deal.aggregate<OutcomeAggRow>([
       { $match: { workspaceId, deletedAt: null, status: { $in: ['won', 'lost'] } } },
       {
@@ -292,6 +345,9 @@ async function loadLossInsights(workspaceId: Types.ObjectId): Promise<LossInsigh
         },
       },
     ]),
+    Deal.find({ workspaceId, deletedAt: null, status: { $in: ['won', 'lost'] } })
+      .select('status expectedCloseDate closedAt updatedAt')
+      .lean(),
   ]);
 
   const won = outcomeAgg.find((row) => row._id === 'won') ?? { count: 0, value: 0 };
@@ -315,6 +371,7 @@ async function loadLossInsights(workspaceId: Types.ObjectId): Promise<LossInsigh
     totalLost: lost.count,
     totalLostValue: lost.value,
     reasons,
+    monthly: monthlyClosedTrend(closedDeals, new Date()),
   };
 }
 
@@ -412,5 +469,96 @@ export async function getActivityAnalytics(req: AuthedRequest, res: Response) {
       'Product Requests',
       'Team Requests',
     ],
+  });
+}
+
+/** Pipeline forecast KPIs from non-deleted workspace deals. */
+export async function getForecastInsights(req: AuthedRequest, res: Response) {
+  const workspaceId = new Types.ObjectId(req.tenant!.workspaceId);
+  const now = new Date();
+  const deals = await Deal.find({ workspaceId, deletedAt: null })
+    .select('status amount winProbability isHot expectedCloseDate closedAt updatedAt')
+    .lean();
+
+  const closed = deals.filter((d) => d.status === 'won' || d.status === 'lost');
+  const winRate = winRateFromCounts(
+    closed.filter((d) => d.status === 'won').length,
+    closed.filter((d) => d.status === 'lost').length,
+  );
+
+  const msDay = 86400000;
+  const currentStart = new Date(now.getTime() - 30 * msDay);
+  const prevStart = new Date(now.getTime() - 60 * msDay);
+  const inWindow = (deal: DealPeriodFields, start: Date, end: Date) => {
+    const dt = closedInWindowDate(deal);
+    return Boolean(dt && dt >= start && dt < end);
+  };
+  const currentClosed = closed.filter((d) => inWindow(d, currentStart, now));
+  const prevClosed = closed.filter((d) => inWindow(d, prevStart, currentStart));
+  const currentWinRate = winRateFromCounts(
+    currentClosed.filter((d) => d.status === 'won').length,
+    currentClosed.filter((d) => d.status === 'lost').length,
+  );
+  const prevWinRate = winRateFromCounts(
+    prevClosed.filter((d) => d.status === 'won').length,
+    prevClosed.filter((d) => d.status === 'lost').length,
+  );
+
+  const open = deals.filter((d) => d.status === 'open');
+  const weightedPipeline = Math.round(
+    open.reduce((sum, d) => sum + (d.amount ?? 0) * ((d.winProbability ?? 0) / 100), 0),
+  );
+  const commitForecast = Math.round(
+    open
+      .filter((d) => (d.winProbability ?? 0) >= 70 || Boolean(d.isHot))
+      .reduce((sum, d) => sum + (d.amount ?? 0), 0),
+  );
+
+  const monthly = monthlyClosedTrend(closed, now);
+  const winRateTrend = monthly.map((row) => ({
+    period: row.period,
+    winRate: winRateFromCounts(row.won, row.lost),
+  }));
+
+  const winRateKpi: {
+    id: string;
+    label: string;
+    value: number;
+    format: 'percent';
+    changePct?: number;
+    sub?: string;
+  } = {
+    id: 'winRate',
+    label: 'Win rate',
+    value: winRate,
+    format: 'percent',
+  };
+  if (prevClosed.length > 0) {
+    winRateKpi.changePct = currentWinRate - prevWinRate;
+  } else {
+    winRateKpi.sub = 'Closed won / (won + lost)';
+  }
+
+  res.json({
+    stub: false,
+    message: 'Computed from workspace pipeline',
+    kpis: [
+      winRateKpi,
+      {
+        id: 'weightedPipeline',
+        label: 'Weighted pipeline',
+        value: weightedPipeline,
+        format: 'currency',
+        sub: 'Amount × win probability',
+      },
+      {
+        id: 'commitForecast',
+        label: 'Commit forecast',
+        value: commitForecast,
+        format: 'currency',
+        sub: 'Open deals with win probability ≥ 70% or marked hot',
+      },
+    ],
+    winRateTrend,
   });
 }

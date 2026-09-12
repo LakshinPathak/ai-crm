@@ -191,7 +191,12 @@ export default function IntegrationsPage() {
       const gong = rest[CHAT_PROVIDER_IDS.length + 1] as GongStatus;
       const calStatus = rest[CHAT_PROVIDER_IDS.length + 2] as CalendarStatus;
 
-      setProviders(p.providers);
+      setProviders(
+        p.providers.map((provider) => ({
+          ...provider,
+          status: provider.status === 'available' ? 'enabled' : provider.status,
+        })),
+      );
       setStatus(s);
       setChatProviders(
         chat.providers.map((provider) => ({
@@ -234,7 +239,15 @@ export default function IntegrationsPage() {
     const token = getToken();
     if (!token) return;
     try {
-      await apiPost(`/integrations/crm/connect/${providerId}`, token, {});
+      const result = await apiPost<{ authUrl?: string; connected?: boolean }>(
+        `/integrations/crm/connect/${providerId}`,
+        token,
+        {},
+      );
+      if (result.authUrl) {
+        window.location.href = result.authUrl;
+        return;
+      }
       load();
       toast(`${providerId} connected`, 'success');
     } catch (err) {

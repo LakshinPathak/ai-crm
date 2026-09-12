@@ -16,6 +16,8 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  Line,
+  LineChart,
 } from 'recharts';
 import { formatMoney } from '@/lib/format';
 import { KpiCard } from '@/components/ui/KpiCard';
@@ -32,6 +34,7 @@ export type LossData = {
     value: number;
     percent: number;
   }>;
+  monthly?: Array<{ period: string; won: number; lost: number }>;
 };
 
 const OUTCOME_COLORS = { won: '#14b8a6', lost: '#ef4444' };
@@ -65,6 +68,13 @@ export function LossDashboard({ data }: { data: LossData }) {
     count: r.count,
     percent: r.percent,
   }));
+  const monthlyChartData = (data.monthly ?? []).map((row) => ({
+    period: row.period,
+    closed: row.won + row.lost,
+    won: row.won,
+    lost: row.lost,
+  }));
+  const showMonthly = monthlyChartData.some((row) => row.closed > 0);
 
   return (
     <div className="analytics-loss min-w-0 overflow-hidden">
@@ -187,6 +197,24 @@ export function LossDashboard({ data }: { data: LossData }) {
               </tbody>
             </table>
           </div>
+
+          {showMonthly ? (
+            <div className="analytics-activity__chart-card analytics-table-wrap--wide min-w-0 overflow-hidden">
+              <div className="analytics-activity__chart-header">
+                <h3>Closed deals by month</h3>
+              </div>
+              <ResponsiveContainer width="100%" height={220} minWidth={280}>
+                <LineChart data={monthlyChartData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e8eaef" />
+                  <XAxis dataKey="period" tick={{ fontSize: 11 }} stroke="#94a3b8" />
+                  <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="won" name="Won" stroke="#14b8a6" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="lost" name="Lost" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          ) : null}
         </div>
       )}
     </div>

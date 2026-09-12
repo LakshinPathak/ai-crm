@@ -86,7 +86,7 @@
 
 | Date | Change |
 |------|--------|
-| 2026-09-11 | v1.3 — R8 complete; R9 in progress; [`deploy-beta.md`](../deploy-beta.md) added (WS-10) |
+| 2026-09-11 | v1.3 — R8–R9 shipped; [`deploy-beta.md`](../deploy-beta.md); R10 batch 1 in progress |
 | 2026-09-11 | v1.2 — R8 batch 1 shipped |
 | 2026-09-10 | v1.1 — Post R7 + responsive UI status |
 | 2026-09-09 | v1.0 — Initial snapshot in future/README |

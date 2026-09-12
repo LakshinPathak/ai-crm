@@ -13,6 +13,11 @@ import {
   exchangeHubSpotCode,
   hubspotOAuthConfigured,
 } from '../../lib/integrations/hubspot-oauth.js';
+import {
+  buildSalesforceAuthUrl,
+  exchangeSalesforceCode,
+  salesforceOAuthConfigured,
+} from '../../lib/integrations/salesforce-oauth.js';
 import { saveTokens } from '../../lib/integrations/tokens.js';
 import {
   buildGoogleCalendarAuthUrl,
@@ -43,16 +48,25 @@ export function startCrmOAuth(
   userId: string,
   provider: string,
 ): string | null {
-  if (provider !== 'hubspot' || !hubspotOAuthConfigured()) {
-    return null;
+  if (provider === 'hubspot' && hubspotOAuthConfigured()) {
+    const state = issueIntegrationOAuthContext(res, {
+      workspaceId,
+      userId,
+      provider: 'hubspot',
+      kind: 'crm',
+    });
+    return buildHubSpotAuthUrl(state);
   }
-  const state = issueIntegrationOAuthContext(res, {
-    workspaceId,
-    userId,
-    provider: 'hubspot',
-    kind: 'crm',
-  });
-  return buildHubSpotAuthUrl(state);
+  if (provider === 'salesforce' && salesforceOAuthConfigured()) {
+    const state = issueIntegrationOAuthContext(res, {
+      workspaceId,
+      userId,
+      provider: 'salesforce',
+      kind: 'crm',
+    });
+    return buildSalesforceAuthUrl(state);
+  }
+  return null;
 }
 
 export function startSlackOAuth(res: Response, workspaceId: string, userId: string): string | null {
@@ -161,6 +175,37 @@ export async function handleCrmOAuthCallback(req: Request, res: Response): Promi
         { upsert: true },
       );
       await saveTokens(ctx.workspaceId, 'hubspot', {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresAt: tokens.expiresAt,
+      });
+      res.redirect(integrationOAuthRedirectUrl(true, provider));
+      return;
+    }
+
+    if (provider === 'salesforce' && salesforceOAuthConfigured()) {
+      const tokens = await exchangeSalesforceCode(code);
+      const existing = await IntegrationConnection.findOne({
+        workspaceId: ctx.workspaceId,
+        providerKey: 'salesforce',
+      });
+      const settings = ensureConnectionWebhookSecret(
+        (existing?.settings ?? {}) as Record<string, unknown>,
+      );
+      await IntegrationConnection.findOneAndUpdate(
+        { workspaceId: ctx.workspaceId, providerKey: 'salesforce' },
+        {
+          status: 'connected',
+          externalAccountId: tokens.externalAccountId ?? 'oauth-salesforce',
+          settings: {
+            ...settings,
+            mode: 'live',
+            ...(tokens.instanceUrl ? { instanceUrl: tokens.instanceUrl } : {}),
+          },
+        },
+        { upsert: true },
+      );
+      await saveTokens(ctx.workspaceId, 'salesforce', {
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
         expiresAt: tokens.expiresAt,
