@@ -12,7 +12,7 @@ export function WhyPage() {
         badge="Why AI CRM"
         title="Your CRM stores fields. We unify the context behind every deal."
         description="Technical sales teams lose hours hunting across Slack threads, Gong clips, calendar notes, and CRM updates. AI CRM is the presales operating system that sits next to your CRM — converging scattered signals into one cited, approval-gated record per opportunity."
-        stats="4 hr saved per deal per week · 95% citation coverage on AI claims"
+        stats="Cited MEDDPICC · approval-gated CRM write-back · live HubSpot + Salesforce"
       />
 
       <section className="mkt-mvp bg-muted px-4 py-12 sm:px-6 sm:py-16">

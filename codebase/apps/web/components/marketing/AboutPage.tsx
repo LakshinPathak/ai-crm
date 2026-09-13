@@ -20,7 +20,7 @@ const MISSION_POINTS = [
   {
     title: 'Built for technical sales',
     description:
-      'POC workflows, SE workbenches, and buyer portals — designed for solutions engineering and presales, not generic sales ops.',
+      'POC workflows and SE deal rooms — buyer portal is on the roadmap, not shipping yet.',
     icon: 'users',
   },
 ] as const;

@@ -1,5 +1,5 @@
 import type { Types } from 'mongoose';
-import { Company, Deal, IntegrationConnection, PipelineStage } from '@ai-crm/db';
+import { Company, Deal, ExternalRecord, IntegrationConnection, PipelineStage } from '@ai-crm/db';
 import { ensurePipelineStages } from '../seed.js';
 import { resolveWorkspaceAccessToken } from '../integrations/workspace-tokens.js';
 import { salesforceQueryPath, salesforceRequest } from './client.js';
@@ -33,6 +33,11 @@ type SfQueryResponse = {
 
 type ConnectionSettings = {
   instanceUrl?: string;
+  stageMappings?: Array<{
+    stageExternalId: string;
+    stageExternalLabel: string;
+    internalStageId: string;
+  }>;
 };
 
 export type SalesforceSyncResult = {
@@ -57,10 +62,23 @@ function mapDealStatus(opp: SfOpportunity): 'open' | 'won' | 'lost' {
 
 function pickStage(
   opp: SfOpportunity,
+  localStages: Array<{ _id: Types.ObjectId; stageType: string; id?: string }>,
   openStages: Array<{ _id: Types.ObjectId; stageType: string }>,
-  closedWon?: { _id: Types.ObjectId },
-  closedLost?: { _id: Types.ObjectId },
+  closedWon: { _id: Types.ObjectId } | undefined,
+  closedLost: { _id: Types.ObjectId } | undefined,
+  mappings: Array<{ stageExternalId: string; stageExternalLabel: string; internalStageId: string }>,
 ): { _id: Types.ObjectId } {
+  const stageName = opp.StageName?.trim();
+  if (stageName && mappings.length > 0) {
+    const mapped = mappings.find(
+      (m) => m.stageExternalId === stageName || m.stageExternalLabel === stageName,
+    );
+    if (mapped?.internalStageId) {
+      const found = localStages.find((s) => String(s._id) === mapped.internalStageId || s.id === mapped.internalStageId);
+      if (found) return found;
+    }
+  }
+
   if (opp.IsWon && closedWon) return closedWon;
   if (opp.IsClosed && !opp.IsWon && closedLost) return closedLost;
 
@@ -146,6 +164,7 @@ export async function syncSalesforceToWorkspace(params: {
   }
   const closedWon = localStages.find((s) => s.stageType === 'closed_won');
   const closedLost = localStages.find((s) => s.stageType === 'closed_lost');
+  const stageMappings = ((conn?.settings as ConnectionSettings | undefined)?.stageMappings) ?? [];
 
   const query = await salesforceRequest<SfQueryResponse>({
     instanceUrl,
@@ -196,7 +215,7 @@ export async function syncSalesforceToWorkspace(params: {
         : amount > 80000
           ? 55
           : 40;
-    const localStage = pickStage(opp, openStages, closedWon, closedLost);
+    const localStage = pickStage(opp, localStages, openStages, closedWon, closedLost, stageMappings);
     const status = mapDealStatus(opp);
     const expectedCloseDate = parseDate(opp.CloseDate);
     const lastActivityAt = parseDate(opp.LastModifiedDate) ?? new Date();
@@ -215,8 +234,22 @@ export async function syncSalesforceToWorkspace(params: {
       if (closedAt) existing.closedAt = closedAt;
       await existing.save();
       dealsUpdated += 1;
+      await ExternalRecord.findOneAndUpdate(
+        { workspaceId, providerKey: PROVIDER, entityType: 'deal', externalId: opp.Id },
+        {
+          $setOnInsert: {
+            workspaceId,
+            providerKey: PROVIDER,
+            entityType: 'deal',
+            externalId: opp.Id,
+            internalId: existing.id,
+          },
+          $set: { lastSyncedAt: new Date(), metadata: { stageName: opp.StageName ?? null } },
+        },
+        { upsert: true },
+      );
     } else {
-      await Deal.create({
+      const createdDeal = await Deal.create({
         workspaceId,
         companyId,
         title: opp.Name ?? 'Untitled Opportunity',
@@ -235,6 +268,20 @@ export async function syncSalesforceToWorkspace(params: {
       });
       positionOffset += 1;
       dealsCreated += 1;
+      await ExternalRecord.findOneAndUpdate(
+        { workspaceId, providerKey: PROVIDER, entityType: 'deal', externalId: opp.Id },
+        {
+          $setOnInsert: {
+            workspaceId,
+            providerKey: PROVIDER,
+            entityType: 'deal',
+            externalId: opp.Id,
+            internalId: createdDeal.id,
+          },
+          $set: { lastSyncedAt: new Date(), metadata: { stageName: opp.StageName ?? null } },
+        },
+        { upsert: true },
+      );
     }
   }
 

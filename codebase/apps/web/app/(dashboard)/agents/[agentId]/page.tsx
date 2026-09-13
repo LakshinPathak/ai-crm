@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { ArrowLeft, Bot, Pencil, Play } from 'lucide-react';
-import { apiGet, apiPatch, apiPost } from '@/lib/api-client';
+import { useParams, useRouter } from 'next/navigation';
+import { ArrowLeft, Bot, Pencil, Play, Trash2 } from 'lucide-react';
+import { apiDelete, apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { agentCategoryBadge, agentRunStatusBadge } from '@/lib/ui-badge';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -51,6 +51,7 @@ type Run = {
 
 export default function AgentDetailPage() {
   const { agentId } = useParams<{ agentId: string }>();
+  const router = useRouter();
   const { toast } = useToast();
 
   const [agent, setAgent] = useState<Agent | null>(null);
@@ -59,6 +60,7 @@ export default function AgentDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState(false);
   const [running, setRunning] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(() => {
     const token = getToken();
@@ -159,6 +161,21 @@ export default function AgentDetailPage() {
     }
   }
 
+  async function deleteAgent() {
+    const token = getToken();
+    if (!token || !agentId) return;
+    if (!window.confirm('Disable this agent? It will no longer run on schedules or events.')) return;
+    setDeleting(true);
+    try {
+      await apiDelete(`/agents/${agentId}`, token);
+      toast('Agent disabled', 'success');
+      router.push('/agents');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to delete agent', 'error');
+      setDeleting(false);
+    }
+  }
+
   if (!agent && !error) return <PageSkeleton />;
 
   if (error || !agent) {
@@ -227,6 +244,16 @@ export default function AgentDetailPage() {
             >
               <Play className="size-3.5" />
               Run
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={deleting}
+              onClick={deleteAgent}
+              className="w-full text-foreground sm:w-auto"
+            >
+              <Trash2 className="size-3.5" />
+              Delete
             </Button>
           </div>
         }

@@ -42,18 +42,23 @@ export async function salesforceRequest<T>(params: {
   instanceUrl: string;
   accessToken: string;
   path: string;
+  method?: 'GET' | 'PATCH' | 'POST';
+  body?: unknown;
 }): Promise<T> {
   const origin = parseSalesforceInstanceUrl(params.instanceUrl);
   if (!params.path.startsWith('/services/')) {
     throw new Error('Salesforce request path is not allowed');
   }
 
+  const method = params.method ?? 'GET';
   const res = await fetch(`${origin}${params.path}`, {
-    method: 'GET',
+    method,
     headers: {
       Authorization: `Bearer ${params.accessToken}`,
       Accept: 'application/json',
+      ...(params.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
     },
+    body: params.body !== undefined ? JSON.stringify(params.body) : undefined,
     redirect: 'error',
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
@@ -63,11 +68,11 @@ export async function salesforceRequest<T>(params: {
   try {
     data = text ? JSON.parse(text) : {};
   } catch {
-    throw new Error(`Salesforce GET ${params.path} → ${res.status}: ${text.slice(0, 200)}`);
+    throw new Error(`Salesforce ${method} ${params.path} → ${res.status}: ${text.slice(0, 200)}`);
   }
 
   if (!res.ok) {
-    throw new Error(`Salesforce GET ${params.path} → ${res.status}: ${salesforceErrorMessage(data, text)}`);
+    throw new Error(`Salesforce ${method} ${params.path} → ${res.status}: ${salesforceErrorMessage(data, text)}`);
   }
 
   return data as T;

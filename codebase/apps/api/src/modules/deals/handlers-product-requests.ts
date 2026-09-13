@@ -1,7 +1,7 @@
 import type { Response } from 'express';
 import type { AuthedRequest } from '../../lib/auth/index.js';
 import { Deal, DealProductRequest } from '@ai-crm/db';
-import { CreateProductRequestSchema } from '@ai-crm/shared';
+import { CreateProductRequestSchema, UpdateProductRequestSchema } from '@ai-crm/shared';
 
 function paramId(value: string | string[]): string {
   return Array.isArray(value) ? value[0] : value;
@@ -67,4 +67,61 @@ export async function createDealProductRequest(req: AuthedRequest, res: Response
   await deal.save();
 
   res.status(201).json({ productRequest: productRequestPayload(productRequest) });
+}
+
+export async function updateDealProductRequest(req: AuthedRequest, res: Response) {
+  const parsed = UpdateProductRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: parsed.error.message } });
+    return;
+  }
+
+  const dealId = paramId(req.params.dealId);
+  const deal = await assertDeal(req.tenant!.workspaceId, dealId);
+  if (!deal) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Deal not found' } });
+    return;
+  }
+
+  const productRequest = await DealProductRequest.findOne({
+    _id: paramId(req.params.requestId),
+    dealId: deal._id,
+    workspaceId: req.tenant!.workspaceId,
+  });
+  if (!productRequest) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Product request not found' } });
+    return;
+  }
+
+  if (parsed.data.title !== undefined) productRequest.title = parsed.data.title;
+  if (parsed.data.description !== undefined) productRequest.description = parsed.data.description;
+  if (parsed.data.status !== undefined) productRequest.status = parsed.data.status;
+  if (parsed.data.priority !== undefined) productRequest.priority = parsed.data.priority;
+  await productRequest.save();
+  deal.lastActivityAt = new Date();
+  await deal.save();
+  res.json({ productRequest: productRequestPayload(productRequest) });
+}
+
+export async function deleteDealProductRequest(req: AuthedRequest, res: Response) {
+  const dealId = paramId(req.params.dealId);
+  const deal = await assertDeal(req.tenant!.workspaceId, dealId);
+  if (!deal) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Deal not found' } });
+    return;
+  }
+
+  const productRequest = await DealProductRequest.findOneAndDelete({
+    _id: paramId(req.params.requestId),
+    dealId: deal._id,
+    workspaceId: req.tenant!.workspaceId,
+  });
+  if (!productRequest) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Product request not found' } });
+    return;
+  }
+
+  deal.lastActivityAt = new Date();
+  await deal.save();
+  res.json({ deleted: true });
 }

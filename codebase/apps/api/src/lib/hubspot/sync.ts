@@ -1,7 +1,7 @@
-import type { Types } from 'mongoose';
+import { Types } from 'mongoose';
 import { ensurePipelineStages } from '../seed.js';
 import { hubspotRequest, searchObjects } from './client.js';
-import { Company, Deal, Note, PipelineStage, Task } from '@ai-crm/db';
+import { Company, Deal, ExternalRecord, IntegrationConnection, Note, PipelineStage, Task } from '@ai-crm/db';
 
 type HsDeal = {
   id: string;
@@ -11,6 +11,7 @@ type HsDeal = {
     dealstage?: string;
     closedate?: string;
     hs_lastmodifieddate?: string;
+    hubspot_owner_id?: string;
   };
 };
 
@@ -34,6 +35,62 @@ type HsTask = {
 };
 
 const PROVIDER = 'hubspot';
+
+type StageMapping = {
+  stageExternalId: string;
+  internalStageId: string;
+};
+
+type UserMapping = {
+  externalUserId: string;
+  internalUserId: string | null;
+};
+
+function resolveLocalStage(
+  hsStageId: string,
+  mappings: StageMapping[],
+  localStages: InstanceType<typeof PipelineStage>[],
+  openStages: InstanceType<typeof PipelineStage>[],
+  stageMap: Map<string, number>,
+): InstanceType<typeof PipelineStage> {
+  const mapped = mappings.find((m) => m.stageExternalId === hsStageId);
+  if (mapped?.internalStageId) {
+    const found = localStages.find((s) => s.id === mapped.internalStageId);
+    if (found) return found;
+  }
+  const stageIdx = stageIndexFromHubSpot(hsStageId, stageMap);
+  return openStages[stageIdx] ?? openStages[0];
+}
+
+async function upsertDealExternalRecord(
+  workspaceId: Types.ObjectId,
+  dealId: string,
+  externalId: string,
+  metadata: Record<string, unknown>,
+) {
+  await ExternalRecord.findOneAndUpdate(
+    {
+      workspaceId,
+      providerKey: PROVIDER,
+      entityType: 'deal',
+      externalId,
+    },
+    {
+      $setOnInsert: {
+        workspaceId,
+        providerKey: PROVIDER,
+        entityType: 'deal',
+        externalId,
+        internalId: dealId,
+      },
+      $set: {
+        lastSyncedAt: new Date(),
+        metadata,
+      },
+    },
+    { upsert: true },
+  );
+}
 
 function stageIndexFromHubSpot(stageId: string, stageMap: Map<string, number>): number {
   const idx = stageMap.get(stageId);
@@ -75,6 +132,11 @@ export async function syncHubSpotToWorkspace(params: {
   if (openStages.length === 0) {
     throw new Error('No open pipeline stages in workspace — run onboarding or seed first');
   }
+
+  const conn = await IntegrationConnection.findOne({ workspaceId, providerKey: PROVIDER });
+  const settings = (conn?.settings as { stageMappings?: StageMapping[]; userMappings?: UserMapping[] } | undefined) ?? {};
+  const stageMappings = settings.stageMappings ?? [];
+  const userMappings = settings.userMappings ?? [];
 
   const stageMap = new Map<string, number>();
   const sortedHs = [...hsStages].sort((a, b) => a.displayOrder - b.displayOrder);
@@ -130,7 +192,7 @@ export async function syncHubSpotToWorkspace(params: {
   const dealsRes = await searchObjects<HsDeal>(
     'deals',
     {
-      properties: ['dealname', 'amount', 'dealstage', 'closedate', 'hs_lastmodifieddate'],
+      properties: ['dealname', 'amount', 'dealstage', 'closedate', 'hs_lastmodifieddate', 'hubspot_owner_id'],
       limit: 100,
     },
     workspaceIdStr,
@@ -164,20 +226,34 @@ export async function syncHubSpotToWorkspace(params: {
       companyId = fallback._id;
     }
 
-    const stageIdx = stageIndexFromHubSpot(hs.properties.dealstage ?? '', stageMap);
-    const localStage = openStages[stageIdx] ?? openStages[0];
+    const localStage = resolveLocalStage(
+      hs.properties.dealstage ?? '',
+      stageMappings,
+      localStages,
+      openStages,
+      stageMap,
+    );
     const amount = Number(hs.properties.amount ?? 0);
     const winProbability = amount > 150000 ? 65 : amount > 80000 ? 55 : 40;
+
+    const mappedOwner = userMappings.find((m) => m.externalUserId === (hs.properties.hubspot_owner_id ?? ''));
+    const dealOwnerId = mappedOwner?.internalUserId
+      ? new Types.ObjectId(mappedOwner.internalUserId)
+      : ownerId;
 
     if (existing) {
       existing.title = hs.properties.dealname ?? existing.title;
       existing.amount = amount;
       existing.stageId = localStage._id;
+      existing.ownerId = dealOwnerId;
       existing.expectedCloseDate = hs.properties.closedate ? new Date(hs.properties.closedate) : existing.expectedCloseDate;
       existing.lastActivityAt = new Date();
       await existing.save();
       dealsUpdated += 1;
       dealIdMap.set(hs.id, existing._id);
+      await upsertDealExternalRecord(workspaceId, existing.id, hs.id, {
+        dealstage: hs.properties.dealstage ?? null,
+      });
     } else {
       const count = await Deal.countDocuments({ workspaceId, deletedAt: null });
       const deal = await Deal.create({
@@ -187,7 +263,7 @@ export async function syncHubSpotToWorkspace(params: {
         amount,
         stageId: localStage._id,
         position: count,
-        ownerId,
+        ownerId: dealOwnerId,
         winProbability,
         sentiment: winProbability >= 60 ? 'green' : winProbability >= 40 ? 'yellow' : 'red',
         lastActivityAt: new Date(),
@@ -197,6 +273,9 @@ export async function syncHubSpotToWorkspace(params: {
       });
       dealsCreated += 1;
       dealIdMap.set(hs.id, deal._id);
+      await upsertDealExternalRecord(workspaceId, deal.id, hs.id, {
+        dealstage: hs.properties.dealstage ?? null,
+      });
     }
   }
 

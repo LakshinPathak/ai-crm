@@ -3,14 +3,22 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ClipboardList } from 'lucide-react';
-import { apiGet } from '@/lib/api-client';
+import { apiGet, apiPatch } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import type { DealCard } from '@/lib/types';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from '@/components/ui/Toast';
 import {
   Table,
   TableBody,
@@ -49,6 +57,7 @@ type RequestRow = {
 };
 
 export default function RequestsPage() {
+  const { toast } = useToast();
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -104,25 +113,26 @@ export default function RequestsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  async function updateStatus(row: RequestRow, status: string) {
+    const token = getToken();
+    if (!token) return;
+    const path =
+      row.type === 'team'
+        ? `/deals/${row.dealId}/team-requests/${row.id}`
+        : `/deals/${row.dealId}/product-requests/${row.id}`;
+    try {
+      await apiPatch(path, token, { status });
+      setRequests((prev) =>
+        prev.map((r) => (r.id === row.id && r.type === row.type ? { ...r, status } : r)),
+      );
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to update request', 'error');
+    }
+  }
+
   return (
     <>
       <PageHeader title="Requests" subtitle="Product and team requests across deals" />
-
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="rounded-full bg-primary/10 p-2 text-primary">
-              <ClipboardList className="size-5" />
-            </div>
-            <div>
-              <CardTitle className="text-base">Workspace requests — coming soon</CardTitle>
-              <CardDescription>
-                Full workspace-wide request tracking is on the way. For now, manage requests on individual deals.
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
 
       {loading ? (
         <Skeleton className="h-48 rounded-xl" />
@@ -150,7 +160,28 @@ export default function RequestsPage() {
                     <Badge variant="outline">{r.detail}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{r.status}</Badge>
+                    <Select value={r.status} onValueChange={(v) => updateStatus(r, v)}>
+                      <SelectTrigger className="h-8 w-[140px]" aria-label={`Status for ${r.title}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {r.type === 'team' ? (
+                          <>
+                            <SelectItem value="open">open</SelectItem>
+                            <SelectItem value="in_progress">in progress</SelectItem>
+                            <SelectItem value="completed">completed</SelectItem>
+                            <SelectItem value="cancelled">cancelled</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="open">open</SelectItem>
+                            <SelectItem value="submitted">submitted</SelectItem>
+                            <SelectItem value="in_progress">in progress</SelectItem>
+                            <SelectItem value="done">done</SelectItem>
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell>
                     <Link href={`/deals/${r.dealId}`} className="font-medium text-foreground hover:underline">

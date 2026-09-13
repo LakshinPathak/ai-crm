@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
@@ -37,6 +38,7 @@ type Approval = {
   dealId: string | null;
   dealTitle: string | null;
   status: string;
+  contentType?: string;
   contentPreview: { summary?: string };
   createdAt: string;
 };
@@ -65,6 +67,29 @@ function formatJsonPreview(value: unknown) {
   } catch {
     return String(value);
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function describeProposedChange(value: unknown): string | null {
+  if (!isRecord(value) || typeof value.type !== 'string') return null;
+  if (value.type === 'deal_hot_alert') return 'Mark this deal as hot after buying-signal review.';
+  if (value.type === 'crm_field_update') return 'Update CRM fields on the linked deal.';
+  if (value.type === 'post_call_bundle') {
+    const tasks = Array.isArray(value.tasks) ? value.tasks.length : 0;
+    return `Save a post-call note, ${tasks} task${tasks === 1 ? '' : 's'}, and an email draft as a note.`;
+  }
+  if (value.type === 'task_batch') return 'Create a batch of follow-up tasks.';
+  if (value.type === 'note_create') return 'Add a note to the linked deal.';
+  if (value.type === 'deal_update') return 'Update local deal fields.';
+  return `Proposed change: ${value.type}`;
+}
+
+function contentTypeLabel(contentType?: string) {
+  if (!contentType) return null;
+  return contentType.replace(/_/g, ' ');
 }
 
 export default function ApprovalsPage() {
@@ -213,9 +238,16 @@ export default function ApprovalsPage() {
               <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div className="min-w-0 flex-1">
                   <CardTitle className="text-[0.9375rem] text-foreground">{a.title}</CardTitle>
-                  {a.dealTitle && (
-                    <CardDescription className="mt-0.5">{a.dealTitle}</CardDescription>
-                  )}
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    {a.contentType && (
+                      <Badge variant="outline" className="text-foreground">
+                        {contentTypeLabel(a.contentType)}
+                      </Badge>
+                    )}
+                    {a.dealTitle && (
+                      <CardDescription className="mt-0">{a.dealTitle}</CardDescription>
+                    )}
+                  </div>
                   {a.contentPreview?.summary && (
                     <p className="mt-2 text-[0.8125rem] leading-relaxed text-muted-foreground">
                       {a.contentPreview.summary}
@@ -260,7 +292,20 @@ export default function ApprovalsPage() {
 
                 <dt className="font-semibold text-muted-foreground">Created</dt>
                 <dd className="text-foreground">{formatCreatedAt(detail.createdAt)}</dd>
+
+                {detail.contentType && (
+                  <>
+                    <dt className="font-semibold text-muted-foreground">Type</dt>
+                    <dd className="text-foreground">{contentTypeLabel(detail.contentType)}</dd>
+                  </>
+                )}
               </dl>
+
+              {describeProposedChange(detail.proposedChange) && (
+                <p className="text-[0.8125rem] leading-relaxed text-foreground">
+                  {describeProposedChange(detail.proposedChange)}
+                </p>
+              )}
 
               {detail.contentPreview?.summary && (
                 <p className="text-[0.8125rem] leading-relaxed text-muted-foreground">

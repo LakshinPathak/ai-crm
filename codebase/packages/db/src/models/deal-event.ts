@@ -9,10 +9,15 @@ const DealEventSchema = new Schema(
     endAt: { type: Date, required: true },
     type: { type: String, enum: ['meeting', 'call'], required: true },
     source: { type: String, required: true },
+    externalId: { type: String },
   },
   { timestamps: true },
 );
 
 DealEventSchema.index({ workspaceId: 1, dealId: 1, startAt: -1 });
+DealEventSchema.index(
+  { workspaceId: 1, source: 1, externalId: 1 },
+  { unique: true, sparse: true },
+);
 
 export const DealEvent = model('DealEvent', DealEventSchema);

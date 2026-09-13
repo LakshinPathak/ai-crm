@@ -39,6 +39,8 @@ export const CreateNoteSchema = z.object({
   body: z.string().min(1).max(5000),
 });
 
+export const UpdateNoteSchema = CreateNoteSchema;
+
 export const CreateTaskSchema = z.object({
   title: z.string().min(1).max(300),
   dueDate: z.string().datetime().optional(),
@@ -66,10 +68,20 @@ export const CreateParticipantSchema = z.object({
   company: z.string().max(200).optional(),
 });
 
+export const UpdateParticipantSchema = CreateParticipantSchema.partial().refine(
+  (value) => Object.keys(value).length > 0,
+  { message: 'At least one field is required' },
+);
+
 export const CreateDealProjectSchema = z.object({
   title: z.string().min(1).max(300),
   status: z.enum(['planning', 'active', 'completed', 'on_hold']).optional(),
 });
+
+export const UpdateDealProjectSchema = CreateDealProjectSchema.partial().refine(
+  (value) => Object.keys(value).length > 0,
+  { message: 'At least one field is required' },
+);
 
 export const CreateProductRequestSchema = z.object({
   title: z.string().min(1).max(300),
@@ -78,12 +90,22 @@ export const CreateProductRequestSchema = z.object({
   priority: z.enum(['low', 'medium', 'high']).optional(),
 });
 
+export const UpdateProductRequestSchema = CreateProductRequestSchema.partial().refine(
+  (value) => Object.keys(value).length > 0,
+  { message: 'At least one field is required' },
+);
+
 export const CreateDealTeamRequestSchema = z.object({
   title: z.string().min(1).max(300),
   department: z.string().min(1).max(100),
   status: z.enum(['open', 'in_progress', 'completed', 'cancelled']).optional(),
   assigneeName: z.string().max(200).optional(),
 });
+
+export const UpdateDealTeamRequestSchema = CreateDealTeamRequestSchema.partial().refine(
+  (value) => Object.keys(value).length > 0,
+  { message: 'At least one field is required' },
+);
 
 export const CreateDealFileSchema = z.object({
   name: z.string().min(1).max(500),

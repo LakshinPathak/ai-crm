@@ -106,6 +106,36 @@ export async function listCalls(req: AuthedRequest, res: Response) {
   });
 }
 
+function callDetailPayload(input: {
+  id: string;
+  title: string;
+  source: string;
+  date: Date;
+  dealId: string | null;
+  dealTitle: string | null;
+  transcriptExcerpt: string;
+  hasFullTranscript: boolean;
+}) {
+  return {
+    call: {
+      id: input.id,
+      title: input.title,
+      source: input.source,
+      date: input.date.toISOString(),
+      dealId: input.dealId,
+      dealTitle: input.dealTitle,
+      transcriptExcerpt: input.transcriptExcerpt,
+      hasFullTranscript: input.hasFullTranscript,
+    },
+  };
+}
+
+async function resolveDealTitle(workspaceId: string, dealId: string | null | undefined) {
+  if (!dealId) return null;
+  const deal = await Deal.findOne({ _id: dealId, workspaceId, deletedAt: null }).select('title');
+  return deal?.title ?? null;
+}
+
 export async function getCallDetail(req: AuthedRequest, res: Response) {
   const workspaceId = req.tenant!.workspaceId;
   const { id } = req.params;
@@ -116,34 +146,42 @@ export async function getCallDetail(req: AuthedRequest, res: Response) {
     type: 'call',
   });
 
-  if (!artifact) {
+  if (artifact) {
+    const rawText = artifact.rawText ?? '';
+    const occurredAt = artifact.occurredAt ?? artifact.createdAt;
+    res.json(
+      callDetailPayload({
+        id: artifact.id,
+        title: artifact.title ?? `Call (${artifact.source})`,
+        source: artifact.source,
+        date: occurredAt,
+        dealId: artifact.dealId?.toString() ?? null,
+        dealTitle: await resolveDealTitle(workspaceId, artifact.dealId?.toString()),
+        transcriptExcerpt: rawText.slice(0, TRANSCRIPT_EXCERPT_MAX),
+        hasFullTranscript: rawText.length > 0,
+      }),
+    );
+    return;
+  }
+
+  const event = await DealEvent.findOne({ _id: id, workspaceId, type: 'call' });
+  if (!event) {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Call not found' } });
     return;
   }
 
-  let dealTitle: string | null = null;
-  if (artifact.dealId) {
-    const deal = await Deal.findOne({ _id: artifact.dealId, workspaceId, deletedAt: null }).select(
-      'title',
-    );
-    dealTitle = deal?.title ?? null;
-  }
-
-  const rawText = artifact.rawText ?? '';
-  const occurredAt = artifact.occurredAt ?? artifact.createdAt;
-
-  res.json({
-    call: {
-      id: artifact.id,
-      title: artifact.title ?? `Call (${artifact.source})`,
-      source: artifact.source,
-      date: occurredAt.toISOString(),
-      dealId: artifact.dealId?.toString() ?? null,
-      dealTitle,
-      transcriptExcerpt: rawText.slice(0, TRANSCRIPT_EXCERPT_MAX),
-      hasFullTranscript: rawText.length > 0,
-    },
-  });
+  res.json(
+    callDetailPayload({
+      id: event.id,
+      title: event.title,
+      source: event.source ?? 'gong',
+      date: event.startAt,
+      dealId: event.dealId?.toString() ?? null,
+      dealTitle: await resolveDealTitle(workspaceId, event.dealId?.toString()),
+      transcriptExcerpt: '',
+      hasFullTranscript: false,
+    }),
+  );
 }
 
 export async function patchCall(req: AuthedRequest, res: Response) {
@@ -156,55 +194,86 @@ export async function patchCall(req: AuthedRequest, res: Response) {
   const workspaceId = req.tenant!.workspaceId;
   const { id } = req.params;
 
+  async function linkedDealTitle(dealId: string | null) {
+    return resolveDealTitle(workspaceId, dealId);
+  }
+
   const artifact = await Artifact.findOne({
     _id: id,
     workspaceId,
     type: 'call',
   });
 
-  if (!artifact) {
+  if (artifact) {
+    if (parsed.data.dealId === null) {
+      artifact.dealId = undefined;
+    } else {
+      const deal = await Deal.findOne({
+        _id: parsed.data.dealId,
+        workspaceId,
+        deletedAt: null,
+      });
+      if (!deal) {
+        res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Deal not found' } });
+        return;
+      }
+      artifact.dealId = deal._id;
+    }
+
+    await artifact.save();
+    const rawText = artifact.rawText ?? '';
+    const occurredAt = artifact.occurredAt ?? artifact.createdAt;
+    const dealId = artifact.dealId?.toString() ?? null;
+    res.json(
+      callDetailPayload({
+        id: artifact.id,
+        title: artifact.title ?? `Call (${artifact.source})`,
+        source: artifact.source,
+        date: occurredAt,
+        dealId,
+        dealTitle: await linkedDealTitle(dealId),
+        transcriptExcerpt: rawText.slice(0, TRANSCRIPT_EXCERPT_MAX),
+        hasFullTranscript: rawText.length > 0,
+      }),
+    );
+    return;
+  }
+
+  const event = await DealEvent.findOne({ _id: id, workspaceId, type: 'call' });
+  if (!event) {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Call not found' } });
     return;
   }
 
   if (parsed.data.dealId === null) {
-    artifact.dealId = undefined;
-  } else {
-    const deal = await Deal.findOne({
-      _id: parsed.data.dealId,
-      workspaceId,
-      deletedAt: null,
+    res.status(400).json({
+      error: { code: 'BAD_REQUEST', message: 'Calendar/call events must stay linked to a deal' },
     });
-    if (!deal) {
-      res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Deal not found' } });
-      return;
-    }
-    artifact.dealId = deal._id;
+    return;
   }
 
-  await artifact.save();
-
-  let dealTitle: string | null = null;
-  if (artifact.dealId) {
-    const deal = await Deal.findOne({ _id: artifact.dealId, workspaceId, deletedAt: null }).select(
-      'title',
-    );
-    dealTitle = deal?.title ?? null;
-  }
-
-  const rawText = artifact.rawText ?? '';
-  const occurredAt = artifact.occurredAt ?? artifact.createdAt;
-
-  res.json({
-    call: {
-      id: artifact.id,
-      title: artifact.title ?? `Call (${artifact.source})`,
-      source: artifact.source,
-      date: occurredAt.toISOString(),
-      dealId: artifact.dealId?.toString() ?? null,
-      dealTitle,
-      transcriptExcerpt: rawText.slice(0, TRANSCRIPT_EXCERPT_MAX),
-      hasFullTranscript: rawText.length > 0,
-    },
+  const deal = await Deal.findOne({
+    _id: parsed.data.dealId,
+    workspaceId,
+    deletedAt: null,
   });
+  if (!deal) {
+    res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Deal not found' } });
+    return;
+  }
+  event.dealId = deal._id;
+  await event.save();
+
+  res.json(
+    callDetailPayload({
+      id: event.id,
+      title: event.title,
+      source: event.source ?? 'gong',
+      date: event.startAt,
+      dealId: event.dealId.toString(),
+      dealTitle: deal.title,
+      transcriptExcerpt: '',
+      hasFullTranscript: false,
+    }),
+  );
 }

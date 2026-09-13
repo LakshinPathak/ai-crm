@@ -15,6 +15,10 @@ export const InviteMemberSchema = z.object({
   role: z.enum(['admin', 'manager', 'member']).default('member'),
 });
 
+export const UpdateMemberSchema = z.object({
+  role: z.enum(['admin', 'manager', 'member']),
+});
+
 export const DevLoginSchema = z.object({
   email: z.string().email(),
   displayName: z.string().min(1).max(120),

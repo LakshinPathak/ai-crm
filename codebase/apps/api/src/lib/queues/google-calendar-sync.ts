@@ -1,4 +1,5 @@
 import { Deal, DealEvent, IntegrationConnection } from '@ai-crm/db';
+import { resolveWorkspaceAccessToken } from '../integrations/workspace-tokens.js';
 import { log } from '../logger.js';
 import { enqueueJob } from './mongo-queue.js';
 
@@ -20,34 +21,29 @@ export async function enqueueGoogleCalendarSync(data: GoogleCalendarSyncJobData)
   });
 }
 
-type PlannedMeetingEvent = {
-  dealId: string;
-  title: string;
-  startAt: Date;
-  endAt: Date;
-  type: 'meeting';
-  source: 'google_calendar';
+type CalendarEvent = {
+  id?: string;
+  summary?: string;
+  start?: { dateTime?: string; date?: string };
+  end?: { dateTime?: string; date?: string };
 };
 
-function planDemoMeetingEventsForDeals(
-  deals: Array<{ id: string; title: string }>,
-): PlannedMeetingEvent[] {
-  const now = Date.now();
-  return deals.map((deal, index) => {
-    const startAt = new Date(now + (index + 1) * 86400000);
-    const endAt = new Date(startAt.getTime() + 3600000);
-    return {
-      dealId: deal.id,
-      title: `Demo calendar meeting — ${deal.title}`,
-      startAt,
-      endAt,
-      type: 'meeting',
-      source: 'google_calendar',
-    };
-  });
+function parseCalendarDate(value: string | undefined): Date | null {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
-/** Demo persist: upserts planned meeting DealEvents (no Google Calendar REST). */
+function matchDeal(
+  deals: Array<{ id: string; title: string }>,
+  summary: string,
+): { id: string; title: string } | null {
+  const hay = summary.toLowerCase();
+  const exact = deals.find((d) => hay.includes(d.title.toLowerCase()) || d.title.toLowerCase().includes(hay));
+  return exact ?? null;
+}
+
+/** Pull events from Google Calendar REST and upsert DealEvents matched to open deals. */
 export async function processGoogleCalendarSync(data: GoogleCalendarSyncJobData): Promise<void> {
   const conn = await IntegrationConnection.findOne({
     _id: data.connectionId,
@@ -63,80 +59,104 @@ export async function processGoogleCalendarSync(data: GoogleCalendarSyncJobData)
     return;
   }
 
+  const accessToken = await resolveWorkspaceAccessToken(data.workspaceId, 'google_calendar');
+  if (!accessToken) {
+    log('google-calendar-sync', 'skip — no access token', { workspaceId: data.workspaceId });
+    return;
+  }
+
+  const timeMin = new Date(Date.now() - 7 * 86400000).toISOString();
+  const timeMax = new Date(Date.now() + 60 * 86400000).toISOString();
+  const params = new URLSearchParams({
+    timeMin,
+    timeMax,
+    singleEvents: 'true',
+    orderBy: 'startTime',
+    maxResults: '100',
+  });
+  const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params.toString()}`;
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+    signal: AbortSignal.timeout(20_000),
+  });
+  const payload = (await res.json().catch(() => ({}))) as { items?: CalendarEvent[]; error?: { message?: string } };
+  if (!res.ok) {
+    log('google-calendar-sync', 'Google Calendar list failed', {
+      workspaceId: data.workspaceId,
+      status: res.status,
+      error: payload.error?.message ?? res.statusText,
+    });
+    return;
+  }
+
   const deals = await Deal.find({
     workspaceId: data.workspaceId,
     deletedAt: null,
     status: 'open',
-    crmExternalId: { $exists: true, $ne: null },
   })
     .select('_id title')
     .sort({ _id: 1 })
-    .limit(25)
+    .limit(100)
     .lean();
 
   const linked = deals.map((d) => ({ id: String(d._id), title: d.title }));
-  const planned = planDemoMeetingEventsForDeals(linked);
-
-  const { created, skipped } = await persistPlannedDemoMeetings(data.workspaceId, planned);
-
-  if (planned.length === 0) {
-    log('google-calendar-sync', 'demo: no CRM-linked open deals to match', {
-      workspaceId: data.workspaceId,
-    });
-  }
-
-  log('google-calendar-sync', 'demo sync complete', {
-    workspaceId: data.workspaceId,
-    plannedMeetings: planned.length,
-    created,
-    skipped,
-  });
-
-  await IntegrationConnection.updateOne(
-    { _id: conn._id },
-    { $set: { lastSyncAt: new Date() } },
-  );
-}
-
-/**
- * Demo meetings use wall-clock startAt on first insert. Re-sync matches
- * workspace + deal + source + title (not startAt) so Date.now() offsets stay idempotent.
- */
-async function persistPlannedDemoMeetings(
-  workspaceId: string,
-  planned: PlannedMeetingEvent[],
-): Promise<{ created: number; skipped: number }> {
   let created = 0;
-  let skipped = 0;
+  let updated = 0;
+  let unmatched = 0;
 
-  for (const event of planned) {
+  for (const event of payload.items ?? []) {
+    if (!event.id) continue;
+    const title = (event.summary ?? 'Meeting').trim() || 'Meeting';
+    const startAt = parseCalendarDate(event.start?.dateTime ?? event.start?.date);
+    const endAt =
+      parseCalendarDate(event.end?.dateTime ?? event.end?.date) ??
+      (startAt ? new Date(startAt.getTime() + 3600000) : null);
+    if (!startAt || !endAt) continue;
+
+    const deal = matchDeal(linked, title);
+    if (!deal) {
+      unmatched += 1;
+      continue;
+    }
+
     const result = await DealEvent.updateOne(
       {
-        workspaceId,
-        dealId: event.dealId,
-        source: event.source,
-        title: event.title,
+        workspaceId: data.workspaceId,
+        source: 'google_calendar',
+        externalId: event.id,
       },
       {
+        $set: {
+          dealId: deal.id,
+          title,
+          startAt,
+          endAt,
+          type: 'meeting',
+          source: 'google_calendar',
+          externalId: event.id,
+        },
         $setOnInsert: {
-          workspaceId,
-          dealId: event.dealId,
-          title: event.title,
-          startAt: event.startAt,
-          endAt: event.endAt,
-          type: event.type,
-          source: event.source,
+          workspaceId: data.workspaceId,
         },
       },
       { upsert: true },
     );
 
-    if (result.upsertedCount === 1) {
-      created += 1;
-    } else {
-      skipped += 1;
-    }
+    if (result.upsertedCount === 1) created += 1;
+    else updated += 1;
   }
 
-  return { created, skipped };
+  log('google-calendar-sync', 'sync complete', {
+    workspaceId: data.workspaceId,
+    events: (payload.items ?? []).length,
+    created,
+    updated,
+    unmatched,
+  });
+
+  await IntegrationConnection.updateOne(
+    { _id: conn._id },
+    { $set: { lastSyncAt: new Date(), 'settings.mode': 'live' } },
+  );
 }

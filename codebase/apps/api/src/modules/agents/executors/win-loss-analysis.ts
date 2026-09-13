@@ -199,6 +199,7 @@ export async function runWinLossAnalysis(ctx: AgentRunContext): Promise<AgentRun
         contentFull: report,
         proposedChange: {
           type: 'note_create',
+          dealId: closedDeals[0]?.id ?? '',
           body: report.summary,
         },
         expiresAt: new Date(Date.now() + APPROVAL_EXPIRY_DAYS * MS_PER_DAY),

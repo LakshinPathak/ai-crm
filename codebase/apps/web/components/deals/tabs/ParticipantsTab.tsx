@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Users } from 'lucide-react';
-import { apiGet, apiPost } from '@/lib/api-client';
+import { Users, Trash2 } from 'lucide-react';
+import { apiDelete, apiGet, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,6 +70,19 @@ export function ParticipantsTab({ dealId }: { dealId: string }) {
     }
   }
 
+  async function removeParticipant(participantId: string) {
+    if (!confirm('Remove this participant?')) return;
+    const token = getToken();
+    if (!token) return;
+    try {
+      await apiDelete(`/deals/${dealId}/participants/${participantId}`, token);
+      await reload();
+      toast('Participant removed', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to remove participant', 'error');
+    }
+  }
+
   if (loading) {
     return (
       <div>
@@ -115,6 +128,7 @@ export function ParticipantsTab({ dealId }: { dealId: string }) {
                 <th>Email</th>
                 <th>Role</th>
                 <th>Company</th>
+                <th />
               </tr>
             </thead>
             <tbody>
@@ -124,6 +138,11 @@ export function ParticipantsTab({ dealId }: { dealId: string }) {
                   <td>{p.email}</td>
                   <td>{p.role ?? '—'}</td>
                   <td>{p.company ?? '—'}</td>
+                  <td>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeParticipant(p.id)} aria-label="Remove participant">
+                      <Trash2 size={14} />
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>

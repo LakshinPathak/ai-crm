@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Package } from 'lucide-react';
-import { apiGet, apiPost } from '@/lib/api-client';
+import { Package, Trash2 } from 'lucide-react';
+import { apiDelete, apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,13 +32,6 @@ type ProductRequest = {
   priority: ProductRequestPriority;
   createdAt: string;
 };
-
-function statusVariant(status: ProductRequestStatus): ShadcnBadgeVariant {
-  if (status === 'done') return 'default';
-  if (status === 'in_progress') return 'secondary';
-  if (status === 'submitted') return 'outline';
-  return 'secondary';
-}
 
 function priorityVariant(priority: ProductRequestPriority): ShadcnBadgeVariant {
   if (priority === 'high') return 'destructive';
@@ -94,6 +87,30 @@ export function ProductRequestsTab({ dealId }: { dealId: string }) {
       toast('Product request created', 'success');
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Failed to create product request', 'error');
+    }
+  }
+
+  async function updateStatus(requestId: string, status: ProductRequestStatus) {
+    const token = getToken();
+    if (!token) return;
+    try {
+      await apiPatch(`/deals/${dealId}/product-requests/${requestId}`, token, { status });
+      await reload();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to update request', 'error');
+    }
+  }
+
+  async function removeRequest(requestId: string) {
+    if (!confirm('Delete this product request?')) return;
+    const token = getToken();
+    if (!token) return;
+    try {
+      await apiDelete(`/deals/${dealId}/product-requests/${requestId}`, token);
+      await reload();
+      toast('Request deleted', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to delete request', 'error');
     }
   }
 
@@ -156,6 +173,7 @@ export function ProductRequestsTab({ dealId }: { dealId: string }) {
                 <th>Priority</th>
                 <th>Status</th>
                 <th>Created</th>
+                <th />
               </tr>
             </thead>
             <tbody>
@@ -171,9 +189,27 @@ export function ProductRequestsTab({ dealId }: { dealId: string }) {
                     <Badge variant={priorityVariant(r.priority)}>{formatLabel(r.priority)}</Badge>
                   </td>
                   <td>
-                    <Badge variant={statusVariant(r.status)}>{formatLabel(r.status)}</Badge>
+                    <Select
+                      value={r.status}
+                      onValueChange={(v) => updateStatus(r.id, v as ProductRequestStatus)}
+                    >
+                      <SelectTrigger className="h-8 w-[140px]" aria-label={`Status for ${r.title}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="open">open</SelectItem>
+                        <SelectItem value="submitted">submitted</SelectItem>
+                        <SelectItem value="in_progress">in progress</SelectItem>
+                        <SelectItem value="done">done</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </td>
                   <td>{new Date(r.createdAt).toLocaleDateString()}</td>
+                  <td>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeRequest(r.id)} aria-label="Delete request">
+                      <Trash2 size={14} />
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>

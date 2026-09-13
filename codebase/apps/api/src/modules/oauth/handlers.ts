@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { IntegrationConnection } from '@ai-crm/db';
+import { IntegrationConnection, Workspace } from '@ai-crm/db';
 import { ensureConnectionWebhookSecret } from '../../lib/webhook-hmac.js';
 import { buildGongAuthUrl, exchangeGongCode, gongOAuthConfigured } from '../../lib/integrations/gong-oauth.js';
 import { ensureWebhookSecret } from '../../lib/integrations/webhook-secret.js';
@@ -41,6 +41,17 @@ import {
 } from '../../lib/integrations/teams-oauth.js';
 import { enqueueGoogleCalendarSync } from '../../lib/queues/google-calendar-sync.js';
 import { log } from '../../lib/logger.js';
+
+async function setPrimaryCrmIfUnset(workspaceId: string, connectionId: unknown): Promise<void> {
+  if (!connectionId) return;
+  await Workspace.updateOne(
+    {
+      _id: workspaceId,
+      $or: [{ primaryCrmConnectionId: { $exists: false } }, { primaryCrmConnectionId: null }],
+    },
+    { $set: { primaryCrmConnectionId: connectionId } },
+  );
+}
 
 export function startCrmOAuth(
   res: Response,
@@ -165,20 +176,21 @@ export async function handleCrmOAuthCallback(req: Request, res: Response): Promi
       const settings = ensureConnectionWebhookSecret(
         (existing?.settings ?? {}) as Record<string, unknown>,
       );
-      await IntegrationConnection.findOneAndUpdate(
+      const conn = await IntegrationConnection.findOneAndUpdate(
         { workspaceId: ctx.workspaceId, providerKey: 'hubspot' },
         {
           status: 'connected',
           externalAccountId: 'oauth-hubspot',
           settings: { ...settings, mode: 'live' },
         },
-        { upsert: true },
+        { upsert: true, new: true },
       );
       await saveTokens(ctx.workspaceId, 'hubspot', {
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
         expiresAt: tokens.expiresAt,
       });
+      if (conn) await setPrimaryCrmIfUnset(ctx.workspaceId, conn._id);
       res.redirect(integrationOAuthRedirectUrl(true, provider));
       return;
     }
@@ -192,7 +204,7 @@ export async function handleCrmOAuthCallback(req: Request, res: Response): Promi
       const settings = ensureConnectionWebhookSecret(
         (existing?.settings ?? {}) as Record<string, unknown>,
       );
-      await IntegrationConnection.findOneAndUpdate(
+      const conn = await IntegrationConnection.findOneAndUpdate(
         { workspaceId: ctx.workspaceId, providerKey: 'salesforce' },
         {
           status: 'connected',
@@ -203,13 +215,14 @@ export async function handleCrmOAuthCallback(req: Request, res: Response): Promi
             ...(tokens.instanceUrl ? { instanceUrl: tokens.instanceUrl } : {}),
           },
         },
-        { upsert: true },
+        { upsert: true, new: true },
       );
       await saveTokens(ctx.workspaceId, 'salesforce', {
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
         expiresAt: tokens.expiresAt,
       });
+      if (conn) await setPrimaryCrmIfUnset(ctx.workspaceId, conn._id);
       res.redirect(integrationOAuthRedirectUrl(true, provider));
       return;
     }
@@ -316,7 +329,7 @@ export async function handleGoogleCalendarOAuthCallback(req: Request, res: Respo
       {
         status: 'connected',
         externalAccountId: tokens.externalAccountId ?? 'google-calendar',
-        settings: { mode: 'demo', provider: 'google_calendar' },
+        settings: { mode: 'live', provider: 'google_calendar' },
       },
       { upsert: true, new: true },
     );

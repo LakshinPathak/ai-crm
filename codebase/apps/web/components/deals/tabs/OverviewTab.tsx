@@ -18,6 +18,8 @@ import { pastelBadgeClass } from '@/components/deals/deal-badges';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/Toast';
 
@@ -84,6 +86,9 @@ export function OverviewTab({
   const [loading, setLoading] = useState(true);
   const [streaming, setStreaming] = useState(false);
   const [streamSteps, setStreamSteps] = useState<MeddpiccStreamStep[] | null>(null);
+  const [blockerTitle, setBlockerTitle] = useState('');
+  const [suggestingBlocker, setSuggestingBlocker] = useState(false);
+  const [creatingBlocker, setCreatingBlocker] = useState(false);
 
   const reload = useCallback(() => {
     const token = getToken();
@@ -155,6 +160,41 @@ export function OverviewTab({
       status: current === 'done' ? 'open' : 'done',
     });
     await reload();
+  }
+
+  async function suggestBlocker() {
+    const token = getToken();
+    if (!token) return;
+    setSuggestingBlocker(true);
+    try {
+      const result = await apiPost<{ title: string; reasoning?: string }>(
+        '/ai/suggest-blocker',
+        token,
+        { dealId },
+      );
+      setBlockerTitle(result.title);
+      toast(result.reasoning ?? 'Suggested blocker title', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Suggest failed', 'error');
+    } finally {
+      setSuggestingBlocker(false);
+    }
+  }
+
+  async function createBlocker(e: React.FormEvent) {
+    e.preventDefault();
+    const token = getToken();
+    if (!token || !blockerTitle.trim()) return;
+    setCreatingBlocker(true);
+    try {
+      await apiPost(`/deals/${dealId}/blockers`, token, { title: blockerTitle.trim(), severity: 'medium' });
+      setBlockerTitle('');
+      toast('Blocker added', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Could not add blocker', 'error');
+    } finally {
+      setCreatingBlocker(false);
+    }
   }
 
   if (loading) {
@@ -239,6 +279,42 @@ export function OverviewTab({
           )}
         </Card>
       </div>
+
+      <Card className="mt-4">
+        <form onSubmit={createBlocker} className="flex flex-col gap-3">
+          <div>
+            <h4 className="m-0 text-sm font-semibold">Add blocker</h4>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Capture an open risk. Suggest uses deal notes and current sentiment.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="blocker-title">Title</Label>
+            <Input
+              id="blocker-title"
+              value={blockerTitle}
+              onChange={(e) => setBlockerTitle(e.target.value)}
+              placeholder="Missing security review from buyer legal"
+              required
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={suggestingBlocker}
+              onClick={suggestBlocker}
+              className="text-foreground"
+            >
+              {suggestingBlocker ? 'Suggesting…' : 'Suggest title'}
+            </Button>
+            <Button type="submit" size="sm" disabled={creatingBlocker} className="text-primary-foreground">
+              {creatingBlocker ? 'Adding…' : 'Add blocker'}
+            </Button>
+          </div>
+        </form>
+      </Card>
 
       {Object.entries(meddpicc).length > 0 && (
         <div style={{ marginTop: '1.5rem' }}>

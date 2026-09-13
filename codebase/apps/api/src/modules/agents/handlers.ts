@@ -111,6 +111,30 @@ const TEMPLATES = [
   },
 ];
 
+function defaultTriggerConfig(slug: string): {
+  type: 'schedule' | 'event' | 'manual';
+  event?: string;
+  schedule?: string;
+} {
+  if (
+    slug === 'post-call' ||
+    slug === 'meeting-summary' ||
+    slug === 'buying-signals' ||
+    slug === 'product-feedback' ||
+    slug === 'objection-tracker' ||
+    slug === 'meddpicc-synth'
+  ) {
+    return { type: 'event', event: 'activity.ingested' };
+  }
+  if (slug === 'deal-focus' || slug === 'risk-scanner' || slug === 'deal-stalling') {
+    return { type: 'schedule', schedule: '0 7 * * 1-5' };
+  }
+  if (slug === 'weekly-digest') {
+    return { type: 'schedule', schedule: '0 8 * * 1' };
+  }
+  return { type: 'manual' };
+}
+
 function toAgentDto(a: InstanceType<typeof Agent>) {
   return {
     id: a.id,
@@ -318,7 +342,7 @@ export async function createAgent(req: AuthedRequest, res: Response) {
     category: category ?? template?.category ?? 'process',
     ownerId: req.tenant!.userId,
     isActive: true,
-    triggerConfig: config?.triggerConfig ?? {},
+    triggerConfig: config?.triggerConfig ?? defaultTriggerConfig(template?.slug ?? ''),
     toolsConfig: config?.toolsConfig ?? {},
     deliveryConfig: config?.deliveryConfig ?? null,
     settings,
@@ -341,6 +365,7 @@ export async function createFromTemplate(req: AuthedRequest, res: Response) {
     category: template.category,
     ownerId: req.tenant!.userId,
     isActive: true,
+    triggerConfig: defaultTriggerConfig(template.slug),
     settings: ensureConnectionWebhookSecret({}),
   });
 

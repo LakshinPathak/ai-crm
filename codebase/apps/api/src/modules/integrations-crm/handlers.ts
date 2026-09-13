@@ -422,7 +422,24 @@ export async function listCrmOwners(req: AuthedRequest, res: Response) {
     res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Unknown provider' } });
     return;
   }
-  res.json({ owners: getDemoCrmOwners(providerKey) });
+
+  try {
+    const conn = await IntegrationConnection.findOne({
+      workspaceId: req.tenant!.workspaceId,
+      providerKey,
+    });
+    const ctx = await buildCrmConnectionContext(req.tenant!.workspaceId, providerKey, conn);
+    const connector = resolveCrmConnector(ctx);
+    const owners = await connector.listOwners(ctx);
+    res.json({ owners });
+  } catch (err) {
+    res.status(502).json({
+      error: {
+        code: 'CRM_DISCOVERY_FAILED',
+        message: err instanceof Error ? err.message : 'Failed to list CRM owners',
+      },
+    });
+  }
 }
 
 export async function getStageMappings(req: AuthedRequest, res: Response) {
@@ -436,7 +453,15 @@ export async function getStageMappings(req: AuthedRequest, res: Response) {
   const internalStages = await PipelineStage.find({ workspaceId: req.tenant!.workspaceId }).sort({ position: 1 });
   const pipelineId =
     typeof req.query.pipelineId === 'string' ? req.query.pipelineId : 'default';
-  const crmStages = getDemoCrmStages(conn.providerKey, pipelineId);
+  let crmStages = getDemoCrmStages(conn.providerKey, pipelineId);
+  try {
+    const ctx = await buildCrmConnectionContext(req.tenant!.workspaceId, conn.providerKey, conn);
+    const connector = resolveCrmConnector(ctx);
+    const live = await connector.listStages(ctx, pipelineId);
+    if (live.length > 0) crmStages = live;
+  } catch {
+    // keep demo stages if live discovery fails
+  }
   const settings = (conn.settings ?? {}) as ConnectionSettings;
   const saved = settings.stageMappings ?? [];
 
@@ -490,7 +515,15 @@ export async function getUserMappings(req: AuthedRequest, res: Response) {
     return;
   }
 
-  const crmOwners = getDemoCrmOwners(conn.providerKey);
+  let crmOwners = getDemoCrmOwners(conn.providerKey);
+  try {
+    const ctx = await buildCrmConnectionContext(req.tenant!.workspaceId, conn.providerKey, conn);
+    const connector = resolveCrmConnector(ctx);
+    const live = await connector.listOwners(ctx);
+    if (live.length > 0) crmOwners = live;
+  } catch {
+    // keep demo owners if live discovery fails
+  }
   const members = await User.find({ workspaceId: req.tenant!.workspaceId, isActive: true }).sort({ createdAt: 1 });
   const settings = (conn.settings ?? {}) as ConnectionSettings;
   const saved = settings.userMappings ?? [];

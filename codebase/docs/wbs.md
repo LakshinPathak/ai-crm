@@ -39,6 +39,8 @@
 
 **Recent completions (R8):** Full R8 roadmap shipped (both batches). **R9 WS-10:** [`deploy-beta.md`](deploy-beta.md) + implementation status v1.3 refresh.
 
+**Next (R11 remaining):** CRUD satellites → AI wiring → CRM truth — see [`r11-wbs.md`](r11-wbs.md).
+
 **Next batch (R9 batch 1):** Slack approve polish · `dmUserId` · CRM `deal.stage_changed` · MEDDPICC chunk cites · Gong settings UI — see [`r9-roadmap.md`](r9-roadmap.md).
 
 **Playwright E2E (local):** With `pnpm dev` running (API :4000 + web :3000) and MongoDB up:

@@ -36,9 +36,10 @@ export function LandingHero() {
             </em>
           </h1>
           <p className="mkt-hero__sub text-base sm:text-lg">
-            Connect HubSpot, Salesforce, Pipedrive, or Zoho in under 10 minutes. One record per deal
-            — calls, threads, calendar, and CRM fields — with MEDDPICC summaries that cite every
-            claim. <strong>Nothing writes back without your approval.</strong>
+            Connect live HubSpot or Salesforce (Pipedrive and Zoho are demo until OAuth ships).
+            One record per deal — calls, notes, calendar, and CRM fields — with MEDDPICC that
+            cites source excerpts when we have them.{' '}
+            <strong>Nothing writes back without your approval.</strong>
           </p>
           <div className="mkt-hero__actions flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
             <div className="flex w-full flex-col gap-1 sm:w-auto">

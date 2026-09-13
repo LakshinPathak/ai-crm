@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { Company, Deal, DealBlocker, Note } from '@ai-crm/db';
+import { Company, Deal, DealBlocker, Note } from '@ai-crm/db';
 import { log } from './logger.js';
 
 export type Sentiment = 'green' | 'yellow' | 'red';
@@ -240,4 +240,28 @@ Return ONLY valid JSON: {"title": string, "reasoning": string}`;
 
   const result = heuristicBlockerTitle(context);
   return { ...result, source: 'heuristic' };
+}
+
+export async function refreshDealScores(workspaceId: string, dealId: string): Promise<void> {
+  try {
+    const deal = await Deal.findOne({ _id: dealId, workspaceId, deletedAt: null });
+    if (!deal) return;
+
+    const [company, notes, blockers] = await Promise.all([
+      Company.findById(deal.companyId),
+      Note.find({ dealId: deal._id, workspaceId, deletedAt: null }).sort({ createdAt: -1 }).limit(8),
+      DealBlocker.find({ dealId: deal._id, workspaceId, status: 'open' }).sort({ createdAt: -1 }).limit(8),
+    ]);
+
+    const context = buildDealScoringContext(deal, company, notes, blockers);
+    const [sentiment, fit] = await Promise.all([
+      scoreSentiment(context),
+      scoreTechnicalFit(context),
+    ]);
+    deal.sentiment = sentiment.sentiment;
+    deal.technicalFitScore = fit.technicalFitScore;
+    await deal.save();
+  } catch (err) {
+    log('ai-scoring', 'refreshDealScores failed', { dealId, error: String(err) });
+  }
 }

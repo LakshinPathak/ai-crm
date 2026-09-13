@@ -3,14 +3,20 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { FolderKanban } from 'lucide-react';
-import { apiGet } from '@/lib/api-client';
+import { apiGet, apiPatch } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import type { DealCard } from '@/lib/types';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -19,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useToast } from '@/components/ui/Toast';
 
 type DealProject = {
   id: string;
@@ -31,6 +38,7 @@ type DealProject = {
 type ProjectRow = DealProject & { dealTitle: string };
 
 export default function ProjectsPage() {
+  const { toast } = useToast();
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -61,25 +69,20 @@ export default function ProjectsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  async function updateStatus(row: ProjectRow, status: string) {
+    const token = getToken();
+    if (!token) return;
+    try {
+      await apiPatch(`/deals/${row.dealId}/projects/${row.id}`, token, { status });
+      setProjects((prev) => prev.map((p) => (p.id === row.id ? { ...p, status } : p)));
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to update project', 'error');
+    }
+  }
+
   return (
     <>
       <PageHeader title="Projects" subtitle="POC and implementation projects across deals" />
-
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="rounded-full bg-primary/10 p-2 text-primary">
-              <FolderKanban className="size-5" />
-            </div>
-            <div>
-              <CardTitle className="text-base">Workspace projects — coming soon</CardTitle>
-              <CardDescription>
-                Full workspace-wide project tracking is on the way. For now, manage projects on individual deals.
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
 
       {loading ? (
         <Skeleton className="h-48 rounded-xl" />
@@ -103,7 +106,17 @@ export default function ProjectsPage() {
                 <TableRow key={p.id}>
                   <TableCell className="font-medium text-foreground">{p.title}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{p.status}</Badge>
+                    <Select value={p.status} onValueChange={(v) => updateStatus(p, v)}>
+                      <SelectTrigger className="h-8 w-[140px]" aria-label={`Status for ${p.title}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="planning">planning</SelectItem>
+                        <SelectItem value="active">active</SelectItem>
+                        <SelectItem value="completed">completed</SelectItem>
+                        <SelectItem value="on_hold">on hold</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell>
                     <Link href={`/deals/${p.dealId}`} className="font-medium text-foreground hover:underline">

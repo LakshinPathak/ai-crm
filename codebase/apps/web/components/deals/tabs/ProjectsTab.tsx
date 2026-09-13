@@ -1,10 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { FolderKanban } from 'lucide-react';
-import { apiGet, apiPost } from '@/lib/api-client';
+import { FolderKanban, Trash2 } from 'lucide-react';
+import { apiDelete, apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -74,6 +73,30 @@ export function ProjectsTab({ dealId }: { dealId: string }) {
     }
   }
 
+  async function updateStatus(projectId: string, next: ProjectStatus) {
+    const token = getToken();
+    if (!token) return;
+    try {
+      await apiPatch(`/deals/${dealId}/projects/${projectId}`, token, { status: next });
+      await reload();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to update project', 'error');
+    }
+  }
+
+  async function removeProject(projectId: string) {
+    if (!confirm('Delete this project?')) return;
+    const token = getToken();
+    if (!token) return;
+    try {
+      await apiDelete(`/deals/${dealId}/projects/${projectId}`, token);
+      await reload();
+      toast('Project deleted', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to delete project', 'error');
+    }
+  }
+
   if (loading) {
     return (
       <div>
@@ -118,6 +141,7 @@ export function ProjectsTab({ dealId }: { dealId: string }) {
                 <th>Title</th>
                 <th>Status</th>
                 <th>Created</th>
+                <th />
               </tr>
             </thead>
             <tbody>
@@ -125,9 +149,26 @@ export function ProjectsTab({ dealId }: { dealId: string }) {
                 <tr key={p.id}>
                   <td className="cell-title">{p.title}</td>
                   <td>
-                    <Badge variant="default">{STATUS_LABELS[p.status] ?? p.status}</Badge>
+                    <Select
+                      value={p.status}
+                      onValueChange={(v) => updateStatus(p.id, v as ProjectStatus)}
+                    >
+                      <SelectTrigger className="h-8 w-[140px]" aria-label={`Status for ${p.title}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </td>
                   <td>{new Date(p.createdAt).toLocaleDateString()}</td>
+                  <td>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeProject(p.id)} aria-label="Delete project">
+                      <Trash2 size={14} />
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>

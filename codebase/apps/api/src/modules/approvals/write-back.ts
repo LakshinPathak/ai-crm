@@ -84,6 +84,10 @@ export function parseProposedChange(raw: unknown): ProposedChange | null {
     };
   }
 
+  if (raw.type === 'deal_hot_alert') {
+    return { type: 'deal_update', dealId: raw.dealId, patch: { isHot: raw.isHot !== false } };
+  }
+
   if (raw.type === 'note_create' && typeof raw.body === 'string') {
     return { type: 'note_create', dealId: raw.dealId, body: raw.body };
   }

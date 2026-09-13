@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bot, Plus, Search, Wand2 } from 'lucide-react';
-import { apiGet, apiPost } from '@/lib/api-client';
+import { Bot, Plus, Search, Trash2, Wand2 } from 'lucide-react';
+import { apiDelete, apiGet, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { agentCategoryBadge, agentRunStatusBadge } from '@/lib/ui-badge';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -188,6 +188,19 @@ export default function AgentsPage() {
     }
   }
 
+  async function deleteAgent(agentId: string) {
+    const token = getToken();
+    if (!token) return;
+    if (!window.confirm('Disable this agent? It will no longer run on schedules or events.')) return;
+    try {
+      await apiDelete(`/agents/${agentId}`, token);
+      setAgents((prev) => prev.filter((a) => a.id !== agentId));
+      toast('Agent disabled', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to delete agent', 'error');
+    }
+  }
+
   const inactiveCount = (stats?.totalAgents ?? agents.length) - (stats?.activeAgents ?? 0);
   const activePct = stats && stats.totalAgents > 0 ? Math.round((stats.activeAgents / stats.totalAgents) * 100) : 0;
 
@@ -319,14 +332,25 @@ export default function AgentsPage() {
                   </TableCell>
                   <TableCell className="text-foreground">{runs.filter((r) => r.agentName === a.name).length}</TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      size="sm"
-                      disabled={Boolean(runningIds[a.id])}
-                      onClick={() => runAgent(a.id)}
-                      className="text-primary-foreground"
-                    >
-                      {runningIds[a.id] ? 'Running…' : 'Run'}
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        size="sm"
+                        disabled={Boolean(runningIds[a.id])}
+                        onClick={() => runAgent(a.id)}
+                        className="text-primary-foreground"
+                      >
+                        {runningIds[a.id] ? 'Running…' : 'Run'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => deleteAgent(a.id)}
+                        className="text-foreground"
+                      >
+                        <Trash2 className="size-3.5" />
+                        Delete
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

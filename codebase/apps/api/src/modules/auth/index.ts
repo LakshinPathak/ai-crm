@@ -11,9 +11,11 @@ import {
   listMembers,
   logout,
   refreshToken,
+  removeMember,
   requireAdmin,
   requireWorkspace,
   startGoogleAuth,
+  updateMember,
   updateWorkspace,
 } from './handlers.js';
 
@@ -31,5 +33,7 @@ authProtectedRouter.get('/me', getMe);
 authProtectedRouter.post('/onboarding/workspace', createWorkspace);
 authProtectedRouter.patch('/workspace', requireWorkspace, requireAdmin, updateWorkspace);
 authProtectedRouter.get('/workspace/members', requireWorkspace, listMembers);
+authProtectedRouter.patch('/workspace/members/:userId', requireWorkspace, requireAdmin, updateMember);
+authProtectedRouter.delete('/workspace/members/:userId', requireWorkspace, requireAdmin, removeMember);
 authProtectedRouter.get('/workspace/invites', requireWorkspace, requireAdmin, listInvites);
 authProtectedRouter.post('/workspace/members/invite', requireWorkspace, requireAdmin, inviteMember);

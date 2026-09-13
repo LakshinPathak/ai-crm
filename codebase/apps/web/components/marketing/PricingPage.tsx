@@ -29,7 +29,7 @@ export function PricingPage() {
             ))}
           </ul>
           <p className="mkt-pricing-hero__stats text-primary">
-            Rated 4.8/5 on G2 · 95% of POCs become customers
+            HubSpot and Salesforce live today · Pipedrive and Zoho in demo
           </p>
         </div>
       </section>

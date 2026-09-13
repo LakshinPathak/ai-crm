@@ -1,18 +1,22 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { UserPlus } from 'lucide-react';
-import { apiGet, apiPost } from '@/lib/api-client';
+import { UserPlus, Trash2 } from 'lucide-react';
+import { apiDelete, apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/Toast';
-import type { ShadcnBadgeVariant } from '@/lib/ui-badge';
-
 type TeamRequest = {
   id: string;
   title: string;
@@ -21,17 +25,6 @@ type TeamRequest = {
   assigneeName: string | null;
   createdAt: string;
 };
-
-function statusVariant(status: string): ShadcnBadgeVariant {
-  if (status === 'completed') return 'default';
-  if (status === 'in_progress') return 'secondary';
-  if (status === 'cancelled') return 'outline';
-  return 'outline';
-}
-
-function formatStatus(status: string) {
-  return status.replace(/_/g, ' ');
-}
 
 export function TeamRequestsTab({ dealId }: { dealId: string }) {
   const { toast } = useToast();
@@ -80,6 +73,30 @@ export function TeamRequestsTab({ dealId }: { dealId: string }) {
     }
   }
 
+  async function updateStatus(requestId: string, status: string) {
+    const token = getToken();
+    if (!token) return;
+    try {
+      await apiPatch(`/deals/${dealId}/team-requests/${requestId}`, token, { status });
+      await reload();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to update request', 'error');
+    }
+  }
+
+  async function removeRequest(requestId: string) {
+    if (!confirm('Delete this team request?')) return;
+    const token = getToken();
+    if (!token) return;
+    try {
+      await apiDelete(`/deals/${dealId}/team-requests/${requestId}`, token);
+      await reload();
+      toast('Request deleted', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to delete request', 'error');
+    }
+  }
+
   if (loading) {
     return (
       <div>
@@ -124,6 +141,7 @@ export function TeamRequestsTab({ dealId }: { dealId: string }) {
                 <th>Department</th>
                 <th>Assignee</th>
                 <th>Status</th>
+                <th />
               </tr>
             </thead>
             <tbody>
@@ -133,7 +151,22 @@ export function TeamRequestsTab({ dealId }: { dealId: string }) {
                   <td>{r.department}</td>
                   <td>{r.assigneeName ?? '—'}</td>
                   <td>
-                    <Badge variant={statusVariant(r.status)}>{formatStatus(r.status)}</Badge>
+                    <Select value={r.status} onValueChange={(v) => updateStatus(r.id, v)}>
+                      <SelectTrigger className="h-8 w-[140px]" aria-label={`Status for ${r.title}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="open">open</SelectItem>
+                        <SelectItem value="in_progress">in progress</SelectItem>
+                        <SelectItem value="completed">completed</SelectItem>
+                        <SelectItem value="cancelled">cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </td>
+                  <td>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeRequest(r.id)} aria-label="Delete request">
+                      <Trash2 size={14} />
+                    </Button>
                   </td>
                 </tr>
               ))}

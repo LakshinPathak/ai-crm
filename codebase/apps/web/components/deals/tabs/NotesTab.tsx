@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { StickyNote, Trash2 } from 'lucide-react';
-import { apiDelete, apiGet, apiPost } from '@/lib/api-client';
+import { StickyNote, Trash2, Pencil, Check } from 'lucide-react';
+import { apiDelete, apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -18,6 +18,8 @@ export function NotesTab({ dealId }: { dealId: string }) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [noteBody, setNoteBody] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editBody, setEditBody] = useState('');
 
   const reload = useCallback(() => {
     const token = getToken();
@@ -39,6 +41,19 @@ export function NotesTab({ dealId }: { dealId: string }) {
       toast('Note deleted', 'success');
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Failed to delete note', 'error');
+    }
+  }
+
+  async function saveNote(noteId: string) {
+    const token = getToken();
+    if (!token || !editBody.trim()) return;
+    try {
+      await apiPatch(`/deals/${dealId}/notes/${noteId}`, token, { body: editBody.trim() });
+      setEditingId(null);
+      await reload();
+      toast('Note updated', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to update note', 'error');
     }
   }
 
@@ -86,10 +101,38 @@ export function NotesTab({ dealId }: { dealId: string }) {
         notes.map((n) => (
           <Card key={n.id} className="mb-2.5">
             <div className="flex items-start justify-between gap-2">
-              <p className="mb-1.5 min-w-0 flex-1 leading-relaxed">{n.body}</p>
-              <Button variant="ghost" size="icon-sm" onClick={() => deleteNote(n.id)}>
-                <Trash2 size={14} />
-              </Button>
+              {editingId === n.id ? (
+                <Textarea
+                  className="min-w-0 flex-1"
+                  rows={3}
+                  value={editBody}
+                  onChange={(e) => setEditBody(e.target.value)}
+                />
+              ) : (
+                <p className="mb-1.5 min-w-0 flex-1 leading-relaxed">{n.body}</p>
+              )}
+              <div className="flex shrink-0">
+                {editingId === n.id ? (
+                  <Button variant="ghost" size="icon-sm" onClick={() => saveNote(n.id)} aria-label="Save note">
+                    <Check size={14} />
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => {
+                      setEditingId(n.id);
+                      setEditBody(n.body);
+                    }}
+                    aria-label="Edit note"
+                  >
+                    <Pencil size={14} />
+                  </Button>
+                )}
+                <Button variant="ghost" size="icon-sm" onClick={() => deleteNote(n.id)} aria-label="Delete note">
+                  <Trash2 size={14} />
+                </Button>
+              </div>
             </div>
             <small style={{ color: 'var(--muted-light)' }}>{new Date(n.createdAt).toLocaleString()}</small>
           </Card>

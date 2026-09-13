@@ -1,7 +1,11 @@
 import type { Response } from 'express';
 import type { AuthedRequest } from '../../lib/auth/index.js';
 import { dispatchDealCreated, dispatchDealStageChanged } from '../../lib/agent-events.js';
+import { refreshDealScores } from '../../lib/ai-scoring.js';
+import { pushCrmFieldUpdateToHubSpot } from '../../lib/hubspot/crm-field-write-back.js';
+import { pushOpportunityUpdateToSalesforce } from '../../lib/salesforce/opportunity-write-back.js';
 import { Company, Deal, DealBlocker, DealStageChange, Note, PipelineStage, Task } from '@ai-crm/db';
+import type { DealUpdatePatch } from '../approvals/write-back.js';
 import {
   CreateBlockerSchema,
   CreateDealSchema,
@@ -10,8 +14,16 @@ import {
   MoveDealStageSchema,
   ResolveBlockerSchema,
   UpdateDealSchema,
+  UpdateNoteSchema,
   UpdateTaskSchema,
 } from '@ai-crm/shared';
+
+function pushLocalDealChangeToCrm(workspaceId: string, dealId: string, patch: DealUpdatePatch): void {
+  const hasField = Object.values(patch).some((v) => v !== undefined);
+  if (!hasField) return;
+  void pushCrmFieldUpdateToHubSpot(workspaceId, dealId, patch);
+  void pushOpportunityUpdateToSalesforce(workspaceId, dealId, patch);
+}
 
 function paramId(value: string | string[]): string {
   return Array.isArray(value) ? value[0] : value;
@@ -193,6 +205,13 @@ export async function updateDeal(req: AuthedRequest, res: Response) {
 
   const company = await Company.findById(deal.companyId);
   res.json({ deal: dealCard(deal, company) });
+  void refreshDealScores(req.tenant!.workspaceId, deal.id);
+  void pushLocalDealChangeToCrm(req.tenant!.workspaceId, deal.id, {
+    title: parsed.data.title,
+    amount: parsed.data.amount,
+    isHot: parsed.data.isHot,
+    expectedCloseDate: parsed.data.expectedCloseDate,
+  });
 }
 
 export async function moveDealStage(req: AuthedRequest, res: Response) {
@@ -243,6 +262,8 @@ export async function moveDealStage(req: AuthedRequest, res: Response) {
 
   const company = await Company.findById(deal.companyId);
   res.json({ deal: dealCard(deal, company) });
+  void refreshDealScores(req.tenant!.workspaceId, deal.id);
+  void pushLocalDealChangeToCrm(req.tenant!.workspaceId, deal.id, { stageId: stage.id });
 }
 
 export async function deleteDeal(req: AuthedRequest, res: Response) {
@@ -337,6 +358,39 @@ export async function createDealNote(req: AuthedRequest, res: Response) {
   res.status(201).json({
     note: { id: note.id, body: note.body, authorId: note.authorId.toString(), createdAt: note.createdAt },
   });
+  void refreshDealScores(req.tenant!.workspaceId, deal.id);
+}
+
+export async function updateDealNote(req: AuthedRequest, res: Response) {
+  const parsed = UpdateNoteSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: parsed.error.message } });
+    return;
+  }
+  const dealId = paramId(req.params.dealId);
+  const deal = await assertDeal(req.tenant!.workspaceId, dealId);
+  if (!deal) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Deal not found' } });
+    return;
+  }
+  const note = await Note.findOne({
+    _id: paramId(req.params.noteId),
+    dealId,
+    workspaceId: req.tenant!.workspaceId,
+    deletedAt: null,
+  });
+  if (!note) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Note not found' } });
+    return;
+  }
+  note.body = parsed.data.body;
+  await note.save();
+  deal.lastActivityAt = new Date();
+  await deal.save();
+  res.json({
+    note: { id: note.id, body: note.body, authorId: note.authorId.toString(), createdAt: note.createdAt },
+  });
+  void refreshDealScores(req.tenant!.workspaceId, deal.id);
 }
 
 export async function createDealTask(req: AuthedRequest, res: Response) {
@@ -480,6 +534,7 @@ export async function createDealBlocker(req: AuthedRequest, res: Response) {
   res.status(201).json({
     blocker: { id: blocker.id, title: blocker.title, severity: blocker.severity, status: blocker.status },
   });
+  void refreshDealScores(req.tenant!.workspaceId, deal.id);
 }
 
 export async function resolveDealBlocker(req: AuthedRequest, res: Response) {
@@ -512,6 +567,7 @@ export async function resolveDealBlocker(req: AuthedRequest, res: Response) {
   res.json({
     blocker: { id: blocker.id, title: blocker.title, severity: blocker.severity, status: blocker.status },
   });
+  void refreshDealScores(req.tenant!.workspaceId, dealId);
 }
 
 export async function getDealOverview(req: AuthedRequest, res: Response) {

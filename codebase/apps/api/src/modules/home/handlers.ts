@@ -1,6 +1,6 @@
 import type { Response } from 'express';
 import type { AuthedRequest } from '../../lib/auth/index.js';
-import { Approval, Company, Deal, Note, PipelineStage, Task } from '@ai-crm/db';
+import { Approval, Agent, AgentRun, Company, Deal, Note, PipelineStage, Task } from '@ai-crm/db';
 
 const STALLED_MS = 14 * 24 * 60 * 60 * 1000;
 
@@ -37,6 +37,37 @@ function toDealCard(
   };
 }
 
+async function focusDealsFromLatestRun(
+  workspaceId: string,
+  userId: string,
+  companyMap: Map<string, InstanceType<typeof Company>>,
+  fallback: ReturnType<typeof toDealCard>[],
+): Promise<ReturnType<typeof toDealCard>[]> {
+  const agent = await Agent.findOne({
+    workspaceId,
+    templateSlug: 'deal-focus',
+    isActive: true,
+    ownerId: userId,
+  }).sort({ updatedAt: -1 });
+  if (!agent) return fallback;
+
+  const run = await AgentRun.findOne({
+    workspaceId,
+    agentId: agent._id,
+    status: { $in: ['completed', 'awaiting_approval'] },
+  }).sort({ completedAt: -1, updatedAt: -1 });
+
+  const scope = run?.scope as { output?: { focusDeals?: { dealId: string }[] } } | undefined;
+  const ids = scope?.output?.focusDeals?.map((item) => item.dealId).filter(Boolean) ?? [];
+  if (ids.length === 0) return fallback;
+
+  const deals = await Deal.find({ _id: { $in: ids }, workspaceId, deletedAt: null });
+  const order = new Map(ids.map((id, i) => [id, i]));
+  return [...deals]
+    .sort((a, b) => (order.get(a.id) ?? 99) - (order.get(b.id) ?? 99))
+    .map((d) => toDealCard(d, companyMap));
+}
+
 export async function getHome(req: AuthedRequest, res: Response) {
   const workspaceId = req.tenant!.workspaceId;
   const userId = req.tenant!.userId;
@@ -69,7 +100,7 @@ export async function getHome(req: AuthedRequest, res: Response) {
       toDealCard(d, companyMap, atRiskReason(d.sentiment)),
     );
 
-  const focusDeals = openDeals
+  const heuristicFocus = openDeals
     .filter((d) => d.isHot || d.riskScore > 50 || d.ownerId.toString() === userId)
     .sort((a, b) => {
       if (a.isHot !== b.isHot) return a.isHot ? -1 : 1;
@@ -77,6 +108,8 @@ export async function getHome(req: AuthedRequest, res: Response) {
     })
     .slice(0, 5)
     .map((d) => toDealCard(d, companyMap));
+
+  const focusDeals = await focusDealsFromLatestRun(workspaceId, userId, companyMap, heuristicFocus);
 
   const totalAmount = openDeals.reduce((sum, d) => sum + (d.amount ?? 0), 0);
 
@@ -144,18 +177,24 @@ export async function getHome(req: AuthedRequest, res: Response) {
 
 export async function getFocus(req: AuthedRequest, res: Response) {
   const workspaceId = req.tenant!.workspaceId;
-  const deals = await Deal.find({ workspaceId, deletedAt: null, status: 'open', isHot: true })
-    .sort({ updatedAt: -1 })
-    .limit(20);
+  const userId = req.tenant!.userId;
 
+  const openDeals = await Deal.find({ workspaceId, deletedAt: null, status: 'open' }).sort({ updatedAt: -1 });
   const companies = await Company.find({ workspaceId });
   const companyMap = new Map(companies.map((c) => [c.id, c]));
+
+  const heuristic = openDeals
+    .filter((d) => d.isHot)
+    .slice(0, 20)
+    .map((d) => toDealCard(d, companyMap));
+
+  const deals = await focusDealsFromLatestRun(workspaceId, userId, companyMap, heuristic);
 
   res.json({
     deals: deals.map((d) => ({
       id: d.id,
       title: d.title,
-      companyName: companyMap.get(d.companyId.toString())?.name,
+      companyName: d.companyName,
       amount: d.amount,
       sentiment: d.sentiment,
     })),

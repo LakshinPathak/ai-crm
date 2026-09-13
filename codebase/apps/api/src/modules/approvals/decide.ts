@@ -2,6 +2,7 @@ import { createEventEnvelope, publishEvent } from '@ai-crm/events';
 import type { Types } from 'mongoose';
 import { Approval } from '@ai-crm/db';
 import { pushCrmFieldUpdateToHubSpot } from '../../lib/hubspot/crm-field-write-back.js';
+import { pushOpportunityUpdateToSalesforce } from '../../lib/salesforce/opportunity-write-back.js';
 import { applyProposedChange, parseProposedChange } from './write-back.js';
 
 export type DecideErrorCode = 'NOT_FOUND' | 'INVALID_STATE';
@@ -49,8 +50,9 @@ export async function decideApproveApproval(
   let writeBack: { tasksCreated: number; notesCreated: number } | null = null;
   if (proposedChange) {
     writeBack = await applyProposedChange(workspaceId, userId, proposedChange);
-    if (proposedChange.type === 'crm_field_update') {
+    if (proposedChange.type === 'crm_field_update' || proposedChange.type === 'deal_update') {
       await pushCrmFieldUpdateToHubSpot(workspaceId, proposedChange.dealId, proposedChange.patch);
+      await pushOpportunityUpdateToSalesforce(workspaceId, proposedChange.dealId, proposedChange.patch);
     }
   }
 

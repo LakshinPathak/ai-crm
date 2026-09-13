@@ -24,6 +24,7 @@ import {
   DevLoginSchema,
   ExchangeCodeSchema,
   InviteMemberSchema,
+  UpdateMemberSchema,
   UpdateWorkspaceSchema,
 } from '@ai-crm/shared';
 import { seedWorkspaceData } from '../../lib/seed.js';
@@ -310,6 +311,7 @@ export async function listMembers(req: AuthedRequest, res: Response) {
 }
 
 function toInviteDto(invite: InstanceType<typeof WorkspaceInvite>) {
+  const base = webBaseUrl().replace(/\/$/, '');
   return {
     id: invite.id,
     email: invite.email,
@@ -317,6 +319,7 @@ function toInviteDto(invite: InstanceType<typeof WorkspaceInvite>) {
     status: invite.status,
     expiresAt: invite.expiresAt.toISOString(),
     createdAt: invite.createdAt.toISOString(),
+    inviteUrl: `${base}/sign-in?invite=${encodeURIComponent(invite.id)}`,
   };
 }
 
@@ -378,6 +381,70 @@ export async function listInvites(req: AuthedRequest, res: Response) {
   }).sort({ createdAt: -1 });
 
   res.json({ invites: invites.map((invite) => toInviteDto(invite)) });
+}
+
+async function adminCount(workspaceId: string): Promise<number> {
+  return User.countDocuments({ workspaceId, isActive: true, role: 'admin' });
+}
+
+export async function updateMember(req: AuthedRequest, res: Response) {
+  const parsed = UpdateMemberSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: parsed.error.message } });
+    return;
+  }
+
+  const member = await User.findOne({
+    _id: req.params.userId,
+    workspaceId: req.tenant!.workspaceId,
+    isActive: true,
+  });
+  if (!member) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Member not found' } });
+    return;
+  }
+
+  if (member.role === 'admin' && parsed.data.role !== 'admin') {
+    const admins = await adminCount(req.tenant!.workspaceId);
+    if (admins <= 1) {
+      res.status(400).json({ error: { code: 'LAST_ADMIN', message: 'Cannot demote the last admin' } });
+      return;
+    }
+  }
+
+  member.role = parsed.data.role;
+  await member.save();
+  res.json({ member: toUserDto(member) });
+}
+
+export async function removeMember(req: AuthedRequest, res: Response) {
+  const member = await User.findOne({
+    _id: req.params.userId,
+    workspaceId: req.tenant!.workspaceId,
+    isActive: true,
+  });
+  if (!member) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Member not found' } });
+    return;
+  }
+
+  if (member.id === req.tenant!.userId) {
+    res.status(400).json({ error: { code: 'CANNOT_REMOVE_SELF', message: 'You cannot remove yourself' } });
+    return;
+  }
+
+  if (member.role === 'admin') {
+    const admins = await adminCount(req.tenant!.workspaceId);
+    if (admins <= 1) {
+      res.status(400).json({ error: { code: 'LAST_ADMIN', message: 'Cannot remove the last admin' } });
+      return;
+    }
+  }
+
+  member.isActive = false;
+  member.workspaceId = null;
+  await member.save();
+  res.json({ removed: true });
 }
 
 export { requireAdmin, requireWorkspace };
