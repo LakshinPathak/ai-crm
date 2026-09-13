@@ -54,7 +54,7 @@ pnpm dev
 |---------|-----|
 | Web (Next.js) | http://localhost:3000 |
 | API (Express) | http://localhost:4000 |
-| Health check | http://localhost:4000/api/v1/health |
+| Health check | http://localhost:4000/health |
 
 ### Run separately
 
