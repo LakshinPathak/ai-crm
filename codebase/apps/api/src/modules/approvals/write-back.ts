@@ -63,7 +63,7 @@ function parseTaskSuggestions(raw: unknown): TaskSuggestion[] {
 }
 
 export function parseProposedChange(raw: unknown): ProposedChange | null {
-  if (!isRecord(raw) || typeof raw.type !== 'string' || typeof raw.dealId !== 'string') {
+  if (!isRecord(raw) || typeof raw.type !== 'string' || typeof raw.dealId !== 'string' || !raw.dealId.trim()) {
     return null;
   }
 

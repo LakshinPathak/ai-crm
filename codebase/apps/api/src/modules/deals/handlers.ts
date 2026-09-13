@@ -5,6 +5,7 @@ import { refreshDealScores } from '../../lib/ai-scoring.js';
 import { pushCrmFieldUpdateToHubSpot } from '../../lib/hubspot/crm-field-write-back.js';
 import { pushOpportunityUpdateToSalesforce } from '../../lib/salesforce/opportunity-write-back.js';
 import { Company, Deal, DealBlocker, DealStageChange, Note, PipelineStage, Task } from '@ai-crm/db';
+import { isValidObjectId } from 'mongoose';
 import type { DealUpdatePatch } from '../approvals/write-back.js';
 import {
   CreateBlockerSchema,
@@ -282,8 +283,13 @@ export async function deleteDeal(req: AuthedRequest, res: Response) {
 }
 
 export async function getDealNotes(req: AuthedRequest, res: Response) {
+  const deal = await assertDeal(req.tenant!.workspaceId, paramId(req.params.dealId));
+  if (!deal) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Deal not found' } });
+    return;
+  }
   const notes = await Note.find({
-    dealId: req.params.dealId,
+    dealId: deal._id,
     workspaceId: req.tenant!.workspaceId,
     deletedAt: null,
   }).sort({ createdAt: -1 });
@@ -315,8 +321,13 @@ export async function getDealTasks(req: AuthedRequest, res: Response) {
 }
 
 export async function getDealBlockers(req: AuthedRequest, res: Response) {
+  const deal = await assertDeal(req.tenant!.workspaceId, paramId(req.params.dealId));
+  if (!deal) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Deal not found' } });
+    return;
+  }
   const blockers = await DealBlocker.find({
-    dealId: req.params.dealId,
+    dealId: deal._id,
     workspaceId: req.tenant!.workspaceId,
     status: 'open',
   }).sort({ severity: -1 });
@@ -332,6 +343,7 @@ export async function getDealBlockers(req: AuthedRequest, res: Response) {
 }
 
 async function assertDeal(workspaceId: string, dealId: string) {
+  if (!isValidObjectId(dealId)) return null;
   return Deal.findOne({ _id: dealId, workspaceId, deletedAt: null });
 }
 
@@ -432,9 +444,14 @@ export async function updateDealTask(req: AuthedRequest, res: Response) {
     res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: parsed.error.message } });
     return;
   }
+  const deal = await assertDeal(req.tenant!.workspaceId, paramId(req.params.dealId));
+  if (!deal) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Deal not found' } });
+    return;
+  }
   const task = await Task.findOne({
     _id: paramId(req.params.taskId),
-    dealId: paramId(req.params.dealId),
+    dealId: deal._id,
     workspaceId: req.tenant!.workspaceId,
     deletedAt: null,
   });
@@ -543,10 +560,14 @@ export async function resolveDealBlocker(req: AuthedRequest, res: Response) {
     res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: parsed.error.message } });
     return;
   }
-  const dealId = paramId(req.params.dealId);
+  const deal = await assertDeal(req.tenant!.workspaceId, paramId(req.params.dealId));
+  if (!deal) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Deal not found' } });
+    return;
+  }
   const blocker = await DealBlocker.findOne({
     _id: paramId(req.params.blockerId),
-    dealId,
+    dealId: deal._id,
     workspaceId: req.tenant!.workspaceId,
   });
   if (!blocker) {
@@ -558,16 +579,19 @@ export async function resolveDealBlocker(req: AuthedRequest, res: Response) {
   await blocker.save();
 
   const openCount = await DealBlocker.countDocuments({
-    dealId,
+    dealId: deal._id,
     workspaceId: req.tenant!.workspaceId,
     status: 'open',
   });
-  await Deal.updateOne({ _id: dealId }, { blockerCount: openCount, lastActivityAt: new Date() });
+  await Deal.updateOne(
+    { _id: deal._id, workspaceId: req.tenant!.workspaceId },
+    { blockerCount: openCount, lastActivityAt: new Date() },
+  );
 
   res.json({
     blocker: { id: blocker.id, title: blocker.title, severity: blocker.severity, status: blocker.status },
   });
-  void refreshDealScores(req.tenant!.workspaceId, dealId);
+  void refreshDealScores(req.tenant!.workspaceId, deal.id);
 }
 
 export async function getDealOverview(req: AuthedRequest, res: Response) {

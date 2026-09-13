@@ -197,10 +197,6 @@ export async function runBuyingSignals(ctx: AgentRunContext): Promise<AgentRunRe
     if (isHot) {
       hotDeals += 1;
       for (const tag of tags) allTags.add(tag);
-      if (!deal.isHot) {
-        deal.isHot = true;
-        await deal.save();
-      }
     }
 
     dealResults.push({

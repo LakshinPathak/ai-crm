@@ -52,14 +52,17 @@ function resolveLocalStage(
   localStages: InstanceType<typeof PipelineStage>[],
   openStages: InstanceType<typeof PipelineStage>[],
   stageMap: Map<string, number>,
-): InstanceType<typeof PipelineStage> {
+): InstanceType<typeof PipelineStage> | null {
   const mapped = mappings.find((m) => m.stageExternalId === hsStageId);
-  if (mapped?.internalStageId) {
-    const found = localStages.find((s) => s.id === mapped.internalStageId);
-    if (found) return found;
+  if (mapped) {
+    if (!mapped.internalStageId) return null;
+    const found = localStages.find(
+      (s) => s.id === mapped.internalStageId || String(s._id) === mapped.internalStageId,
+    );
+    return found ?? null;
   }
   const stageIdx = stageIndexFromHubSpot(hsStageId, stageMap);
-  return openStages[stageIdx] ?? openStages[0];
+  return openStages[stageIdx] ?? openStages[0] ?? null;
 }
 
 async function upsertDealExternalRecord(
@@ -236,16 +239,19 @@ export async function syncHubSpotToWorkspace(params: {
     const amount = Number(hs.properties.amount ?? 0);
     const winProbability = amount > 150000 ? 65 : amount > 80000 ? 55 : 40;
 
-    const mappedOwner = userMappings.find((m) => m.externalUserId === (hs.properties.hubspot_owner_id ?? ''));
-    const dealOwnerId = mappedOwner?.internalUserId
-      ? new Types.ObjectId(mappedOwner.internalUserId)
-      : ownerId;
+    const mappedOwner = userMappings.find(
+      (m) => String(m.externalUserId) === String(hs.properties.hubspot_owner_id ?? ''),
+    );
+    const mappedOwnerId =
+      mappedOwner?.internalUserId && Types.ObjectId.isValid(mappedOwner.internalUserId)
+        ? new Types.ObjectId(mappedOwner.internalUserId)
+        : null;
 
     if (existing) {
       existing.title = hs.properties.dealname ?? existing.title;
       existing.amount = amount;
-      existing.stageId = localStage._id;
-      existing.ownerId = dealOwnerId;
+      if (localStage) existing.stageId = localStage._id;
+      if (mappedOwnerId) existing.ownerId = mappedOwnerId;
       existing.expectedCloseDate = hs.properties.closedate ? new Date(hs.properties.closedate) : existing.expectedCloseDate;
       existing.lastActivityAt = new Date();
       await existing.save();
@@ -261,9 +267,9 @@ export async function syncHubSpotToWorkspace(params: {
         companyId,
         title: hs.properties.dealname ?? 'Untitled Deal',
         amount,
-        stageId: localStage._id,
+        stageId: (localStage ?? openStages[0])._id,
         position: count,
-        ownerId: dealOwnerId,
+        ownerId: mappedOwnerId ?? ownerId,
         winProbability,
         sentiment: winProbability >= 60 ? 'green' : winProbability >= 40 ? 'yellow' : 'red',
         lastActivityAt: new Date(),

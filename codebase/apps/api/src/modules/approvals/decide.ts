@@ -46,14 +46,40 @@ export async function decideApproveApproval(
     };
   }
 
-  const proposedChange = parseProposedChange(approval.proposedChange);
+  const rawChange = approval.proposedChange;
   let writeBack: { tasksCreated: number; notesCreated: number } | null = null;
-  if (proposedChange) {
+  if (rawChange != null) {
+    const proposedChange = parseProposedChange(rawChange);
+    if (!proposedChange) {
+      return {
+        ok: false,
+        code: 'INVALID_STATE',
+        message: 'Proposed change payload is invalid',
+      };
+    }
     writeBack = await applyProposedChange(workspaceId, userId, proposedChange);
     if (proposedChange.type === 'crm_field_update' || proposedChange.type === 'deal_update') {
       await pushCrmFieldUpdateToHubSpot(workspaceId, proposedChange.dealId, proposedChange.patch);
       await pushOpportunityUpdateToSalesforce(workspaceId, proposedChange.dealId, proposedChange.patch);
     }
+    approval.status = 'approved';
+    approval.decidedBy = userId as unknown as Types.ObjectId;
+    approval.decidedAt = new Date();
+    await approval.save();
+
+    publishEvent(
+      createEventEnvelope(
+        { type: 'approval.approved', workspaceId, approvalId: approval.id },
+        workspaceId,
+      ),
+    );
+
+    return {
+      ok: true,
+      approval,
+      changeApplied: true,
+      writeBack,
+    };
   }
 
   approval.status = 'approved';
@@ -71,7 +97,7 @@ export async function decideApproveApproval(
   return {
     ok: true,
     approval,
-    changeApplied: !!proposedChange,
+    changeApplied: false,
     writeBack,
   };
 }

@@ -19,7 +19,7 @@ type ConnectionSettings = {
 
 function resolveStageName(internalStageId: string, mappings: StageMapping[]): string | null {
   const match = mappings.find((m) => m.internalStageId === internalStageId);
-  return match?.stageExternalLabel || match?.stageExternalId || null;
+  return match?.stageExternalId || match?.stageExternalLabel || null;
 }
 
 async function resolveSalesforceOpportunityId(

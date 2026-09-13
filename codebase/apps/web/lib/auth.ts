@@ -13,9 +13,11 @@ export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
 }
 
-export function getGoogleSignInUrl(): string {
+export function getGoogleSignInUrl(inviteId?: string | null): string {
   const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
-  return `${api}/api/v1/auth/google`;
+  const url = new URL(`${api}/api/v1/auth/google`);
+  if (inviteId?.trim()) url.searchParams.set('invite', inviteId.trim());
+  return url.toString();
 }
 
 export async function exchangeAuthCode(code: string): Promise<{ accessToken: string; needsWorkspace: boolean }> {

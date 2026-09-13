@@ -26,6 +26,6 @@ test.describe('deal ask', () => {
       timeout: 15_000,
     });
     await expect(page.getByPlaceholder(/what objections came up/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Ask' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Ask', exact: true })).toBeVisible();
   });
 });

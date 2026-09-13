@@ -17,6 +17,9 @@ import {
   signAccessToken,
   validateOAuthState,
   acceptPendingWorkspaceInvite,
+  setOAuthInviteCookie,
+  getOAuthInviteFromCookie,
+  clearOAuthInviteCookie,
 } from '../../lib/auth/index.js';
 import { User, Workspace, WorkspaceInvite } from '@ai-crm/db';
 import {
@@ -90,8 +93,10 @@ function webAuthErrorRedirect(code: string, message: string): string {
   return `${webBaseUrl()}/auth/callback?${params.toString()}`;
 }
 
-export function startGoogleAuth(_req: AuthedRequest, res: Response) {
+export function startGoogleAuth(req: AuthedRequest, res: Response) {
   try {
+    const invite = typeof req.query.invite === 'string' ? req.query.invite.trim() : '';
+    if (invite) setOAuthInviteCookie(res, invite);
     const state = issueOAuthState(res);
     res.redirect(getGoogleAuthUrl(state));
   } catch (err) {
@@ -126,9 +131,6 @@ export async function googleCallback(req: AuthedRequest, res: Response) {
         avatarUrl: profile.picture,
         role: 'admin',
       });
-    } else if (!user.isActive) {
-      res.redirect(webAuthErrorRedirect('FORBIDDEN', 'Account deactivated'));
-      return;
     } else {
       user.email = profile.email;
       user.displayName = profile.name;
@@ -136,7 +138,14 @@ export async function googleCallback(req: AuthedRequest, res: Response) {
       await user.save();
     }
 
-    await acceptPendingWorkspaceInvite(user);
+    const inviteId = getOAuthInviteFromCookie(req.header('cookie'));
+    clearOAuthInviteCookie(res);
+    const accepted = await acceptPendingWorkspaceInvite(user, inviteId);
+
+    if (!user.isActive && !accepted) {
+      res.redirect(webAuthErrorRedirect('FORBIDDEN', 'Account deactivated'));
+      return;
+    }
 
     const exchangeCode = await createExchangeCode(user.id, !user.workspaceId);
     res.redirect(webCallbackUrl(exchangeCode, !user.workspaceId));

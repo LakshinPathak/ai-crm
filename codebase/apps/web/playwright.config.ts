@@ -1,9 +1,8 @@
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000';
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const repoRoot = path.resolve(process.cwd(), '../..');
 
 const e2eEnv = {
   MONGODB_URI: process.env.MONGODB_URI ?? 'mongodb://localhost:27017/ai-crm',

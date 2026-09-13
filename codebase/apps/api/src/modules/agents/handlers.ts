@@ -184,7 +184,9 @@ export async function getAgentStats(req: AuthedRequest, res: Response) {
 }
 
 export async function listAgents(req: AuthedRequest, res: Response) {
-  const agents = await Agent.find({ workspaceId: req.tenant!.workspaceId }).sort({ createdAt: -1 });
+  const agents = await Agent.find({ workspaceId: req.tenant!.workspaceId, isActive: true }).sort({
+    createdAt: -1,
+  });
   res.json({
     agents: agents.map((a) => ({
       id: a.id,
@@ -335,6 +337,15 @@ export async function createAgent(req: AuthedRequest, res: Response) {
     (parsed.data.settings as Record<string, unknown> | undefined) ?? {},
   );
 
+  const incoming = config?.triggerConfig;
+  const defaults = defaultTriggerConfig(template?.slug ?? '');
+  const triggerConfig =
+    incoming && incoming.type && incoming.type !== 'manual'
+      ? incoming
+      : defaults.type !== 'manual'
+        ? defaults
+        : (incoming ?? defaults);
+
   const agent = await Agent.create({
     workspaceId: req.tenant!.workspaceId,
     templateSlug: template?.slug,
@@ -342,7 +353,7 @@ export async function createAgent(req: AuthedRequest, res: Response) {
     category: category ?? template?.category ?? 'process',
     ownerId: req.tenant!.userId,
     isActive: true,
-    triggerConfig: config?.triggerConfig ?? defaultTriggerConfig(template?.slug ?? ''),
+    triggerConfig,
     toolsConfig: config?.toolsConfig ?? {},
     deliveryConfig: config?.deliveryConfig ?? null,
     settings,
@@ -384,6 +395,11 @@ export async function runAgent(req: AuthedRequest, res: Response) {
     return;
   }
 
+  if (!agent.isActive) {
+    res.status(409).json({ error: { code: 'AGENT_DISABLED', message: 'Agent is disabled' } });
+    return;
+  }
+
   const parsed = RunAgentSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
     res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: parsed.error.message } });
@@ -407,7 +423,7 @@ export async function runAgent(req: AuthedRequest, res: Response) {
     agentId: agent.id,
     templateSlug: agent.templateSlug ?? 'unknown',
     dealId: scope.dealId,
-    userId: req.tenant!.userId,
+    userId: agent.ownerId?.toString() ?? req.tenant!.userId,
   });
 
   res.status(202).json({ run: { id: run.id, status: run.status, agentId: agent.id } });

@@ -335,7 +335,7 @@ export default function AgentsPage() {
                     <div className="flex justify-end gap-2">
                       <Button
                         size="sm"
-                        disabled={Boolean(runningIds[a.id])}
+                        disabled={Boolean(runningIds[a.id]) || !agentIsActive(a)}
                         onClick={() => runAgent(a.id)}
                         className="text-primary-foreground"
                       >

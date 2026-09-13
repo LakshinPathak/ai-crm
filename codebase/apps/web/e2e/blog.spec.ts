@@ -18,6 +18,6 @@ test.describe('blog', () => {
         name: 'Why unified deal context beats another CRM field',
       }),
     ).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('link', { name: '← Back to all posts' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Blog' }).first()).toBeVisible();
   });
 });

@@ -61,7 +61,12 @@ async function focusDealsFromLatestRun(
   const ids = scope?.output?.focusDeals?.map((item) => item.dealId).filter(Boolean) ?? [];
   if (ids.length === 0) return fallback;
 
-  const deals = await Deal.find({ _id: { $in: ids }, workspaceId, deletedAt: null });
+  const deals = await Deal.find({
+    _id: { $in: ids },
+    workspaceId,
+    deletedAt: null,
+    status: 'open',
+  });
   const order = new Map(ids.map((id, i) => [id, i]));
   return [...deals]
     .sort((a, b) => (order.get(a.id) ?? 99) - (order.get(b.id) ?? 99))

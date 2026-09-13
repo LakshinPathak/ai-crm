@@ -260,7 +260,10 @@ export async function refreshDealScores(workspaceId: string, dealId: string): Pr
     ]);
     deal.sentiment = sentiment.sentiment;
     deal.technicalFitScore = fit.technicalFitScore;
-    await deal.save();
+    await Deal.updateOne(
+      { _id: deal._id, workspaceId, deletedAt: null },
+      { $set: { sentiment: sentiment.sentiment, technicalFitScore: fit.technicalFitScore } },
+    );
   } catch (err) {
     log('ai-scoring', 'refreshDealScores failed', { dealId, error: String(err) });
   }

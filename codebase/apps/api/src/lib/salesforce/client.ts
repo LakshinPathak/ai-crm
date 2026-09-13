@@ -46,7 +46,7 @@ export async function salesforceRequest<T>(params: {
   body?: unknown;
 }): Promise<T> {
   const origin = parseSalesforceInstanceUrl(params.instanceUrl);
-  if (!params.path.startsWith('/services/')) {
+  if (!params.path.startsWith('/services/') || params.path.includes('..')) {
     throw new Error('Salesforce request path is not allowed');
   }
 
