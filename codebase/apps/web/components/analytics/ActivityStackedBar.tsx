@@ -1,11 +1,11 @@
 'use client';
 
 const COLORS = {
-  customerMeeting: '#3b82f6',
-  internalMeeting: '#60a5fa',
-  dealPrep: '#8b5cf6',
-  logged: '#f59e0b',
-  other: '#cbd5e1',
+  customerMeeting: 'var(--chart-1)',
+  internalMeeting: 'var(--chart-2)',
+  dealPrep: 'var(--chart-3)',
+  logged: 'var(--chart-4)',
+  other: 'var(--chart-5)',
 };
 
 type Breakdown = {

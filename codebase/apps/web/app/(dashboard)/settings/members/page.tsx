@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -32,6 +32,7 @@ import {
   BreadcrumbLink,
   BreadcrumbList,
 } from '@/components/ui/breadcrumb';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
 
 type Member = { id: string; email: string; displayName: string; role: string };
@@ -141,7 +142,7 @@ export default function SettingsMembersPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button type="submit" disabled={inviting} className="w-full sm:w-auto">
+              <Button type="submit" disabled={inviting} className="w-full text-primary-foreground sm:w-auto">
                 {inviting ? 'Sending…' : 'Send invite'}
               </Button>
             </form>
@@ -149,12 +150,11 @@ export default function SettingsMembersPage() {
         )}
         <CardContent className="pt-6">
           {members.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-              <div className="rounded-full bg-muted p-3 text-muted-foreground">
-                <Users className="size-5" />
-              </div>
-              <CardDescription>No members listed.</CardDescription>
-            </div>
+            <EmptyState
+              icon={<Users className="size-5" />}
+              title="No members listed"
+              description="Invite a colleague to share this workspace."
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -167,9 +167,9 @@ export default function SettingsMembersPage() {
               <TableBody>
                 {members.map((m) => (
                   <TableRow key={m.id}>
-                    <TableCell className="font-medium">{m.displayName}</TableCell>
-                    <TableCell>{m.email}</TableCell>
-                    <TableCell>{m.role}</TableCell>
+                    <TableCell className="font-medium text-foreground">{m.displayName}</TableCell>
+                    <TableCell className="text-muted-foreground">{m.email}</TableCell>
+                    <TableCell className="text-muted-foreground">{m.role}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

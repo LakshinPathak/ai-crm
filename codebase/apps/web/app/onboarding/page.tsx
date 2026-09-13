@@ -2,9 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Check } from 'lucide-react';
+import { BrandLogo } from '@/components/brand/BrandLogo';
+import { cn } from '@/lib/utils';
 import { IntegrationLogo, type IntegrationId } from '@/components/brand/IntegrationLogo';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
@@ -83,7 +87,103 @@ const CRM_PROVIDERS: CrmProviderOption[] = [
   { id: 'none', name: 'Skip for now', logo: null, description: 'Explore with sample data' },
 ];
 
-const STEP_LABELS = ['CRM', 'Connect', 'Stages', 'Team', 'Import'];
+const STEP_LABELS = ['CRM', 'Connect', 'Stages', 'Team', 'Import'] as const;
+const UNASSIGNED_MEMBER = '__unassigned__';
+
+function WizardStepper({ current }: { current: number }) {
+  return (
+    <nav aria-label="Onboarding steps" className="mb-2">
+      <ol className="flex items-start">
+        {STEP_LABELS.map((label, idx) => {
+          const n = idx + 1;
+          const done = n < current;
+          const active = n === current;
+          const upcoming = n > current;
+          return (
+            <li key={label} className="flex min-w-0 flex-1 flex-col items-center">
+              <div className="flex w-full items-center">
+                <span
+                  aria-hidden={idx === 0}
+                  className={cn(
+                    'h-0.5 min-w-0 flex-1 rounded-full transition-colors duration-300',
+                    idx === 0 ? 'bg-transparent' : done || active ? 'bg-primary' : 'bg-border',
+                  )}
+                />
+                <span
+                  className={cn(
+                    'relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-all duration-300',
+                    done && 'bg-primary text-primary-foreground shadow-[0_0_0_4px_var(--primary-glow)]',
+                    active &&
+                      'bg-primary text-primary-foreground shadow-[0_0_0_6px_var(--primary-glow)] ring-2 ring-primary/30',
+                    upcoming && 'border border-border bg-muted text-muted-foreground',
+                  )}
+                >
+                  {done ? <Check className="size-3.5 stroke-[2.5]" /> : n}
+                </span>
+                <span
+                  aria-hidden={idx === STEP_LABELS.length - 1}
+                  className={cn(
+                    'h-0.5 min-w-0 flex-1 rounded-full transition-colors duration-300',
+                    idx === STEP_LABELS.length - 1
+                      ? 'bg-transparent'
+                      : done
+                        ? 'bg-primary'
+                        : 'bg-border',
+                  )}
+                />
+              </div>
+              <span
+                className={cn(
+                  'mt-2 max-w-full truncate px-0.5 text-center text-[11px] font-semibold tracking-wide',
+                  active && 'text-primary',
+                  done && 'text-foreground',
+                  upcoming && 'text-muted-foreground',
+                )}
+                aria-current={active ? 'step' : undefined}
+              >
+                {label}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
+function OnboardingShell({
+  title,
+  description,
+  children,
+  footer,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
+  return (
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-6 sm:p-8">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--primary-glow),transparent_55%)]"
+      />
+      <Card className="relative w-full max-w-[640px] border-border/80 bg-card shadow-[0_24px_80px_-24px_oklch(0.45_0.08_290_/_0.35)]">
+        <CardHeader className="items-center px-4 text-center sm:px-6">
+          <BrandLogo href="/" size="lg" showText={false} />
+          <CardTitle className="mt-4 text-xl text-card-foreground sm:text-2xl">{title}</CardTitle>
+          <CardDescription className="text-muted-foreground">{description}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5 px-4 text-card-foreground sm:px-6">{children}</CardContent>
+        {footer ? (
+          <CardFooter className="flex-wrap justify-end gap-2 border-t border-border/60 bg-muted/40 px-4 sm:px-6">
+            {footer}
+          </CardFooter>
+        ) : null}
+      </Card>
+    </main>
+  );
+}
 
 function parseApiError(err: unknown): string {
   if (!(err instanceof Error)) return 'Something went wrong';
@@ -451,66 +551,104 @@ export default function OnboardingPage() {
 
   if (phase === 'loading') {
     return (
-      <main className="auth-page">
-        <div className="auth-card onboarding-card w-full max-w-[640px]">
-          <p className="subtitle" style={{ marginBottom: 0 }}>Loading…</p>
-        </div>
-      </main>
+      <OnboardingShell title="Connect your CRM" description="Loading…">
+        <p className="text-sm text-muted-foreground">Preparing your workspace…</p>
+      </OnboardingShell>
     );
   }
 
   if (phase === 'workspace') {
     return (
-      <main className="auth-page">
-        <div className="auth-card onboarding-card w-full max-w-[640px]">
-          <div className="auth-card__logo" style={{ margin: '0 0 1rem' }}>AI</div>
-          <h1>Create your workspace</h1>
-          <p className="subtitle">Set up your team before connecting a CRM.</p>
-          <form onSubmit={createWorkspace}>
-            <Label htmlFor="name">Workspace name</Label>
-            <Input
-              id="name"
-              value={workspaceName}
-              onChange={(e) => setWorkspaceName(e.target.value)}
-              required
-              minLength={2}
-              className="mt-2 mb-4 w-full"
-            />
-            {error && <p style={{ color: 'var(--red)', fontSize: 14 }}>{error}</p>}
-            <Button type="submit" disabled={loading} style={{ width: '100%' }}>
-              {loading ? 'Creating…' : 'Continue to CRM setup'}
-            </Button>
-          </form>
-        </div>
-      </main>
+      <OnboardingShell title="Create your workspace" description="Set up your team before connecting a CRM.">
+        <form onSubmit={createWorkspace}>
+          <Label htmlFor="name" className="text-foreground">
+            Workspace name
+          </Label>
+          <Input
+            id="name"
+            value={workspaceName}
+            onChange={(e) => setWorkspaceName(e.target.value)}
+            required
+            minLength={2}
+            className="mt-2 mb-4 w-full text-foreground"
+          />
+          {error && <p className="mb-3 text-sm text-destructive">{error}</p>}
+          <Button type="submit" disabled={loading} className="w-full text-primary-foreground">
+            {loading ? 'Creating…' : 'Continue to CRM setup'}
+          </Button>
+        </form>
+      </OnboardingShell>
     );
   }
 
-  return (
-    <main className="auth-page">
-      <div className="auth-card onboarding-card w-full max-w-[640px]">
-        <div className="auth-card__logo" style={{ margin: '0 0 1rem' }}>AI</div>
-        <h1>Connect your CRM</h1>
-        <p className="subtitle">Step {step} of 5 — {STEP_LABELS[step - 1]}</p>
+  const wizardActions = (
+    <>
+      {step > 1 && step < 5 && (
+        <Button variant="ghost" className="text-foreground" onClick={() => setStep(step - 1)} disabled={loading}>
+          Back
+        </Button>
+      )}
 
-        <div className="onboarding-steps" aria-hidden>
-          {STEP_LABELS.map((_, idx) => {
-            const n = idx + 1;
-            const cls = n < step ? 'onboarding-steps__item--done' : n === step ? 'onboarding-steps__item--active' : '';
-            return <div key={n} className={`onboarding-steps__item ${cls}`.trim()} />;
-          })}
-        </div>
-        <div className="onboarding-steps__labels" aria-hidden>
-          {STEP_LABELS.map((label, idx) => (
-            <span key={label} className={idx + 1 === step ? 'onboarding-steps__label--active' : undefined}>
-              {label}
-            </span>
-          ))}
-        </div>
+      {step === 1 && (
+        <Button onClick={saveProviderAndContinue} disabled={loading} className="text-primary-foreground">
+          {loading ? 'Saving…' : skippedCrm ? 'Continue without CRM' : 'Continue'}
+        </Button>
+      )}
+
+      {step === 2 && !skippedCrm && (
+        <Button
+          onClick={continueFromConnect}
+          disabled={loading || (!connected && loading)}
+          className="text-primary-foreground"
+        >
+          {loading ? 'Working…' : connected ? 'Continue' : 'Connect & continue'}
+        </Button>
+      )}
+
+      {step === 3 && !skippedCrm && (
+        <Button
+          onClick={saveStageMappings}
+          disabled={loading || stageMappings.length === 0}
+          className="text-primary-foreground"
+        >
+          {loading ? 'Saving…' : 'Save & continue'}
+        </Button>
+      )}
+
+      {step === 4 && !skippedCrm && (
+        <>
+          <Button variant="ghost" className="text-foreground" onClick={() => saveUserMappings(true)} disabled={loading}>
+            Skip
+          </Button>
+          <Button onClick={() => saveUserMappings(false)} disabled={loading} className="text-primary-foreground">
+            {loading ? 'Saving…' : 'Save & import'}
+          </Button>
+        </>
+      )}
+
+      {step === 5 && (
+        <Button
+          onClick={finish}
+          disabled={loading || (!skippedCrm && !importDone && importProgress.status === 'running')}
+          className="text-primary-foreground"
+        >
+          {loading ? 'Finishing…' : 'Go to dashboard'}
+        </Button>
+      )}
+    </>
+  );
+
+  return (
+    <OnboardingShell
+      title="Connect your CRM"
+      description={`Step ${step} of 5 — ${STEP_LABELS[step - 1]}`}
+      footer={wizardActions}
+    >
+        <WizardStepper current={step} />
 
         {step === 1 && (
           <div>
-            <p style={{ color: 'var(--muted)', fontSize: 14, marginTop: 0 }}>
+            <p className="mt-0 text-sm text-muted-foreground">
               Which CRM does your team use? You can change this later in Settings.
             </p>
             <div className="onboarding-provider-grid">
@@ -518,20 +656,27 @@ export default function OnboardingPage() {
                 <button
                   key={opt.id}
                   type="button"
-                  className={`onboarding-provider-card${provider === opt.id ? ' onboarding-provider-card--selected' : ''}`}
+                  className={cn(
+                    'onboarding-provider-card relative',
+                    provider === opt.id && 'onboarding-provider-card--selected',
+                  )}
                   onClick={() => setProvider(opt.id)}
+                  aria-pressed={provider === opt.id}
                 >
                   {opt.logo ? <IntegrationLogo id={opt.logo} size={36} /> : (
-                    <span style={{
-                      width: 36, height: 36, borderRadius: 8, background: 'var(--surface-2)',
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 18, color: 'var(--muted)',
-                    }}>—</span>
+                    <span className="inline-flex size-9 items-center justify-center rounded-lg bg-muted text-lg text-muted-foreground">
+                      —
+                    </span>
                   )}
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="onboarding-provider-card__name">{opt.name}</div>
                     <div className="onboarding-provider-card__hint">{opt.description}</div>
                   </div>
+                  {provider === opt.id ? (
+                    <span className="absolute top-2.5 right-2.5 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <Check className="size-3 stroke-[2.5]" />
+                    </span>
+                  ) : null}
                 </button>
               ))}
             </div>
@@ -545,7 +690,7 @@ export default function OnboardingPage() {
                 {providerMeta?.logo && <IntegrationLogo id={providerMeta.logo} size={40} />}
                 <div>
                   <h3>{providerMeta?.name}</h3>
-                  <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)' }}>
+                  <p className="m-0 text-[13px] text-muted-foreground">
                     Authorize read access to deals, stages, and owners.
                   </p>
                 </div>
@@ -560,17 +705,17 @@ export default function OnboardingPage() {
                   )}
                 </div>
               ) : (
-                <p style={{ fontSize: 13, color: 'var(--muted)', margin: '0 0 1rem' }}>
+                <p className="mb-4 mt-0 text-[13px] text-muted-foreground">
                   Without OAuth credentials, we connect in demo mode and import sample deals instantly.
                 </p>
               )}
               {!connected && (
-                <Button onClick={connectCrm} disabled={loading}>
+                <Button onClick={connectCrm} disabled={loading} className="text-primary-foreground">
                   {loading ? 'Connecting…' : `Connect ${providerMeta?.name}`}
                 </Button>
               )}
               {connectResult?.message && (
-                <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: '0.75rem', marginBottom: 0 }}>
+                <p className="mb-0 mt-3 text-[13px] text-muted-foreground">
                   {connectResult.message}
                 </p>
               )}
@@ -582,7 +727,9 @@ export default function OnboardingPage() {
           <div>
             {pipelines.length > 1 && (
               <div className="mb-4">
-                <Label htmlFor="pipeline">Pipeline</Label>
+                <Label htmlFor="pipeline" className="text-foreground">
+                  Pipeline
+                </Label>
                 <Select value={pipelineId} onValueChange={handlePipelineChange}>
                   <SelectTrigger id="pipeline" className="mt-1.5 w-full">
                     <SelectValue placeholder="Select pipeline" />
@@ -595,15 +742,15 @@ export default function OnboardingPage() {
                 </Select>
               </div>
             )}
-            <p style={{ color: 'var(--muted)', fontSize: 14, marginTop: 0 }}>
+            <p className="mt-0 text-sm text-muted-foreground">
               Map each CRM stage to your internal pipeline. We auto-suggest matches by name.
             </p>
             <div style={{ overflowX: 'auto' }}>
               <table className="onboarding-mapping-table">
                 <thead>
                   <tr>
-                    <th>CRM stage</th>
-                    <th>Internal stage</th>
+                    <th className="text-foreground">CRM stage</th>
+                    <th className="text-foreground">Internal stage</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -611,18 +758,23 @@ export default function OnboardingPage() {
                     <tr key={row.stageExternalId}>
                       <td>{row.stageExternalLabel}</td>
                       <td>
-                        <select
-                          value={row.internalStageId}
-                          onChange={(e) => {
+                        <Select
+                          value={row.internalStageId || undefined}
+                          onValueChange={(value) => {
                             const next = [...stageMappings];
-                            next[idx] = { ...row, internalStageId: e.target.value };
+                            next[idx] = { ...row, internalStageId: value };
                             setStageMappings(next);
                           }}
                         >
-                          {internalStages.map((s) => (
-                            <option key={s.id} value={s.id}>{s.name}</option>
-                          ))}
-                        </select>
+                          <SelectTrigger className="w-full min-w-40" aria-label={`Internal stage for ${row.stageExternalLabel}`}>
+                            <SelectValue placeholder="Select stage" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {internalStages.map((s) => (
+                              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </td>
                     </tr>
                   ))}
@@ -634,15 +786,15 @@ export default function OnboardingPage() {
 
         {step === 4 && !skippedCrm && (
           <div>
-            <p style={{ color: 'var(--muted)', fontSize: 14, marginTop: 0 }}>
+            <p className="mt-0 text-sm text-muted-foreground">
               Match CRM owners to workspace members. Unmapped owners default to you.
             </p>
             <div style={{ overflowX: 'auto' }}>
               <table className="onboarding-mapping-table">
                 <thead>
                   <tr>
-                    <th>CRM user</th>
-                    <th>Workspace member</th>
+                    <th className="text-foreground">CRM user</th>
+                    <th className="text-foreground">Workspace member</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -652,25 +804,30 @@ export default function OnboardingPage() {
                       <tr key={row.externalUserId}>
                         <td>
                           <div style={{ fontWeight: 600 }}>{owner?.name ?? row.externalUserId}</div>
-                          <div style={{ fontSize: 12, color: 'var(--muted)' }}>{owner?.email ?? row.externalEmail}</div>
+                          <div className="text-xs text-muted-foreground">{owner?.email ?? row.externalEmail}</div>
                         </td>
                         <td>
-                          <select
-                            value={row.internalUserId ?? ''}
-                            onChange={(e) => {
+                          <Select
+                            value={row.internalUserId ?? UNASSIGNED_MEMBER}
+                            onValueChange={(value) => {
                               const next = [...userMappings];
                               next[idx] = {
                                 ...row,
-                                internalUserId: e.target.value || null,
+                                internalUserId: value === UNASSIGNED_MEMBER ? null : value,
                               };
                               setUserMappings(next);
                             }}
                           >
-                            <option value="">Unassigned (defaults to you)</option>
-                            {members.map((m) => (
-                              <option key={m.id} value={m.id}>{m.displayName} ({m.email})</option>
-                            ))}
-                          </select>
+                            <SelectTrigger className="w-full min-w-48" aria-label={`Workspace member for ${owner?.name ?? row.externalUserId}`}>
+                              <SelectValue placeholder="Unassigned (defaults to you)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={UNASSIGNED_MEMBER}>Unassigned (defaults to you)</SelectItem>
+                              {members.map((m) => (
+                                <SelectItem key={m.id} value={m.id}>{m.displayName} ({m.email})</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </td>
                       </tr>
                     );
@@ -684,12 +841,12 @@ export default function OnboardingPage() {
         {step === 5 && (
           <div>
             {skippedCrm ? (
-              <p style={{ color: 'var(--muted)', fontSize: 14, marginTop: 0 }}>
+              <p className="mt-0 text-sm text-muted-foreground">
                 Sample deals and pipeline stages are ready. Connect a CRM anytime from Settings.
               </p>
             ) : (
               <>
-                <p style={{ color: 'var(--muted)', fontSize: 14, marginTop: 0 }}>
+                <p className="mt-0 text-sm text-muted-foreground">
                   {importDone
                     ? 'Your pipeline is ready — open the dashboard when you are.'
                     : 'We are pulling deals and matching them to your pipeline stages.'}
@@ -713,51 +870,7 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {error && <p style={{ color: 'var(--red)', fontSize: 14, marginTop: '1rem' }}>{error}</p>}
-
-        <div className="onboarding-actions">
-          {step > 1 && step < 5 && (
-            <Button variant="ghost" onClick={() => setStep(step - 1)} disabled={loading}>
-              Back
-            </Button>
-          )}
-
-          {step === 1 && (
-            <Button onClick={saveProviderAndContinue} disabled={loading}>
-              {loading ? 'Saving…' : skippedCrm ? 'Continue without CRM' : 'Continue'}
-            </Button>
-          )}
-
-          {step === 2 && !skippedCrm && (
-            <Button onClick={continueFromConnect} disabled={loading || (!connected && loading)}>
-              {loading ? 'Working…' : connected ? 'Continue' : 'Connect & continue'}
-            </Button>
-          )}
-
-          {step === 3 && !skippedCrm && (
-            <Button onClick={saveStageMappings} disabled={loading || stageMappings.length === 0}>
-              {loading ? 'Saving…' : 'Save & continue'}
-            </Button>
-          )}
-
-          {step === 4 && !skippedCrm && (
-            <>
-              <Button variant="ghost" onClick={() => saveUserMappings(true)} disabled={loading}>
-                Skip
-              </Button>
-              <Button onClick={() => saveUserMappings(false)} disabled={loading}>
-                {loading ? 'Saving…' : 'Save & import'}
-              </Button>
-            </>
-          )}
-
-          {step === 5 && (
-            <Button onClick={finish} disabled={loading || (!skippedCrm && !importDone && importProgress.status === 'running')}>
-              {loading ? 'Finishing…' : 'Go to dashboard'}
-            </Button>
-          )}
-        </div>
-      </div>
-    </main>
+        {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+    </OnboardingShell>
   );
 }

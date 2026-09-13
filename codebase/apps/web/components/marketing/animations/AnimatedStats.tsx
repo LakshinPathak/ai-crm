@@ -41,7 +41,7 @@ function StatCard({
 
   return (
     <ScrollReveal delay={delay}>
-      <Card className="text-center transition-shadow hover:shadow-md">
+      <Card className="bg-card text-center transition-shadow hover:shadow-md">
         <CardContent className="pt-6">
           <FeatureIcon name={stat.icon} size={18} className="mx-auto mb-2" />
           <div className="text-3xl font-extrabold tabular-nums text-primary sm:text-4xl">
@@ -75,7 +75,7 @@ export function AnimatedStats() {
   }, []);
 
   return (
-    <section ref={ref} className="mkt-stats px-4 sm:px-6">
+    <section ref={ref} className="mkt-stats bg-background px-4 text-foreground sm:px-6">
       <ScrollReveal>
         <h2 className="text-2xl font-bold sm:text-3xl">
           What presales teams report in the <em>first 90 days</em>

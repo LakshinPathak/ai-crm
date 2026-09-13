@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Bot, Play } from 'lucide-react';
+import { ArrowLeft, Bot, Pencil, Play } from 'lucide-react';
 import { apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { agentCategoryBadge, agentRunStatusBadge } from '@/lib/ui-badge';
@@ -32,6 +32,10 @@ type Agent = {
   isActive: boolean;
   enabled: boolean;
 };
+
+function agentIsActive(agent: { enabled?: boolean; isActive?: boolean }) {
+  return Boolean(agent.enabled ?? agent.isActive);
+}
 
 type Template = { slug: string; name: string; category: string; description: string };
 
@@ -160,15 +164,15 @@ export default function AgentDetailPage() {
   if (error || !agent) {
     return (
       <div>
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/agents">
+        <Button variant="ghost" size="sm" asChild className="text-foreground">
+          <Link href="/agents" className="text-foreground">
             <ArrowLeft className="size-4" />
             Back to agents
           </Link>
         </Button>
         <Card className="mt-4">
           <CardContent className="flex flex-col items-center justify-center gap-4 py-12 text-center">
-            <div className="rounded-full bg-muted p-3 text-muted-foreground">
+            <div className="rounded-full bg-primary/10 p-3 text-primary">
               <Bot className="size-6" />
             </div>
             <CardTitle>Agent not found</CardTitle>
@@ -185,8 +189,8 @@ export default function AgentDetailPage() {
     <div>
       <PageHeader
         breadcrumb={
-          <Button variant="ghost" size="icon-sm" asChild>
-            <Link href="/agents">
+          <Button variant="ghost" size="icon-sm" asChild className="text-foreground">
+            <Link href="/agents" className="text-foreground">
               <ArrowLeft className="size-4" />
             </Link>
           </Button>
@@ -198,17 +202,28 @@ export default function AgentDetailPage() {
             <div className="flex w-full items-center gap-2 sm:w-auto">
               <Switch
                 id="agent-enabled"
-                checked={agent.enabled}
+                checked={agentIsActive(agent)}
                 disabled={toggling}
                 onCheckedChange={toggleEnabled}
               />
-              <Label htmlFor="agent-enabled">{agent.enabled ? 'Enabled' : 'Disabled'}</Label>
+              <Label htmlFor="agent-enabled">{agentIsActive(agent) ? 'Enabled' : 'Disabled'}</Label>
             </div>
             <Button
               size="sm"
-              disabled={running || !agent.enabled}
+              variant="outline"
+              asChild
+              className="w-full text-foreground sm:w-auto"
+            >
+              <Link href={`/agents/new?agentId=${encodeURIComponent(agent.id)}`} className="text-foreground">
+                <Pencil className="size-3.5" />
+                Edit
+              </Link>
+            </Button>
+            <Button
+              size="sm"
+              disabled={running || !agentIsActive(agent)}
               onClick={runAgent}
-              className="w-full sm:w-auto"
+              className="w-full text-primary-foreground sm:w-auto"
             >
               <Play className="size-3.5" />
               Run
@@ -218,11 +233,19 @@ export default function AgentDetailPage() {
       />
 
       <div className="mb-5 flex flex-wrap gap-2">
-        <Badge variant={agentCategoryBadge(agent.category)}>{agent.category}</Badge>
-        <Badge variant={agent.enabled ? 'default' : 'outline'}>
-          {agent.enabled ? 'Active' : 'Inactive'}
+        <Badge
+          variant={agentCategoryBadge(agent.category)}
+          className={agentCategoryBadge(agent.category) === 'default' ? 'text-primary-foreground' : 'text-foreground'}
+        >
+          {agent.category}
         </Badge>
-        {template && <Badge variant="outline">{template.slug}</Badge>}
+        <Badge
+          variant={agentIsActive(agent) ? 'default' : 'outline'}
+          className={agentIsActive(agent) ? 'text-primary-foreground' : 'text-foreground'}
+        >
+          {agentIsActive(agent) ? 'Active' : 'Inactive'}
+        </Badge>
+        {template && <Badge variant="outline" className="text-foreground">{template.slug}</Badge>}
       </div>
 
       {template?.description && (
@@ -238,12 +261,12 @@ export default function AgentDetailPage() {
       {runs.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center gap-4 py-12 text-center">
-            <div className="rounded-full bg-muted p-3 text-muted-foreground">
+            <div className="rounded-full bg-primary/10 p-3 text-primary">
               <Bot className="size-6" />
             </div>
             <CardTitle>No runs yet</CardTitle>
             <CardDescription>Run this agent to see execution history here.</CardDescription>
-            <Button size="sm" disabled={!agent.enabled} onClick={runAgent}>
+            <Button size="sm" disabled={!agentIsActive(agent)} onClick={runAgent} className="text-primary-foreground">
               <Play className="size-3.5" />
               Run agent
             </Button>
@@ -251,6 +274,7 @@ export default function AgentDetailPage() {
         </Card>
       ) : (
         <Card className="py-0">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -263,14 +287,20 @@ export default function AgentDetailPage() {
               {runs.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell>
-                    <Badge variant={agentRunStatusBadge(r.status)}>{r.status}</Badge>
+                    <Badge
+                      variant={agentRunStatusBadge(r.status)}
+                      className={agentRunStatusBadge(r.status) === 'default' ? 'text-primary-foreground' : 'text-foreground'}
+                    >
+                      {r.status}
+                    </Badge>
                   </TableCell>
-                  <TableCell>{r.creditsUsed}</TableCell>
-                  <TableCell>{new Date(r.createdAt).toLocaleString()}</TableCell>
+                  <TableCell className="text-foreground">{r.creditsUsed}</TableCell>
+                  <TableCell className="text-foreground">{new Date(r.createdAt).toLocaleString()}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+          </div>
         </Card>
       )}
     </div>

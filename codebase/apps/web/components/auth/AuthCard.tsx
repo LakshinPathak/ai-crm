@@ -30,27 +30,29 @@ export function AuthCard({
   backHref?: string;
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-6 sm:p-4">
-      <Card className="w-full max-w-md">
+    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-6 sm:p-4">
+      <Card className="w-full max-w-md bg-card">
         <CardHeader className="items-center px-4 text-center sm:px-6">
           <BrandLogo href="/" size="lg" showText={false} />
-          <CardTitle className="mt-4 text-xl sm:text-2xl">{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
+          <CardTitle className="mt-4 text-xl text-card-foreground sm:text-2xl">{title}</CardTitle>
+          <CardDescription className="text-muted-foreground">{description}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 px-4 sm:px-6">
-          <Button variant="outline" className="w-full gap-2" asChild>
-            <a href={googleUrl}>
+        <CardContent className="space-y-4 px-4 text-card-foreground sm:px-6">
+          <Button variant="outline" className="w-full gap-2 text-foreground" asChild>
+            <a href={googleUrl} className="text-foreground">
               <GoogleIcon />
               Continue with Google
             </a>
           </Button>
           <DevLoginForm />
           <Separator />
-          <div className="text-center text-sm text-muted-foreground">{footer}</div>
+          <div className="text-center text-sm text-foreground">{footer}</div>
         </CardContent>
         <CardFooter className="justify-center">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={backHref}>← Back to home</Link>
+          <Button variant="ghost" size="sm" className="text-foreground" asChild>
+            <Link href={backHref} className="text-foreground">
+              ← Back to home
+            </Link>
           </Button>
         </CardFooter>
       </Card>

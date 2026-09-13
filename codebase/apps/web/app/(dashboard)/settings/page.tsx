@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageSkeleton } from '@/components/ui/page-skeleton';
 import { useToast } from '@/components/ui/Toast';
 
 export default function SettingsPage() {
@@ -41,7 +42,7 @@ export default function SettingsPage() {
     }
   }
 
-  if (!me) return null;
+  if (!me) return <PageSkeleton />;
 
   return (
     <div>
@@ -61,7 +62,7 @@ export default function SettingsPage() {
                 onChange={(e) => setWorkspaceName(e.target.value)}
               />
             </div>
-            <Button onClick={saveWorkspace} disabled={saving}>
+            <Button onClick={saveWorkspace} disabled={saving} className="text-primary-foreground">
               {saving ? 'Saving…' : 'Save changes'}
             </Button>
           </CardContent>
@@ -86,8 +87,8 @@ export default function SettingsPage() {
             <CardDescription>Invite colleagues and manage workspace roles.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="ghost" asChild>
-              <Link href="/settings/members">Manage members →</Link>
+            <Button variant="ghost" asChild className="text-foreground">
+              <Link href="/settings/members" className="text-foreground">Manage members →</Link>
             </Button>
           </CardContent>
         </Card>
@@ -98,8 +99,8 @@ export default function SettingsPage() {
             <CardDescription>View presales stages and milestones for deals.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="ghost" asChild>
-              <Link href="/settings/sales-process">View sales process →</Link>
+            <Button variant="ghost" asChild className="text-foreground">
+              <Link href="/settings/sales-process" className="text-foreground">View sales process →</Link>
             </Button>
           </CardContent>
         </Card>
@@ -112,8 +113,8 @@ export default function SettingsPage() {
             <CardDescription>Connect CRM, chat, and recording tools.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="ghost" asChild>
-              <Link href="/settings/integrations">Manage integrations →</Link>
+            <Button variant="ghost" asChild className="text-foreground">
+              <Link href="/settings/integrations" className="text-foreground">Manage integrations →</Link>
             </Button>
           </CardContent>
         </Card>
@@ -124,8 +125,8 @@ export default function SettingsPage() {
             <CardDescription>Register external tool servers for agents (preview).</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="ghost" asChild>
-              <Link href="/settings/mcp">View MCP servers →</Link>
+            <Button variant="ghost" asChild className="text-foreground">
+              <Link href="/settings/mcp" className="text-foreground">View MCP servers →</Link>
             </Button>
           </CardContent>
         </Card>

@@ -171,7 +171,7 @@ export default function InsightsPage() {
                 checked={compareOrg}
                 onCheckedChange={(checked) => setCompareOrg(checked === true)}
               />
-              <Label htmlFor="compare-org-perf" className="text-sm font-normal">
+              <Label htmlFor="compare-org-perf" className="text-sm font-normal text-foreground/70">
                 Comparisons vs org average
               </Label>
             </div>
@@ -216,7 +216,7 @@ export default function InsightsPage() {
                 checked={compareOrg}
                 onCheckedChange={(checked) => setCompareOrg(checked === true)}
               />
-              <Label htmlFor="compare-org-users" className="text-sm font-normal">
+              <Label htmlFor="compare-org-users" className="text-sm font-normal text-foreground/70">
                 Comparisons vs org average
               </Label>
             </div>

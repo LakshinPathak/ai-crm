@@ -37,7 +37,7 @@ type McpServer = {
 };
 
 function mcpStatusBadge(status: McpServer['status']) {
-  if (status === 'connected') return <Badge>Connected</Badge>;
+  if (status === 'connected') return <Badge className="text-primary-foreground">Connected</Badge>;
   return <Badge variant="outline">Disconnected</Badge>;
 }
 
@@ -191,7 +191,7 @@ export default function SettingsMcpPage() {
                     required
                   />
                 </div>
-                <Button type="submit" disabled={saving}>
+                <Button type="submit" disabled={saving} className="text-primary-foreground">
                   {saving ? 'Adding…' : 'Add'}
                 </Button>
               </form>
@@ -224,7 +224,7 @@ export default function SettingsMcpPage() {
                   <TableBody>
                     {servers.map((server) => (
                       <TableRow key={server.id}>
-                        <TableCell className="font-medium">{server.name}</TableCell>
+                        <TableCell className="font-medium text-foreground">{server.name}</TableCell>
                         <TableCell className="font-mono text-xs text-muted-foreground">{server.url}</TableCell>
                         <TableCell>{mcpStatusBadge(server.status)}</TableCell>
                         <TableCell>

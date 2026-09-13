@@ -57,7 +57,7 @@ export function AgentDriftDemo() {
 
         <ScrollReveal delay={120}>
           <Card
-            className={`mkt-drift-card border-primary/30 bg-gradient-to-br from-primary/8 to-card transition-all duration-300 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}
+            className={`mkt-drift-card border-border bg-card bg-gradient-to-br from-primary/8 to-card transition-all duration-300 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}
           >
             <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
               <div className="flex items-center gap-2">

@@ -7,7 +7,7 @@ export function LogoMarquee() {
   const track = [...LOGO_ITEMS, ...LOGO_ITEMS];
 
   return (
-    <section className="mkt-logo-marquee border-y border-border bg-muted/40 py-8">
+    <section className="mkt-logo-marquee border-y border-border bg-muted py-8">
       <p className="mb-5 text-center text-sm font-semibold text-muted-foreground">
         Trusted by revenue teams using
       </p>

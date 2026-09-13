@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { apiDelete, apiGet, apiPatch } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import type { CompanyDeal, CompanyDetail, CompanyDetailResponse } from '@/lib/types';
@@ -11,13 +11,20 @@ import { formatMoney, sentimentLabel } from '@/lib/format';
 import { legacyBadgeVariant } from '@/lib/ui-badge';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
-import { UserAvatar } from '@/components/ui/user-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageSkeleton } from '@/components/ui/page-skeleton';
 import { useToast } from '@/components/ui/Toast';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import {
   Table,
   TableBody,
@@ -107,14 +114,26 @@ export default function AccountDetailPage() {
     }
   }
 
+  const accountsCrumb = (
+    <Breadcrumb className="min-w-0">
+      <BreadcrumbList className="flex-nowrap">
+        <BreadcrumbItem className="shrink-0">
+          <BreadcrumbLink asChild>
+            <Link href="/accounts">Accounts</Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator className="shrink-0" />
+        <BreadcrumbItem className="min-w-0">
+          <BreadcrumbPage className="truncate">{company?.name ?? 'Account'}</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
   if (error) {
     return (
       <div>
-        <Link href="/accounts">
-          <Button variant="ghost" size="icon-sm">
-            <ArrowLeft size={16} />
-          </Button>
-        </Link>
+        {accountsCrumb}
         <p className="mt-4 text-destructive">{error}</p>
       </div>
     );
@@ -124,72 +143,72 @@ export default function AccountDetailPage() {
 
   const openDeals = deals.filter((d) => d.status === 'open');
   const totalAmount = openDeals.reduce((sum, d) => sum + d.amount, 0);
+  const subtitle =
+    [company.domain, company.industry].filter(Boolean).join(' · ') || 'Account details';
 
   return (
     <div>
-      <div className="ui-page-header mb-6 flex-col gap-4 sm:flex-row">
-        <div className="ui-page-header__left min-w-0 flex-1">
-          <Link href="/accounts" className="shrink-0">
-            <Button variant="ghost" size="icon-sm">
-              <ArrowLeft size={16} />
-            </Button>
-          </Link>
-          <UserAvatar name={company.name} size="md" className="shrink-0" />
-          <div className="min-w-0 flex-1">
-            {editing ? (
-              <div className="flex flex-col gap-2">
-                <Input
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Company name"
-                  className="w-full sm:w-[280px]"
-                />
-                <div className="flex flex-wrap gap-2">
-                  <Input
-                    value={editDomain}
-                    onChange={(e) => setEditDomain(e.target.value)}
-                    placeholder="Domain"
-                    className="min-w-0 flex-1 sm:w-40 sm:flex-none"
-                  />
-                  <Input
-                    value={editIndustry}
-                    onChange={(e) => setEditIndustry(e.target.value)}
-                    placeholder="Industry"
-                    className="min-w-0 flex-1 sm:w-40 sm:flex-none"
-                  />
-                  <Input
-                    type="number"
-                    min={0}
-                    value={editEmployeeCount}
-                    onChange={(e) => setEditEmployeeCount(e.target.value)}
-                    placeholder="Employees"
-                    className="w-full sm:w-24"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={saveCompany}>Save</Button>
-                  <Button variant="ghost" size="sm" onClick={cancelEdit}>Cancel</Button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <h1 className="ui-page-header__title break-words text-xl">{company.name}</h1>
-                <p className="ui-page-header__subtitle">
-                  {[company.domain, company.industry].filter(Boolean).join(' · ') || 'Account details'}
-                </p>
-              </>
-            )}
+      {editing ? (
+        <div className="mb-6 space-y-4">
+          {accountsCrumb}
+          <div className="flex flex-col gap-2">
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder="Company name"
+              className="w-full sm:w-[280px]"
+            />
+            <div className="flex flex-wrap gap-2">
+              <Input
+                value={editDomain}
+                onChange={(e) => setEditDomain(e.target.value)}
+                placeholder="Domain"
+                className="min-w-0 flex-1 sm:w-40 sm:flex-none"
+              />
+              <Input
+                value={editIndustry}
+                onChange={(e) => setEditIndustry(e.target.value)}
+                placeholder="Industry"
+                className="min-w-0 flex-1 sm:w-40 sm:flex-none"
+              />
+              <Input
+                type="number"
+                min={0}
+                value={editEmployeeCount}
+                onChange={(e) => setEditEmployeeCount(e.target.value)}
+                placeholder="Employees"
+                className="w-full sm:w-24"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={saveCompany} className="text-primary-foreground">Save</Button>
+              <Button variant="ghost" size="sm" onClick={cancelEdit}>Cancel</Button>
+            </div>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {!editing && (
-            <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>Edit</Button>
-          )}
-          <Button variant="destructive" size="icon-sm" onClick={deleteCompany}>
-            <Trash2 size={14} />
-          </Button>
-        </div>
-      </div>
+      ) : (
+        <PageHeader
+          breadcrumb={accountsCrumb}
+          title={company.name}
+          subtitle={subtitle}
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                Edit
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground hover:text-destructive"
+                onClick={deleteCompany}
+                aria-label="Delete account"
+              >
+                <Trash2 size={14} />
+              </Button>
+            </div>
+          }
+        />
+      )}
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card className="p-4">
@@ -206,7 +225,10 @@ export default function AccountDetailPage() {
         </Card>
       </div>
 
-      <PageHeader title="Linked deals" subtitle={`${deals.length} deal${deals.length === 1 ? '' : 's'} for this account`} />
+      <h2 className="mb-1 text-lg font-semibold tracking-tight">Linked deals</h2>
+      <p className="mb-4 text-sm text-muted-foreground">
+        {deals.length} deal{deals.length === 1 ? '' : 's'} for this account
+      </p>
 
       {deals.length === 0 ? (
         <EmptyState title="No deals linked" description="Deals associated with this account will appear here." />
@@ -231,8 +253,8 @@ export default function AccountDetailPage() {
                       {deal.title}
                     </Link>
                   </TableCell>
-                  <TableCell>{formatMoney(deal.amount)}</TableCell>
-                  <TableCell>{deal.winProbability}%</TableCell>
+                  <TableCell className="text-muted-foreground">{formatMoney(deal.amount)}</TableCell>
+                  <TableCell className="text-muted-foreground">{deal.winProbability}%</TableCell>
                   <TableCell>
                     <Badge variant={legacyBadgeVariant(deal.sentiment)}>
                       {sentimentLabel(deal.sentiment)}

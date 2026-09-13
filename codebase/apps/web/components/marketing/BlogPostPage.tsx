@@ -1,7 +1,14 @@
 import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
 import { MarketingCta } from '@/components/marketing/MarketingCta';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 type BlogPost = {
   slug: string;
@@ -14,24 +21,29 @@ type BlogPost = {
 export function BlogPostPage({ post }: { post: BlogPost }) {
   return (
     <MarketingShell activeHref="/blog">
-      <section className="mkt-pricing-hero bg-background px-4 sm:px-6">
-        <div className="mkt-pricing-hero__inner">
-          <Badge variant="secondary" className="mb-4">Blog</Badge>
-          <p className="text-xs font-medium text-muted-foreground">{post.date}</p>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-            {post.title}
-          </h1>
-          <p className="text-muted-foreground">{post.excerpt}</p>
-          <p className="mkt-pricing-hero__stats">
-            <Link href="/blog" className="text-primary hover:underline">
-              ← Back to all posts
-            </Link>
-          </p>
-        </div>
-      </section>
+      <div className="mx-auto w-full max-w-3xl bg-background px-4 pt-10 text-foreground sm:px-6">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href="/blog">Blog</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{post.title}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        <p className="mt-6 text-xs font-medium text-foreground/80">{post.date}</p>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+          {post.title}
+        </h1>
+        <p className="mt-4 text-base leading-relaxed text-foreground/80">{post.excerpt}</p>
+      </div>
 
-      <article className="bg-muted/40 px-4 py-12 sm:px-6 sm:py-16">
-        <div className="mx-auto max-w-3xl space-y-6 text-muted-foreground leading-relaxed">
+      <article className="prose mx-auto max-w-3xl bg-background px-4 py-12 text-base leading-relaxed text-foreground sm:px-6 sm:py-16">
+        <div className="space-y-6">
           {post.body.map((paragraph) => (
             <p key={paragraph.slice(0, 48)}>{paragraph}</p>
           ))}

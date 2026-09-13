@@ -18,9 +18,11 @@ import {
   YAxis,
   Line,
   LineChart,
+  Legend,
 } from 'recharts';
 import { formatMoney } from '@/lib/format';
 import { KpiCard } from '@/components/ui/KpiCard';
+import { CHART_AXIS_COLOR, CHART_LEGEND_STYLE, CHART_TICK } from './chartAppearance';
 
 export type LossData = {
   won: { count: number; value: number };
@@ -37,8 +39,14 @@ export type LossData = {
   monthly?: Array<{ period: string; won: number; lost: number }>;
 };
 
-const OUTCOME_COLORS = { won: '#14b8a6', lost: '#ef4444' };
-const REASON_COLORS = ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#06b6d4', '#8b5cf6', '#94a3b8'];
+const OUTCOME_COLORS = { won: 'var(--chart-2)', lost: 'var(--chart-5)' };
+const REASON_COLORS = [
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+];
 
 export function LossDashboard({ data }: { data: LossData }) {
   const [exporting, setExporting] = useState(false);
@@ -126,7 +134,7 @@ export function LossDashboard({ data }: { data: LossData }) {
                 />
               </PieChart>
             </ResponsiveContainer>
-            <div className="analytics-breakdown-legend" style={{ justifyContent: 'center' }}>
+            <div className="analytics-breakdown-legend text-foreground/70" style={{ justifyContent: 'center', color: CHART_AXIS_COLOR }}>
               {outcomeData.map((d) => (
                 <span key={d.name} className="analytics-breakdown-legend__item">
                   <span className="analytics-breakdown-legend__dot" style={{ background: d.color }} />
@@ -148,9 +156,9 @@ export function LossDashboard({ data }: { data: LossData }) {
               <div className="min-w-0 w-full overflow-x-auto">
               <ResponsiveContainer width="100%" height={Math.max(200, reasonChartData.length * 36)} minWidth={280}>
                 <BarChart data={reasonChartData} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e8eaef" horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
-                  <YAxis type="category" dataKey="reason" width={120} tick={{ fontSize: 11 }} stroke="#94a3b8" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+                  <XAxis type="number" tick={CHART_TICK} stroke={CHART_AXIS_COLOR} allowDecimals={false} />
+                  <YAxis type="category" dataKey="reason" width={120} tick={CHART_TICK} stroke={CHART_AXIS_COLOR} />
                   <Tooltip formatter={(v) => [`${v ?? 0} deals`, 'Count']} />
                   <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                     {reasonChartData.map((entry, index) => (
@@ -205,12 +213,13 @@ export function LossDashboard({ data }: { data: LossData }) {
               </div>
               <ResponsiveContainer width="100%" height={220} minWidth={280}>
                 <LineChart data={monthlyChartData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e8eaef" />
-                  <XAxis dataKey="period" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-                  <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="period" tick={CHART_TICK} stroke={CHART_AXIS_COLOR} />
+                  <YAxis tick={CHART_TICK} stroke={CHART_AXIS_COLOR} allowDecimals={false} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="won" name="Won" stroke="#14b8a6" strokeWidth={2} dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="lost" name="Lost" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} />
+                  <Legend wrapperStyle={CHART_LEGEND_STYLE} />
+                  <Line type="monotone" dataKey="won" name="Won" stroke="var(--chart-2)" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="lost" name="Lost" stroke="var(--chart-5)" strokeWidth={2} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>

@@ -4,10 +4,20 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { DealTabBar } from '@/components/deals/DealTabBar';
 import { DealTabPanels } from '@/components/deals/DealTabPanels';
 import { DEFAULT_DEAL_TAB, isDealTabId, type DealTabId } from '@/components/deals/deal-tabs';
-import { DealOutcomeBadge, HotBadge } from '@/components/deals/deal-badges';
+import { DealOutcomeBadge, HotBadge, wonActionClassName } from '@/components/deals/deal-badges';
 import { apiDelete, apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { formatMoney, initials } from '@/lib/format';
@@ -85,8 +95,11 @@ export default function DealDetailPage() {
   const [editAmount, setEditAmount] = useState('');
   const [editing, setEditing] = useState(false);
   const [lostModalOpen, setLostModalOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [wonOpen, setWonOpen] = useState(false);
   const [lostReason, setLostReason] = useState('');
   const [closing, setClosing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const reloadHeader = useCallback(() => {
     const token = getToken();
@@ -125,12 +138,19 @@ export default function DealDetailPage() {
   }
 
   async function deleteDeal() {
-    if (!confirm('Delete this deal?')) return;
     const token = getToken();
     if (!token || !dealId) return;
-    await apiDelete(`/deals/${dealId}`, token);
-    toast('Deal deleted', 'success');
-    router.push('/deals');
+    setDeleting(true);
+    try {
+      await apiDelete(`/deals/${dealId}`, token);
+      setDeleteOpen(false);
+      toast('Deal deleted', 'success');
+      router.push('/deals');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to delete deal', 'error');
+    } finally {
+      setDeleting(false);
+    }
   }
 
   async function closeDeal(outcome: 'won' | 'lost', reason?: string) {
@@ -143,6 +163,7 @@ export default function DealDetailPage() {
         ...(outcome === 'lost' ? { lostReason: reason } : {}),
       });
       setLostModalOpen(false);
+      setWonOpen(false);
       setLostReason('');
       reloadHeader();
       toast(outcome === 'won' ? 'Deal marked as won' : 'Deal marked as lost', 'success');
@@ -154,7 +175,6 @@ export default function DealDetailPage() {
   }
 
   async function closeWon() {
-    if (!confirm('Mark this deal as won?')) return;
     await closeDeal('won');
   }
 
@@ -233,9 +253,10 @@ export default function DealDetailPage() {
             <>
               <Button
                 size="sm"
+                variant="outline"
                 disabled={closing}
-                onClick={closeWon}
-                className="bg-emerald-600 text-white hover:bg-emerald-600/90"
+                onClick={() => setWonOpen(true)}
+                className={wonActionClassName}
               >
                 Mark Won
               </Button>
@@ -268,7 +289,13 @@ export default function DealDetailPage() {
               </SelectContent>
             </Select>
           )}
-          <Button size="sm" variant="destructive" onClick={deleteDeal}>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-muted-foreground hover:text-destructive"
+            onClick={() => setDeleteOpen(true)}
+            aria-label="Delete deal"
+          >
             <Trash2 className="size-4" />
           </Button>
         </div>
@@ -279,6 +306,55 @@ export default function DealDetailPage() {
           Lost reason: {header.lostReason}
         </p>
       )}
+
+      <AlertDialog open={wonOpen} onOpenChange={(open) => { if (!closing) setWonOpen(open); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mark this deal as won?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will close the deal as won. You can still view it afterwards.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={closing}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={closing}
+              variant="outline"
+              className={wonActionClassName}
+              onClick={(e) => {
+                e.preventDefault();
+                void closeWon();
+              }}
+            >
+              {closing ? 'Closing…' : 'Mark as won'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteOpen} onOpenChange={(open) => { if (!deleting) setDeleteOpen(open); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this deal?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This cannot be undone. The deal will be removed from your pipeline.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault();
+                void deleteDeal();
+              }}
+            >
+              {deleting ? 'Deleting…' : 'Delete deal'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog
         open={lostModalOpen}
@@ -328,7 +404,7 @@ export default function DealDetailPage() {
       </Dialog>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as DealTabId)} className="min-w-0 gap-4">
-        <DealTabBar />
+        <DealTabBar value={tab} onTabSelect={setTab} />
         <DealTabPanels dealId={dealId} tab={tab} header={header} stages={stages} />
       </Tabs>
     </div>

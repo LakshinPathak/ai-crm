@@ -2,7 +2,7 @@
 
 import { Line, LineChart, ResponsiveContainer } from 'recharts';
 
-export function Sparkline({ data, color = '#7c3aed' }: { data: number[]; color?: string }) {
+export function Sparkline({ data, color = 'var(--chart-1)' }: { data: number[]; color?: string }) {
   const points = data.map((v, i) => ({ i, v }));
   return (
     <div className="analytics-sparkline">

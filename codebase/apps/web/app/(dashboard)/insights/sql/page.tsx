@@ -80,7 +80,7 @@ export default function InsightsSqlPage() {
       <Card className="mb-6">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="rounded-full bg-muted p-2 text-muted-foreground">
+            <div className="rounded-full bg-primary/10 p-2 text-primary">
               <Database className="size-5" />
             </div>
             <div>
@@ -146,7 +146,7 @@ export default function InsightsSqlPage() {
               <TableBody>
                 {result.rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={Math.max(result.columns.length, 1)} className="text-muted-foreground">
+                    <TableCell colSpan={Math.max(result.columns.length, 1)} className="text-foreground/70">
                       No rows
                     </TableCell>
                   </TableRow>

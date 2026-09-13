@@ -16,7 +16,7 @@ export function PricingPage() {
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             Pricing tailored to how your team sells.
           </h1>
-          <p className="text-muted-foreground">
+          <p className="!text-foreground/80">
             Your CRM, your team size, your process — pricing should reflect that.
             No rigid per-seat surprises.
           </p>
@@ -38,22 +38,22 @@ export function PricingPage() {
         <PricingWizard />
       </section>
 
-      <section className="mkt-pricing-proof bg-muted/40 px-4 py-12 sm:px-6 sm:py-16">
+      <section className="mkt-pricing-proof bg-muted px-4 py-12 sm:px-6 sm:py-16">
         <div className="mkt-section-head">
           <span className="mkt-eyebrow text-primary">Proof</span>
           <h2 className="text-2xl text-foreground sm:text-3xl">Trusted by presales and RevOps leaders</h2>
         </div>
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {PRICING_TESTIMONIALS.map((item) => (
-            <Card key={item.name} className="h-full">
+            <Card key={item.name} className="h-full bg-card">
               <CardContent className="pt-6">
-                <p className="text-sm leading-relaxed text-muted-foreground">&ldquo;{item.quote}&rdquo;</p>
+                <p className="text-sm leading-relaxed !text-foreground/80">&ldquo;{item.quote}&rdquo;</p>
               </CardContent>
               <CardHeader className="flex-row items-center gap-3 border-t pt-4">
                 <UserAvatar name={item.name} size="sm" />
                 <div>
                   <CardTitle className="text-sm">{item.name}</CardTitle>
-                  <CardDescription className="text-xs">{item.title}</CardDescription>
+                  <CardDescription className="text-xs !text-foreground/80">{item.title}</CardDescription>
                 </div>
               </CardHeader>
             </Card>

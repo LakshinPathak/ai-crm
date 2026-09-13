@@ -6,6 +6,7 @@ import { Sparkline } from './Sparkline';
 import { ActivityStackedBar } from './ActivityStackedBar';
 import { KpiCard } from '@/components/ui/KpiCard';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { CHART_AXIS_COLOR } from './chartAppearance';
 
 type Metric = { value: number; changePct: number };
 
@@ -54,11 +55,11 @@ export type PerformanceData = {
 };
 
 const BREAKDOWN_LEGEND = [
-  { key: 'customerMeeting', label: 'Customer Meeting', color: '#3b82f6' },
-  { key: 'internalMeeting', label: 'Internal Deal Meeting', color: '#60a5fa' },
-  { key: 'dealPrep', label: 'Deal Prep', color: '#8b5cf6' },
-  { key: 'logged', label: 'Logged', color: '#f59e0b' },
-  { key: 'other', label: 'Other', color: '#cbd5e1' },
+  { key: 'customerMeeting', label: 'Customer Meeting', color: 'var(--chart-1)' },
+  { key: 'internalMeeting', label: 'Internal Deal Meeting', color: 'var(--chart-2)' },
+  { key: 'dealPrep', label: 'Deal Prep', color: 'var(--chart-3)' },
+  { key: 'logged', label: 'Logged', color: 'var(--chart-4)' },
+  { key: 'other', label: 'Other', color: 'var(--chart-5)' },
 ] as const;
 
 export function PerformanceDashboard({
@@ -88,7 +89,10 @@ export function PerformanceDashboard({
       )}
 
       {!compact && (
-        <div className="analytics-breakdown-legend">
+        <div
+          className="analytics-breakdown-legend text-foreground/70"
+          style={{ color: CHART_AXIS_COLOR }}
+        >
           {BREAKDOWN_LEGEND.map((item) => (
             <span key={item.key} className="analytics-breakdown-legend__item">
               <span className="analytics-breakdown-legend__dot" style={{ background: item.color }} />

@@ -32,7 +32,7 @@ export function TestimonialCarousel() {
           <CarouselContent className="-ml-4">
             {LANDING_TESTIMONIALS.map((item) => (
               <CarouselItem key={item.name} className="basis-full pl-4 md:basis-1/2">
-                <Card className="h-full">
+                <Card className="h-full bg-card">
                   <CardContent className="pt-6">
                     <p className="text-sm leading-relaxed text-muted-foreground">&ldquo;{item.quote}&rdquo;</p>
                   </CardContent>

@@ -27,7 +27,7 @@ export function LandingPage() {
     <MarketingShell nav={LANDING_NAV}>
       <LandingHero />
 
-      <section className="border-y border-border bg-muted/40 px-4 py-10 text-center sm:px-6">
+      <section className="border-y border-border bg-muted px-4 py-10 text-center sm:px-6">
         <ScrollReveal>
           <p className="mb-6 font-semibold text-muted-foreground">
             Works with your CRM — we don&apos;t replace it
@@ -36,7 +36,7 @@ export function LandingPage() {
         <div className="mx-auto grid max-w-3xl grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:justify-center sm:gap-4">
           {INTEGRATIONS.crm.map((item, i) => (
             <ScrollReveal key={item.id} delay={i * 60}>
-              <Card className="flex w-full flex-col items-center gap-2 p-4 transition-all hover:-translate-y-1 hover:shadow-md sm:w-28">
+              <Card className="flex w-full flex-col items-center gap-2 bg-card p-4 transition-all hover:-translate-y-1 hover:shadow-md sm:w-28">
                 <IntegrationLogo id={item.id} size={36} />
                 <span className="text-sm font-medium text-foreground">{item.name}</span>
               </Card>
@@ -58,14 +58,14 @@ export function LandingPage() {
         <ScrollReveal>
           <div className="mkt-section-head">
             <span className="mkt-eyebrow">Platform</span>
-            <h2>Six capabilities revenue teams adopt first</h2>
+            <h2 className="text-foreground">Six capabilities revenue teams adopt first</h2>
             <p>Citation-first AI, agents with approval, and presales workflow — built for technical sales.</p>
           </div>
         </ScrollReveal>
         <div className="mkt-mvp__grid grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {MVP_FEATURES.map((f, i) => (
             <ScrollReveal key={f.title} delay={i * 70}>
-              <Card className="h-full transition-all hover:-translate-y-0.5 hover:shadow-md">
+            <Card className="h-full bg-card transition-all hover:-translate-y-0.5 hover:shadow-md">
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
                     <FeatureIcon name={f.icon} size={22} />
@@ -82,11 +82,11 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section id="modules" className="mkt-modules">
+      <section id="modules" className="mkt-modules bg-muted">
         <ScrollReveal>
           <div className="mkt-section-head">
             <span className="mkt-eyebrow">Full platform</span>
-            <h2>Everything technical sales teams need</h2>
+            <h2 className="text-foreground">Everything technical sales teams need</h2>
           </div>
         </ScrollReveal>
         <ModulesTabs />
@@ -96,7 +96,7 @@ export function LandingPage() {
         <ScrollReveal>
           <div className="mkt-section-head">
             <span className="mkt-eyebrow">Integrations</span>
-            <h2>Your revenue stack, one deal record</h2>
+            <h2 className="text-foreground">Your revenue stack, one deal record</h2>
           </div>
         </ScrollReveal>
         <IntegrationsTabs />

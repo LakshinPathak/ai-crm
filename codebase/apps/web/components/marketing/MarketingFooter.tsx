@@ -4,10 +4,10 @@ import { Separator } from '@/components/ui/separator';
 
 export function MarketingFooter() {
   return (
-    <footer className="mkt-footer px-4 sm:px-6">
+    <footer className="mkt-footer border-t border-border !bg-muted !text-foreground px-4 sm:px-6 [&_a]:!text-foreground [&_a]:hover:!text-primary [&_h4]:!text-foreground/80 [&_p]:!text-foreground/80">
       <div className="mkt-footer__grid grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5">
         <div>
-          <BrandLogo href="/" variant="light" size="sm" />
+          <BrandLogo href="/" size="sm" />
           <p>AI-native presales operating system</p>
         </div>
         <div>
@@ -29,10 +29,10 @@ export function MarketingFooter() {
           <Link href="/sign-up">Start free</Link>
         </div>
       </div>
-      <Separator className="my-6 bg-white/10" />
-      <div className="mkt-footer__bar flex flex-col gap-2 text-center sm:flex-row sm:justify-between sm:text-left">
-        <span>© 2026 AI CRM. Built for revenue teams.</span>
-        <span className="text-white/60">Privacy · Terms · Status</span>
+      <Separator className="my-6 bg-border" />
+      <div className="mkt-footer__bar flex flex-col gap-2 !border-border !text-foreground/80 text-center sm:flex-row sm:justify-between sm:text-left">
+        <span className="!text-foreground/80">© 2026 AI CRM. Built for revenue teams.</span>
+        <span className="!text-foreground/80">Privacy · Terms · Status</span>
       </div>
     </footer>
   );

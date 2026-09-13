@@ -20,11 +20,11 @@ export function PageHeader({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 space-y-1">
           {breadcrumb}
-          <h1 className="bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             {title}
           </h1>
           {subtitle && (
-            <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+            <p className="max-w-2xl text-sm text-[var(--text-secondary)]">{subtitle}</p>
           )}
         </div>
         {actions && (
@@ -33,7 +33,7 @@ export function PageHeader({
           </div>
         )}
       </div>
-      <Separator className="mt-5 bg-gradient-to-r from-primary/20 via-border to-transparent" />
+      <Separator className="mt-5 bg-border" />
     </header>
   );
 }

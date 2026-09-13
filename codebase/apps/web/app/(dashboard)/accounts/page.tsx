@@ -76,7 +76,7 @@ export default function AccountsPage() {
                 className="w-full pl-8 sm:w-44"
               />
             </div>
-            <Button size="sm" onClick={() => setShowCreate(true)}>
+            <Button size="sm" onClick={() => setShowCreate(true)} className="text-primary-foreground">
               <Plus size={14} />
               New account
             </Button>
@@ -112,8 +112,8 @@ export default function AccountsPage() {
                       </div>
                     </Link>
                   </TableCell>
-                  <TableCell>{company.domain ?? '—'}</TableCell>
-                  <TableCell>{company.industry ?? '—'}</TableCell>
+                  <TableCell className="text-muted-foreground">{company.domain ?? '—'}</TableCell>
+                  <TableCell className="text-muted-foreground">{company.industry ?? '—'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

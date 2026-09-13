@@ -6,9 +6,11 @@ import { apiGet } from '@/lib/api-client';
 import { exchangeAuthCode, getToken, setToken } from '@/lib/auth';
 import type { MeResponse, OnboardingStatus } from '@/lib/types';
 import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
 async function routeAfterAuth(router: ReturnType<typeof useRouter>) {
@@ -83,29 +85,40 @@ function AuthCallbackInner() {
   const busy = exchanging || Boolean(params.get('code') || params.get('token'));
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-      <Card className="w-full max-w-md text-center">
+    <main className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md bg-card text-center">
         <CardHeader className="items-center">
           <BrandLogo href="/" size="lg" showText={false} />
-          <CardTitle className="mt-4">{busy ? 'Completing sign-in…' : 'Sign in'}</CardTitle>
+          {busy && !error && (
+            <Loader2 className="mt-4 size-8 animate-spin text-muted-foreground" aria-label="Completing sign-in" />
+          )}
+          <CardTitle className="mt-4 text-card-foreground">{busy ? 'Completing sign-in…' : 'Sign in'}</CardTitle>
           {error && <CardDescription className="text-destructive">{error}</CardDescription>}
         </CardHeader>
         {!busy && !params.get('code') && !params.get('token') && (
-          <CardContent className="space-y-3 text-left">
-            <CardDescription>
+          <CardContent className="space-y-3 text-left text-card-foreground">
+            <Label htmlFor="dev-token" className="text-foreground">
+              Access token
+            </Label>
+            <p className="text-sm text-muted-foreground">
               Dev fallback — paste access token from POST /api/v1/auth/dev-login
-            </CardDescription>
+            </p>
             <Textarea
+              id="dev-token"
               value={manualToken}
               onChange={(e) => setManualToken(e.target.value)}
               rows={4}
-              className="font-mono text-xs"
+              className="font-mono text-xs text-foreground"
               placeholder="eyJhbG..."
             />
-            <Button onClick={saveManualToken} className="w-full">Save token</Button>
+            <Button onClick={saveManualToken} className="w-full text-primary-foreground">
+              Save token
+            </Button>
             {error && (
-              <Button variant="outline" className="w-full" asChild>
-                <Link href="/sign-in">Back to sign in</Link>
+              <Button variant="outline" className="w-full text-foreground" asChild>
+                <Link href="/sign-in" className="text-foreground">
+                  Back to sign in
+                </Link>
               </Button>
             )}
           </CardContent>
@@ -117,11 +130,12 @@ function AuthCallbackInner() {
 
 function AuthCallbackFallback() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-      <Card className="w-full max-w-md text-center">
+    <main className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md bg-card text-center">
         <CardHeader className="items-center">
           <BrandLogo href="/" size="lg" showText={false} />
-          <CardTitle className="mt-4">Completing sign-in…</CardTitle>
+          <Loader2 className="mt-4 size-8 animate-spin text-muted-foreground" aria-label="Completing sign-in" />
+          <CardTitle className="mt-4 text-card-foreground">Completing sign-in…</CardTitle>
         </CardHeader>
       </Card>
     </main>

@@ -8,7 +8,8 @@ import { getToken } from '@/lib/auth';
 import type { DealCard } from '@/lib/types';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -110,7 +111,7 @@ export default function RequestsPage() {
       <Card className="mb-6">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="rounded-full bg-muted p-2 text-muted-foreground">
+            <div className="rounded-full bg-primary/10 p-2 text-primary">
               <ClipboardList className="size-5" />
             </div>
             <div>
@@ -144,7 +145,7 @@ export default function RequestsPage() {
             <TableBody>
               {requests.map((r) => (
                 <TableRow key={`${r.type}-${r.id}`}>
-                  <TableCell className="font-medium">{r.title}</TableCell>
+                  <TableCell className="font-medium text-foreground">{r.title}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{r.detail}</Badge>
                   </TableCell>
@@ -152,11 +153,11 @@ export default function RequestsPage() {
                     <Badge variant="secondary">{r.status}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Link href={`/deals/${r.dealId}`} className="hover:underline">
+                    <Link href={`/deals/${r.dealId}`} className="font-medium text-foreground hover:underline">
                       {r.dealTitle}
                     </Link>
                   </TableCell>
-                  <TableCell>{new Date(r.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-muted-foreground">{new Date(r.createdAt).toLocaleDateString()}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -164,11 +165,11 @@ export default function RequestsPage() {
           </div>
         </Card>
       ) : (
-        <Card>
-          <CardContent className="py-8 text-center text-sm text-muted-foreground">
-            No deal requests yet. Open a deal to create product or team requests.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<ClipboardList className="size-5" />}
+          title="No deal requests yet"
+          description="Open a deal to create product or team requests."
+        />
       )}
     </>
   );

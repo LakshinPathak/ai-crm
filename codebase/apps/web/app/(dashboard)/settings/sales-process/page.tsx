@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -70,18 +71,17 @@ export default function SettingsSalesProcessPage() {
       )}
 
       {!loading && !error && processes.length === 0 && (
-        <Card>
-          <CardContent className="py-6">
-            <p className="text-sm text-muted-foreground">No sales processes configured.</p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          title="No sales processes configured"
+          description="Presales stages and milestones will appear here once a process is set up."
+        />
       )}
 
       {processes.map((process) => (
         <Card key={process.id} className="mb-4">
           <CardHeader className="flex flex-col items-start gap-2 space-y-0 sm:flex-row sm:items-center">
             <CardTitle>{process.name}</CardTitle>
-            {process.isDefault && <Badge variant="default">Default</Badge>}
+            {process.isDefault && <Badge variant="default" className="text-primary-foreground">Default</Badge>}
           </CardHeader>
           <CardContent className="grid gap-5">
             {[...process.stages]

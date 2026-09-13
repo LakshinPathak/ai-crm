@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -70,21 +71,19 @@ export default function CallsPage() {
       <PageHeader title="Calls" subtitle="Call recordings and transcripts" />
 
       {calls.length === 0 ? (
-        <Card className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="mb-4 text-muted-foreground">
-            <Phone size={32} strokeWidth={1.5} />
-          </div>
-          <h3 className="text-lg font-semibold">No calls yet</h3>
-          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            Connect Gong in Settings to sync call recordings and transcripts into your workspace.
-          </p>
-          <Link href="/settings/integrations" className="mt-4">
-            <Button size="sm">
-              <Settings className="size-4" />
-              Go to Integrations → Gong
+        <EmptyState
+          icon={<Phone size={32} strokeWidth={1.5} />}
+          title="No calls yet"
+          description="Connect Gong in Settings to sync call recordings and transcripts into your workspace."
+          action={
+            <Button size="sm" asChild className="text-primary-foreground">
+              <Link href="/settings/integrations" className="text-primary-foreground">
+                <Settings className="size-4" />
+                Go to Integrations → Gong
+              </Link>
             </Button>
-          </Link>
-        </Card>
+          }
+        />
       ) : (
         <Card className="py-0">
           <div className="overflow-x-auto">
@@ -101,17 +100,17 @@ export default function CallsPage() {
               {calls.map((call) => (
                 <TableRow
                   key={call.id}
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer hover:bg-muted"
                   onClick={() => router.push(`/calls/${call.id}`)}
                 >
-                  <TableCell className="font-medium">{call.title}</TableCell>
+                  <TableCell className="font-medium text-foreground">{call.title}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{call.source}</Badge>
                   </TableCell>
-                  <TableCell>{new Date(call.date).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-muted-foreground">{new Date(call.date).toLocaleDateString()}</TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     {call.dealId && call.dealTitle ? (
-                      <Link href={`/deals/${call.dealId}`} className="hover:underline">
+                      <Link href={`/deals/${call.dealId}`} className="font-medium text-foreground hover:underline">
                         {call.dealTitle}
                       </Link>
                     ) : (

@@ -8,7 +8,8 @@ import { getToken } from '@/lib/auth';
 import type { DealCard } from '@/lib/types';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -67,7 +68,7 @@ export default function ProjectsPage() {
       <Card className="mb-6">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="rounded-full bg-muted p-2 text-muted-foreground">
+            <div className="rounded-full bg-primary/10 p-2 text-primary">
               <FolderKanban className="size-5" />
             </div>
             <div>
@@ -100,16 +101,16 @@ export default function ProjectsPage() {
             <TableBody>
               {projects.map((p) => (
                 <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.title}</TableCell>
+                  <TableCell className="font-medium text-foreground">{p.title}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{p.status}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Link href={`/deals/${p.dealId}`} className="hover:underline">
+                    <Link href={`/deals/${p.dealId}`} className="font-medium text-foreground hover:underline">
                       {p.dealTitle}
                     </Link>
                   </TableCell>
-                  <TableCell>{new Date(p.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-muted-foreground">{new Date(p.createdAt).toLocaleDateString()}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -117,11 +118,11 @@ export default function ProjectsPage() {
           </div>
         </Card>
       ) : (
-        <Card>
-          <CardContent className="py-8 text-center text-sm text-muted-foreground">
-            No deal projects yet. Open a deal to create a POC or implementation project.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<FolderKanban className="size-5" />}
+          title="No deal projects yet"
+          description="Open a deal to create a POC or implementation project."
+        />
       )}
     </>
   );

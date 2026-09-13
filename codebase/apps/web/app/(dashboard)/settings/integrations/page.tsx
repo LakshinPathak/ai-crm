@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { apiDelete, apiGet, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { integrationStatusBadge } from '@/lib/ui-badge';
@@ -19,6 +20,12 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/Toast';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+} from '@/components/ui/breadcrumb';
 import { IntegrationLogo, IntegrationLogoOrFallback, resolveIntegrationId } from '@/components/brand/IntegrationLogo';
 
 type Provider = { id: string; name: string; status: string; mode?: string };
@@ -85,14 +92,14 @@ function IntegrationSection({
           const isConnected = connectedProvider === p.id;
           const badgeVariant = integrationStatusBadge(p.status);
           return (
-            <Card key={p.id}>
+            <Card key={p.id} className="bg-card">
               <CardHeader className="flex flex-col items-start gap-2 space-y-0 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-center gap-3">
                   <IntegrationLogoOrFallback id={p.id} name={p.name} size={40} />
-                  <CardTitle className="text-sm">{p.name}</CardTitle>
+                  <CardTitle className="text-sm text-foreground">{p.name}</CardTitle>
                 </div>
                 {isConnected ? (
-                  <Badge variant="default">Connected</Badge>
+                  <Badge variant="default" className="text-primary-foreground">Connected</Badge>
                 ) : badgeVariant ? (
                   <Badge variant={badgeVariant}>
                     {p.status === 'coming_soon'
@@ -106,7 +113,7 @@ function IntegrationSection({
                 ) : null}
               </CardHeader>
               <CardContent>
-                <CardDescription>
+                <CardDescription className="text-muted-foreground">
                   {p.status === 'available' || p.status === 'enabled'
                     ? p.id === CALENDAR_UI_ID
                       ? `Connect ${p.name} to sync meetings onto linked deals.`
@@ -120,7 +127,9 @@ function IntegrationSection({
               </CardContent>
               <CardFooter className="flex-wrap gap-2">
                 {isConnectableStatus(p.status) && !isConnected && (
-                  <Button size="sm" onClick={() => onConnect(p.id)}>Connect</Button>
+                  <Button size="sm" className="text-primary-foreground" onClick={() => onConnect(p.id)}>
+                    Connect
+                  </Button>
                 )}
                 {isConnected && onDisconnect && (
                   <Button variant="ghost" size="sm" onClick={() => setDisconnectId(p.id)}>
@@ -428,23 +437,37 @@ export default function IntegrationsPage() {
 
   return (
     <div>
-      <PageHeader title="Integrations" subtitle="Connect your tools to sync data automatically" />
+      <PageHeader
+        title="Integrations"
+        subtitle="Connect your tools to sync data automatically"
+        breadcrumb={
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/settings">Settings</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        }
+      />
 
       {status?.connected && (
-        <Card className="mb-6">
+        <Card className="mb-6 bg-card">
           <CardContent className="flex flex-wrap items-center gap-3 py-4">
-            <Badge variant="default">Connected</Badge>
+            <Badge variant="default" className="text-primary-foreground">Connected</Badge>
             {status.provider && resolveIntegrationId(status.provider) && (
               <IntegrationLogo id={resolveIntegrationId(status.provider)!} size={28} />
             )}
-            <strong className="min-w-0">{status.provider ? providers.find((p) => p.id === status.provider)?.name ?? status.provider : ''}</strong>
+            <strong className="min-w-0 text-foreground">{status.provider ? providers.find((p) => p.id === status.provider)?.name ?? status.provider : ''}</strong>
             {status.mode === 'demo' && <Badge variant="outline">Demo mode</Badge>}
             {status.lastSyncAt && (
               <span className="text-sm text-muted-foreground">
                 Last sync {new Date(status.lastSyncAt).toLocaleString()}
               </span>
             )}
-            <Button size="sm" onClick={sync} disabled={syncing} className="w-full sm:ml-auto sm:w-auto">
+            <Button size="sm" onClick={sync} disabled={syncing} className="w-full text-primary-foreground sm:ml-auto sm:w-auto">
               {syncing ? 'Syncing…' : 'Sync now'}
             </Button>
           </CardContent>
@@ -474,11 +497,11 @@ export default function IntegrationsPage() {
       />
 
       {calendarStatus?.connected && (
-        <Card className="mb-6">
+        <Card className="mb-6 bg-card">
           <CardContent className="flex flex-wrap items-center gap-3 py-4">
-            <Badge variant="default">Connected</Badge>
+            <Badge variant="default" className="text-primary-foreground">Connected</Badge>
             <IntegrationLogo id="google-calendar" size={28} />
-            <strong className="min-w-0">Google Calendar</strong>
+            <strong className="min-w-0 text-foreground">Google Calendar</strong>
             {calendarStatus.mode === 'demo' && <Badge variant="outline">Demo ingest</Badge>}
             {calendarStatus.lastSyncAt && (
               <span className="text-sm text-muted-foreground">
@@ -489,7 +512,7 @@ export default function IntegrationsPage() {
               size="sm"
               onClick={syncCalendar}
               disabled={calendarSyncing}
-              className="w-full sm:ml-auto sm:w-auto"
+              className="w-full text-primary-foreground sm:ml-auto sm:w-auto"
             >
               {calendarSyncing ? 'Syncing…' : 'Sync calendar'}
             </Button>

@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Filter, Plus, Search } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ChevronsUpDown, Filter, Plus, Search } from 'lucide-react';
 import { apiGet } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import type {
@@ -16,7 +17,6 @@ import { DealTable } from '@/components/DealTable';
 import { CreateDealModal } from '@/components/CreateDealModal';
 import { formatMoney } from '@/lib/format';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   Select,
@@ -34,6 +34,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Command,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+
+const PIPELINE_SELECT_OPTIONS = [{ value: 'deals', label: 'Deals pipeline' }] as const;
 
 const CLOSED_STAGES = ['Closed Won', 'Closed Lost'];
 
@@ -55,6 +64,82 @@ function groupSearchByStage(
     ...stage,
     deals: byStage.get(stage.id) ?? [],
   }));
+}
+
+function DealSearchCombobox({
+  search,
+  onSearchChange,
+  results,
+  loading,
+}: {
+  search: string;
+  onSearchChange: (q: string) => void;
+  results: DealSearchResponse['deals'] | null;
+  loading: boolean;
+}) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const isSearching = search.trim().length > 0;
+  const options = results ?? [];
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full min-w-0 justify-between font-normal sm:w-52"
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <Search className="size-4 shrink-0 text-muted-foreground" />
+            <span className="truncate text-muted-foreground">
+              {search.trim() || 'Search deals'}
+            </span>
+          </span>
+          <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-[min(100vw-2rem,20rem)] p-0">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search deals"
+            value={search}
+            onValueChange={onSearchChange}
+          />
+          <CommandList>
+            <CommandGroup>
+              {options.map((deal) => (
+                <CommandItem
+                  key={deal.id}
+                  value={deal.id}
+                  onSelect={() => {
+                    setOpen(false);
+                    router.push(`/deals/${deal.id}`);
+                  }}
+                >
+                  <span className="min-w-0 truncate">{deal.title}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            {isSearching && loading ? (
+              <p className="px-2 py-3 text-center text-xs text-muted-foreground">Searching…</p>
+            ) : null}
+            {isSearching && !loading && options.length === 0 ? (
+              <p className="px-2 py-3 text-center text-sm text-muted-foreground">No matching deals</p>
+            ) : null}
+            {!isSearching ? (
+              <p className="px-2 py-3 text-center text-xs text-muted-foreground">
+                Type to search deals
+              </p>
+            ) : null}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 function DealsPageSkeleton() {
@@ -153,10 +238,10 @@ export default function DealsPage() {
   };
 
   const metricCards = [
-    { label: 'Open deals', value: String(metrics.openCount), dot: 'bg-blue-500' },
-    { label: 'Total value', value: formatMoney(metrics.totalValue), dot: 'bg-violet-500' },
-    { label: 'Won', value: String(metrics.wonCount), dot: 'bg-emerald-500' },
-    { label: 'Lost', value: String(metrics.lostCount), dot: 'bg-red-500' },
+    { label: 'Open deals', value: String(metrics.openCount), dot: 'bg-[var(--teal)]' },
+    { label: 'Total value', value: formatMoney(metrics.totalValue), dot: 'bg-primary' },
+    { label: 'Won', value: String(metrics.wonCount), dot: 'bg-[var(--green)]' },
+    { label: 'Lost', value: String(metrics.lostCount), dot: 'bg-[var(--red)]' },
   ];
 
   return (
@@ -166,14 +251,20 @@ export default function DealsPage() {
         subtitle="Pipeline overview"
         actions={
           <div className="flex w-full flex-wrap items-center gap-2">
-            <Select defaultValue="deals">
-              <SelectTrigger size="sm" className="w-full sm:w-[150px]">
-                <SelectValue placeholder="Pipeline" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="deals">Deals pipeline</SelectItem>
-              </SelectContent>
-            </Select>
+            {PIPELINE_SELECT_OPTIONS.length > 1 ? (
+              <Select defaultValue="deals">
+                <SelectTrigger size="sm" className="w-full sm:w-[150px]">
+                  <SelectValue placeholder="Pipeline" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PIPELINE_SELECT_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : null}
             <ToggleGroup
               type="single"
               value={pipeline}
@@ -184,15 +275,12 @@ export default function DealsPage() {
               <ToggleGroupItem value="crm">CRM</ToggleGroupItem>
               <ToggleGroupItem value="opine">Opine</ToggleGroupItem>
             </ToggleGroup>
-            <div className="relative w-full min-w-0 sm:w-auto">
-              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search deals"
-                className="w-full min-w-0 pl-8 sm:w-44"
-              />
-            </div>
+            <DealSearchCombobox
+              search={search}
+              onSearchChange={setSearch}
+              results={searchResults}
+              loading={searchLoading}
+            />
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className={hasActiveFilters ? 'border-primary' : ''}>

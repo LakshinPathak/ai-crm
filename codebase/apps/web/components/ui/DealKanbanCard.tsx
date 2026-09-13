@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Building2, Smile, Star, User } from 'lucide-react';
+import { Building2, Smile, Star } from 'lucide-react';
 import { cn } from 'cn';
 import type { DealCard } from '@/lib/types';
 import { avatarGradient } from '@/lib/colors';
@@ -31,10 +31,10 @@ import {
 type SemanticColor = 'green' | 'yellow' | 'red' | 'teal';
 
 const sentimentBadgeClass: Record<SemanticColor, string> = {
-  green: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300',
-  yellow: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300',
-  red: 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300',
-  teal: 'border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-900 dark:bg-teal-950 dark:text-teal-300',
+  green: 'border-transparent bg-[var(--green-bg)] text-[var(--green-text)]',
+  yellow: 'border-transparent bg-[var(--yellow-bg)] text-[var(--yellow-text)]',
+  red: 'border-transparent bg-[var(--red-bg)] text-[var(--red-text)]',
+  teal: 'border-transparent bg-[var(--teal-bg)] text-[var(--blue-text)]',
 };
 
 function NameAvatar({ name, size = 'sm' }: { name: string; size?: 'sm' | 'default' }) {
@@ -42,7 +42,7 @@ function NameAvatar({ name, size = 'sm' }: { name: string; size?: 'sm' | 'defaul
   return (
     <Avatar size={size} className="ring-1 ring-border/60">
       <AvatarFallback
-        className="text-[10px] font-semibold text-white"
+        className="text-[10px] font-semibold text-primary-foreground"
         style={{ background: `linear-gradient(135deg, ${from}, ${to})` }}
       >
         {initials(name)}
@@ -71,13 +71,20 @@ function StatusBadge({
 }) {
   if (tone === 'hot') {
     return (
-      <Badge variant="destructive" className="bg-orange-500/15 text-orange-700 hover:bg-orange-500/20 dark:text-orange-300">
+      <Badge
+        variant="outline"
+        className="border-transparent bg-[var(--yellow-bg)] text-[var(--yellow-text)] hover:bg-[var(--yellow-bg)]"
+      >
         {children}
       </Badge>
     );
   }
   if (tone === 'blocker') {
-    return <Badge variant="destructive">{children}</Badge>;
+    return (
+      <Badge variant="outline" className="border-transparent bg-[var(--red-bg)] text-[var(--red-text)]">
+        {children}
+      </Badge>
+    );
   }
   return (
     <Badge variant="outline" className={sentimentBadgeClass[tone]}>
@@ -97,8 +104,8 @@ export function DealKanbanCard({ deal, showOpine = false }: { deal: DealCard; sh
           <Link href={`/deals/${deal.id}`} className="block">
             <Card
               className={cn(
-                'group min-w-0 overflow-hidden border-border/70 bg-card/95 py-0 shadow-sm transition-all duration-200',
-                'hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5',
+                'group min-w-0 overflow-hidden border-border bg-card py-0 shadow-sm transition-colors duration-200',
+                'hover:border-primary/20 hover:bg-muted',
               )}
             >
               <CardHeader className="gap-3 pb-2">
@@ -129,19 +136,9 @@ export function DealKanbanCard({ deal, showOpine = false }: { deal: DealCard; sh
               </CardHeader>
 
               <CardContent className="space-y-2 pb-3">
-                <PropRow icon={<Building2 className="size-3.5" />}>{deal.companyName}</PropRow>
-                <PropRow icon={<User className="size-3.5" />}>
-                  <span className="inline-flex items-center gap-1.5">
-                    <NameAvatar name={deal.companyName} size="sm" />
-                    Deal owner
-                  </span>
-                </PropRow>
-                <PropRow icon={<User className="size-3.5" />}>
-                  <span className="inline-flex items-center gap-1.5">
-                    <NameAvatar name="Solutions Engineer" size="sm" />
-                    Solutions Engineer
-                  </span>
-                </PropRow>
+                {deal.companyName ? (
+                  <PropRow icon={<Building2 className="size-3.5" />}>{deal.companyName}</PropRow>
+                ) : null}
                 <PropRow icon={<Smile className="size-3.5" />}>
                   <StatusBadge tone={deal.sentiment as SemanticColor}>
                     {sentimentLabel(deal.sentiment)}
@@ -154,13 +151,13 @@ export function DealKanbanCard({ deal, showOpine = false }: { deal: DealCard; sh
                 </PropRow>
               </CardContent>
 
-              <CardFooter className="border-t bg-muted/30 p-0">
+              <CardFooter className="border-t bg-muted p-0">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="w-full px-0 py-0">
                       <Progress
                         value={winPct}
-                        className="h-1 rounded-none bg-transparent **:data-[slot=progress-indicator]:rounded-none **:data-[slot=progress-indicator]:bg-gradient-to-r **:data-[slot=progress-indicator]:from-violet-600 **:data-[slot=progress-indicator]:to-violet-400"
+                        className="h-1 rounded-none bg-transparent **:data-[slot=progress-indicator]:rounded-none **:data-[slot=progress-indicator]:bg-primary"
                       />
                     </div>
                   </TooltipTrigger>

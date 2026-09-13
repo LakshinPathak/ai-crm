@@ -14,7 +14,9 @@ export default function SignInPage() {
       footer={
         <>
           New here?{' '}
-          <Link href="/sign-up" className="text-primary underline">Create an account</Link>
+          <Link href="/sign-up" className="font-medium text-primary underline">
+            Create an account
+          </Link>
         </>
       }
     />

@@ -19,7 +19,7 @@ const ROTATING_SOURCES = ['Gong', 'Slack', 'HubSpot', 'Salesforce'];
 
 export function LandingHero() {
   return (
-    <section className="mkt-hero mkt-hero--animated">
+    <section className="mkt-hero mkt-hero--animated bg-background text-foreground">
       <div className="mkt-hero__mesh" aria-hidden />
       <div className="mkt-hero__inner">
         <ScrollReveal className="mkt-hero__copy">
@@ -30,7 +30,9 @@ export function LandingHero() {
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             Stop hunting deal context<br />
             <em>
-              across <RotatingText words={ROTATING_SOURCES} /> and your CRM
+              across{' '}
+              <RotatingText words={ROTATING_SOURCES} />{' '}
+              and your CRM
             </em>
           </h1>
           <p className="mkt-hero__sub text-base sm:text-lg">
@@ -40,8 +42,8 @@ export function LandingHero() {
           </p>
           <div className="mkt-hero__actions flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
             <div className="flex w-full flex-col gap-1 sm:w-auto">
-              <Button size="lg" asChild className="mkt-cta-glow w-full sm:w-auto">
-                <Link href="/sign-up">
+              <Button size="lg" asChild className="mkt-cta-glow w-full text-primary-foreground sm:w-auto">
+                <Link href="/sign-up" className="text-primary-foreground">
                   Connect your CRM free
                   <ArrowRight className="size-4" />
                 </Link>
@@ -50,26 +52,11 @@ export function LandingHero() {
                 Free for presales teams · No credit card · OAuth setup ~10 min
               </p>
             </div>
-            <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
-              <Link href="/pricing#quote">Book a 15-min demo</Link>
-            </Button>
-            <Button variant="ghost" size="lg" asChild className="w-full sm:w-auto">
-              <Link href="/sign-in">
-                <Play className="size-4" />
-                Watch overview
+            <Button size="lg" variant="outline" asChild className="w-full text-foreground sm:w-auto">
+              <Link href="/pricing#quote" className="text-foreground">
+                Book a 15-min demo
               </Link>
             </Button>
-          </div>
-
-          <div className="mb-6 flex min-w-0 items-start gap-3 rounded-lg border border-border bg-card p-3 text-sm shadow-sm">
-            <UserAvatar name={HERO_TESTIMONIAL.name} size="sm" />
-            <div>
-              <p className="text-muted-foreground">&ldquo;{HERO_TESTIMONIAL.quote}&rdquo;</p>
-              <p className="mt-1 font-medium text-foreground">
-                {HERO_TESTIMONIAL.name}, {HERO_TESTIMONIAL.title}
-                <span className="ml-2 text-muted-foreground">· {HERO_TESTIMONIAL.rating}</span>
-              </p>
-            </div>
           </div>
 
           <div className="mkt-hero__crm-row">
@@ -91,10 +78,29 @@ export function LandingHero() {
 
       <Separator className="my-10 max-w-6xl mx-auto" />
 
+      <div className="mx-auto mb-8 flex max-w-6xl flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="flex min-w-0 items-start gap-3 rounded-lg border border-border bg-card p-3 text-sm shadow-sm">
+          <UserAvatar name={HERO_TESTIMONIAL.name} size="sm" />
+          <div>
+            <p className="text-muted-foreground">&ldquo;{HERO_TESTIMONIAL.quote}&rdquo;</p>
+            <p className="mt-1 font-medium text-foreground">
+              {HERO_TESTIMONIAL.name}, {HERO_TESTIMONIAL.title}
+              <span className="ml-2 text-muted-foreground">· {HERO_TESTIMONIAL.rating}</span>
+            </p>
+          </div>
+        </div>
+        <Button variant="ghost" size="lg" asChild className="w-full shrink-0 text-foreground sm:w-auto">
+          <Link href="/sign-in" className="text-foreground">
+            <Play className="size-4" />
+            Watch overview
+          </Link>
+        </Button>
+      </div>
+
       <div className="mkt-hero__blocks grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {BUILDING_BLOCKS.map((block, i) => (
           <ScrollReveal key={block.id} delay={i * 100}>
-            <Card className="h-full transition-all hover:-translate-y-0.5 hover:shadow-md">
+            <Card className="h-full bg-card transition-all hover:-translate-y-0.5 hover:shadow-md">
               <CardHeader className="gap-3">
                 <FeatureIcon name={block.icon} size={22} />
                 <CardTitle className="text-base">{block.title}</CardTitle>

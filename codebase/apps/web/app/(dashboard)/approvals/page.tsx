@@ -163,7 +163,7 @@ export default function ApprovalsPage() {
           size="sm"
           disabled={actingId === id}
           onClick={(e) => { e.stopPropagation(); approve(id); }}
-          className={inModal ? 'w-full sm:w-auto' : 'flex-1 sm:flex-none'}
+          className={inModal ? 'w-full text-primary-foreground sm:w-auto' : 'flex-1 text-primary-foreground sm:flex-none'}
         >
           Approve
         </Button>
@@ -172,7 +172,7 @@ export default function ApprovalsPage() {
           size="sm"
           disabled={actingId === id}
           onClick={(e) => { e.stopPropagation(); setRejectId(id); }}
-          className={inModal ? 'w-full sm:w-auto' : 'flex-1 sm:flex-none'}
+          className={inModal ? 'w-full text-foreground sm:w-auto' : 'flex-1 text-foreground sm:flex-none'}
         >
           Reject
         </Button>
@@ -192,7 +192,7 @@ export default function ApprovalsPage() {
       {items.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center gap-4 py-12 text-center">
-            <div className="rounded-full bg-muted p-3 text-muted-foreground">
+            <div className="rounded-full bg-primary/10 p-3 text-primary">
               <CheckSquare className="size-6" />
             </div>
             <CardTitle>All caught up</CardTitle>
@@ -204,7 +204,7 @@ export default function ApprovalsPage() {
           {items.map((a) => (
             <Card
               key={a.id}
-              className="cursor-pointer transition-colors hover:bg-muted/30"
+              className="cursor-pointer bg-card transition-colors hover:bg-muted"
               role="button"
               tabIndex={0}
               onClick={() => openDetail(a.id)}
@@ -212,7 +212,7 @@ export default function ApprovalsPage() {
             >
               <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div className="min-w-0 flex-1">
-                  <CardTitle className="text-[0.9375rem]">{a.title}</CardTitle>
+                  <CardTitle className="text-[0.9375rem] text-foreground">{a.title}</CardTitle>
                   {a.dealTitle && (
                     <CardDescription className="mt-0.5">{a.dealTitle}</CardDescription>
                   )}
@@ -245,12 +245,12 @@ export default function ApprovalsPage() {
             <div className="flex flex-col gap-4">
               <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-[0.8125rem]">
                 <dt className="font-semibold text-muted-foreground">Agent</dt>
-                <dd>{detail.agentName ?? 'Unknown agent'}</dd>
+                <dd className="text-foreground">{detail.agentName ?? 'Unknown agent'}</dd>
 
                 <dt className="font-semibold text-muted-foreground">Deal</dt>
                 <dd>
                   {detail.dealId && detail.dealTitle ? (
-                    <Link href={`/deals/${detail.dealId}`} className="font-medium text-primary hover:underline">
+                    <Link href={`/deals/${detail.dealId}`} className="font-medium text-foreground hover:underline">
                       {detail.dealTitle}
                     </Link>
                   ) : (
@@ -259,7 +259,7 @@ export default function ApprovalsPage() {
                 </dd>
 
                 <dt className="font-semibold text-muted-foreground">Created</dt>
-                <dd>{formatCreatedAt(detail.createdAt)}</dd>
+                <dd className="text-foreground">{formatCreatedAt(detail.createdAt)}</dd>
               </dl>
 
               {detail.contentPreview?.summary && (
@@ -272,7 +272,7 @@ export default function ApprovalsPage() {
                 <div className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                   Proposed change
                 </div>
-                <pre className="max-h-80 overflow-auto rounded-lg border bg-muted/50 p-3 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap">
+                <pre className="max-h-80 overflow-auto rounded-lg border bg-muted p-3 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap text-foreground">
                   {formatJsonPreview(detail.proposedChange ?? detail.contentFull)}
                 </pre>
               </div>

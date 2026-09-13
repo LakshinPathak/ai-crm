@@ -16,6 +16,7 @@ import {
   YAxis,
 } from 'recharts';
 import { Sparkline } from './Sparkline';
+import { CHART_AXIS_COLOR, CHART_LEGEND_STYLE, CHART_TICK } from './chartAppearance';
 
 export type ActivityData = {
   granularity: string;
@@ -47,17 +48,25 @@ export type ActivityData = {
   tabs?: string[];
 };
 
+const CHART_COLORS = [
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+] as const;
+
 const SERIES_COLORS = {
-  customerDemo: '#8b5cf6',
-  external: '#3b82f6',
-  internal: '#60a5fa',
-  kickoff: '#6366f1',
-  logged: '#f59e0b',
-  other: '#94a3b8',
-  poc: '#a855f7',
-  postSales: '#14b8a6',
-  prep: '#7c3aed',
-  workshop: '#d946ef',
+  customerDemo: 'var(--chart-1)',
+  external: 'var(--chart-4)',
+  internal: 'var(--chart-2)',
+  kickoff: 'var(--chart-1)',
+  logged: 'var(--chart-3)',
+  other: 'var(--chart-5)',
+  poc: 'var(--chart-3)',
+  postSales: 'var(--chart-2)',
+  prep: 'var(--chart-1)',
+  workshop: 'var(--chart-5)',
 };
 
 export function ActivityDashboard({
@@ -102,11 +111,11 @@ export function ActivityDashboard({
           <div className="min-w-0 w-full overflow-x-auto">
           <ResponsiveContainer width="100%" height={280} minWidth={280}>
             <ComposedChart data={data.timeSeries} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e8eaef" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-              <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="label" tick={CHART_TICK} stroke={CHART_AXIS_COLOR} />
+              <YAxis tick={CHART_TICK} stroke={CHART_AXIS_COLOR} />
               <Tooltip />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Legend wrapperStyle={CHART_LEGEND_STYLE} />
               <Bar dataKey="external" stackId="a" fill={SERIES_COLORS.external} />
               <Bar dataKey="customerDemo" stackId="a" fill={SERIES_COLORS.customerDemo} />
               <Bar dataKey="internal" stackId="a" fill={SERIES_COLORS.internal} />
@@ -116,7 +125,7 @@ export function ActivityDashboard({
               <Bar dataKey="workshop" stackId="a" fill={SERIES_COLORS.workshop} />
               <Bar dataKey="logged" stackId="a" fill={SERIES_COLORS.logged} />
               <Bar dataKey="other" stackId="a" fill={SERIES_COLORS.other} radius={[4, 4, 0, 0]} />
-              <Line type="monotone" dataKey="total" stroke="#0f172a" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="total" stroke="var(--chart-1)" strokeWidth={2} dot={false} />
             </ComposedChart>
           </ResponsiveContainer>
           </div>
@@ -147,8 +156,8 @@ export function ActivityDashboard({
                 <ResponsiveContainer width="100%" height={200} minWidth={200}>
                   <PieChart>
                     <Pie data={data.donutByType} dataKey="hours" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2}>
-                      {data.donutByType.map((d) => (
-                        <Cell key={d.name} fill={d.color} />
+                      {data.donutByType.map((d, index) => (
+                        <Cell key={d.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip formatter={(v) => [`${v ?? 0}h`, 'Hours']} />
@@ -160,8 +169,8 @@ export function ActivityDashboard({
                 <ResponsiveContainer width="100%" height={200} minWidth={200}>
                   <PieChart>
                     <Pie data={data.donutByLabel} dataKey="hours" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2}>
-                      {data.donutByLabel.map((d) => (
-                        <Cell key={d.name} fill={d.color} />
+                      {data.donutByLabel.map((d, index) => (
+                        <Cell key={d.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip formatter={(v) => [`${v ?? 0}h`, 'Hours']} />
@@ -189,7 +198,7 @@ export function ActivityDashboard({
                         <td>{row.hours}</td>
                         <td>{row.avgPerEvent}h</td>
                         <td>{row.percentOfTotal}%</td>
-                        <td><Sparkline data={row.trend} color="#3b82f6" /></td>
+                        <td><Sparkline data={row.trend} color="var(--chart-4)" /></td>
                         <td><button type="button" className="analytics-view-link">View</button></td>
                       </tr>
                     ))}

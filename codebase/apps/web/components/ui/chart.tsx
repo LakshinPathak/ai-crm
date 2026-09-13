@@ -8,6 +8,19 @@ import type { TooltipValueType } from "recharts"
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const
 
+/** Pastel series fills from `globals.css` `--chart-n` tokens (lilac / mint / peach / sky / rose). */
+export const CHART_THEME_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+] as const
+
+export function chartThemeColor(index: number) {
+  return CHART_THEME_COLORS[index % CHART_THEME_COLORS.length]
+}
+
 const INITIAL_DIMENSION = { width: 320, height: 200 } as const
 type TooltipNameType = number | string
 
@@ -81,13 +94,7 @@ function ChartContainer({
 }
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
-  const colorConfig = Object.entries(config).filter(
-    ([, config]) => config.theme ?? config.color
-  )
-
-  if (!colorConfig.length) {
-    return null
-  }
+  const colorConfig = Object.entries(config)
 
   return (
     <style
@@ -96,12 +103,16 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
           .map(
             ([theme, prefix]) => `
 ${prefix} [data-chart=${id}] {
+${CHART_THEME_COLORS.map(
+  (color, index) => `  --color-chart-${index + 1}: ${color};`
+).join("\n")}
 ${colorConfig
-  .map(([key, itemConfig]) => {
+  .map(([key, itemConfig], index) => {
     const color =
       itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ??
-      itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
+      itemConfig.color ??
+      chartThemeColor(index)
+    return `  --color-${key}: ${color};`
   })
   .join("\n")}
 }

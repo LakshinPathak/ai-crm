@@ -13,6 +13,8 @@ import { apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { getToken } from '@/lib/auth';
 import { formatMoney, fitScore, sentimentLabel } from '@/lib/format';
 import type { MeddpiccLetter } from '@/lib/types';
+import { cn } from 'cn';
+import { pastelBadgeClass } from '@/components/deals/deal-badges';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -246,7 +248,9 @@ export function OverviewTab({
               <Card key={key} className="min-w-0 transition-shadow hover:shadow-md">
                 <div className="mb-2 flex min-w-0 items-start justify-between gap-2">
                   <strong className="min-w-0 break-words">{key} — {letter.label}</strong>
-                  <Badge variant="default" className="shrink-0">{Math.round(letter.confidence * 100)}%</Badge>
+                  <Badge variant="outline" className={cn('shrink-0', pastelBadgeClass.green)}>
+                    {Math.round(letter.confidence * 100)}%
+                  </Badge>
                 </div>
                 <p className="m-0 min-w-0 break-words text-[0.8125rem] leading-relaxed text-muted-foreground">{letter.summary}</p>
                 <MeddpiccLetterCitation letter={letter} />

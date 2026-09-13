@@ -449,8 +449,8 @@ export default function NewAgentPage() {
     <div>
       <PageHeader
         breadcrumb={
-          <Button variant="ghost" size="icon-sm" asChild>
-            <Link href="/agents">
+          <Button variant="ghost" size="icon-sm" asChild className="text-foreground">
+            <Link href="/agents" className="text-foreground">
               <ArrowLeft className="size-4" />
             </Link>
           </Button>
@@ -459,7 +459,7 @@ export default function NewAgentPage() {
         subtitle="Configure triggers, prompt, and tools in five steps"
         actions={
           form.aiSuggested ? (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1 text-foreground">
               <Sparkles className="size-3" />
               AI suggested — review before saving
             </Badge>
@@ -483,7 +483,7 @@ export default function NewAgentPage() {
                 onClick={() => n < step && setStep(n)}
                 disabled={n > step}
                 className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors lg:w-full lg:gap-3 ${
-                  active ? 'bg-muted font-medium' : done ? 'text-foreground hover:bg-muted/50' : 'text-muted-foreground'
+                  active ? 'bg-muted font-medium text-foreground' : done ? 'text-foreground hover:bg-muted' : 'text-muted-foreground'
                 }`}
               >
                 <StepIcon done={done} active={active} />
@@ -843,8 +843,13 @@ export default function NewAgentPage() {
               <CardContent className="space-y-4 text-sm">
                 <div className="flex items-center gap-2">
                   <Bot className="size-4 text-muted-foreground" />
-                  <span className="font-medium">{form.name}</span>
-                  <Badge variant={agentCategoryBadge(form.category)}>{form.category}</Badge>
+                  <span className="font-medium text-foreground">{form.name}</span>
+                  <Badge
+                    variant={agentCategoryBadge(form.category)}
+                    className={agentCategoryBadge(form.category) === 'default' ? 'text-primary-foreground' : 'text-foreground'}
+                  >
+                    {form.category}
+                  </Badge>
                 </div>
                 {selectedTemplate && (
                   <p className="text-muted-foreground">Template: {selectedTemplate.name}</p>
@@ -881,7 +886,7 @@ export default function NewAgentPage() {
                   <div className="flex flex-wrap gap-1">
                     {form.tools.length
                       ? form.tools.map((id) => (
-                          <Badge key={id} variant="secondary">{TOOL_OPTIONS.find((t) => t.id === id)?.label ?? id}</Badge>
+                          <Badge key={id} variant="secondary" className="text-foreground">{TOOL_OPTIONS.find((t) => t.id === id)?.label ?? id}</Badge>
                         ))
                       : <span className="text-muted-foreground">None selected</span>}
                   </div>
@@ -891,7 +896,7 @@ export default function NewAgentPage() {
                   <div className="flex flex-wrap gap-1">
                     {form.skills.length
                       ? form.skills.map((id) => (
-                          <Badge key={id} variant="secondary">{SKILL_OPTIONS.find((s) => s.id === id)?.label ?? id}</Badge>
+                          <Badge key={id} variant="secondary" className="text-foreground">{SKILL_OPTIONS.find((s) => s.id === id)?.label ?? id}</Badge>
                         ))
                       : <span className="text-muted-foreground">None selected</span>}
                   </div>
@@ -905,16 +910,16 @@ export default function NewAgentPage() {
               variant="outline"
               disabled={step <= 1 || loading}
               onClick={() => setStep((s) => Math.max(1, s - 1))}
-              className="w-full sm:w-auto"
+              className="w-full text-foreground sm:w-auto"
             >
               Back
             </Button>
             {step < 5 ? (
-              <Button disabled={loading} onClick={() => persistProgress(step + 1)} className="w-full sm:w-auto">
+              <Button disabled={loading} onClick={() => persistProgress(step + 1)} className="w-full text-primary-foreground sm:w-auto">
                 {loading ? 'Saving…' : 'Continue'}
               </Button>
             ) : (
-              <Button disabled={loading} onClick={finish} className="w-full sm:w-auto">
+              <Button disabled={loading} onClick={finish} className="w-full text-primary-foreground sm:w-auto">
                 {loading ? 'Creating…' : agentId ? 'Save agent' : 'Create agent'}
               </Button>
             )}
@@ -941,13 +946,13 @@ export default function NewAgentPage() {
               className="text-sm"
             />
             {form.draftConfidence !== undefined && form.draftConfidence < 0.7 && (
-              <p className="text-xs text-amber-600 dark:text-amber-500">
+              <p className="text-xs text-[var(--yellow-text)]">
                 Low confidence ({Math.round(form.draftConfidence * 100)}%) — double-check trigger and tools.
               </p>
             )}
             <Button
               type="button"
-              className="w-full"
+              className="w-full text-primary-foreground"
               disabled={nlLoading || nlDescription.trim().length < 10 || Boolean(editAgentId)}
               onClick={() => void handleNlDraft()}
             >

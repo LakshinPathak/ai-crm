@@ -5,7 +5,7 @@ export function FeatureMarquee() {
   const track = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
 
   return (
-    <section className="mkt-marquee-wrap">
+    <section className="mkt-marquee-wrap bg-background text-foreground">
       <h2>Turn scattered deal context into a single system of intelligence</h2>
       <p>SEs, AEs, and presales leaders — one record per opportunity.</p>
       <div className="mkt-marquee mt-6">

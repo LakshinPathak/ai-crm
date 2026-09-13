@@ -56,29 +56,38 @@ export function DevLoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border border-dashed border-border bg-muted/40 p-4 text-left">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Dev login (local only)</p>
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-3 rounded-lg border border-dashed border-border bg-muted p-4 text-left text-foreground"
+    >
+      <p className="text-xs font-semibold uppercase tracking-wide text-foreground">Dev login (local only)</p>
       <div className="space-y-2">
-        <Label htmlFor="dev-email">Email</Label>
+        <Label htmlFor="dev-email" className="text-foreground">
+          Email
+        </Label>
         <Input
           id="dev-email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          className="bg-card text-foreground"
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="dev-name">Display name</Label>
+        <Label htmlFor="dev-name" className="text-foreground">
+          Display name
+        </Label>
         <Input
           id="dev-name"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           required
+          className="bg-card text-foreground"
         />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" className="w-full" disabled={loading}>
+      <Button type="submit" className="w-full text-primary-foreground" disabled={loading}>
         {loading ? 'Signing in…' : 'Sign in with email (dev)'}
       </Button>
     </form>

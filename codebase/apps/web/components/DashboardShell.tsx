@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
+import { Fragment, useEffect, useState } from 'react';
 import {
   Home,
   LayoutGrid,
@@ -17,7 +18,8 @@ import {
   HelpCircle,
   ChevronDown,
   LogOut,
-  ChevronsUpDown,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import { getToken, logout } from '@/lib/auth';
 import { apiGet } from '@/lib/api-client';
@@ -34,6 +36,7 @@ import {
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -46,18 +49,103 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { cn } from 'cn';
+import { cn } from '@/lib/utils';
+
+const SEGMENT_LABELS: Record<string, string> = {
+  home: 'Home',
+  deals: 'Deals',
+  accounts: 'Accounts',
+  projects: 'Projects',
+  calls: 'Calls',
+  requests: 'Requests',
+  agents: 'Agents',
+  approvals: 'Approvals',
+  insights: 'Insights',
+  settings: 'Settings',
+  integrations: 'Integrations',
+  members: 'Members',
+  mcp: 'MCP',
+  sql: 'SQL',
+  new: 'New',
+  'sales-process': 'Sales process',
+};
+
+function formatPathSegment(segment: string) {
+  if (SEGMENT_LABELS[segment]) return SEGMENT_LABELS[segment];
+  if (/^[a-f0-9]{24}$/i.test(segment) || /^[0-9a-f-]{36}$/i.test(segment)) {
+    return 'Details';
+  }
+  return decodeURIComponent(segment)
+    .split('-')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function PathBreadcrumbs({ pathname }: { pathname: string }) {
+  const raw = pathname.split('/').filter(Boolean);
+  const crumbs =
+    raw.length === 0
+      ? [{ href: '/home', label: 'Home', current: true }]
+      : raw.map((segment, index) => {
+          const href = `/${raw.slice(0, index + 1).join('/')}`;
+          return {
+            href,
+            label: formatPathSegment(segment),
+            current: index === raw.length - 1,
+          };
+        });
+
+  const withHome =
+    crumbs[0]?.href === '/home'
+      ? crumbs
+      : [{ href: '/home', label: 'Home', current: false }, ...crumbs];
+
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        {withHome.map((crumb, index) => (
+          <Fragment key={`${crumb.href}-${index}`}>
+            {index > 0 && <BreadcrumbSeparator />}
+            <BreadcrumbItem>
+              {crumb.current ? (
+                <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+              ) : (
+                <BreadcrumbLink asChild>
+                  <Link href={crumb.href}>{crumb.label}</Link>
+                </BreadcrumbLink>
+              )}
+            </BreadcrumbItem>
+          </Fragment>
+        ))}
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+}
 
 const MAIN_NAV = [
   { href: '/home', label: 'Home', icon: Home },
@@ -74,7 +162,7 @@ const AGENT_NAV = [
 ] as const;
 
 const navButtonClass =
-  'data-[active=true]:bg-sidebar-primary/10 data-[active=true]:text-sidebar-primary data-[active=true]:[&>svg]:text-sidebar-primary';
+  'text-foreground hover:text-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-foreground data-[active=true]:[&>svg]:text-foreground';
 
 function SidebarBrand() {
   const { state } = useSidebar();
@@ -92,46 +180,49 @@ function WorkspaceSwitcher({ workspaceName }: { workspaceName: string }) {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              tooltip={label}
-              className="border border-sidebar-border/80 bg-sidebar-accent/30 hover:bg-sidebar-accent/50 data-[state=open]:bg-sidebar-accent/50"
-            >
-              <Avatar size="sm" className="rounded-md after:rounded-md">
-                <AvatarFallback className="rounded-md bg-sidebar-primary text-sidebar-primary-foreground text-[10px] font-semibold">
-                  {initials(label)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{label}</span>
-                <span className="truncate text-xs text-muted-foreground">Workspace</span>
-              </div>
-              <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            align="start"
-            side="bottom"
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Workspace
-            </DropdownMenuLabel>
-            <DropdownMenuItem className="gap-2 p-2" disabled>
-              <Avatar size="sm" className="rounded-md after:rounded-md">
-                <AvatarFallback className="rounded-md bg-sidebar-primary text-sidebar-primary-foreground text-[10px] font-semibold">
-                  {initials(label)}
-                </AvatarFallback>
-              </Avatar>
-              <span className="truncate font-medium">{label}</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <SidebarMenuButton
+          size="lg"
+          tooltip={label}
+          className="pointer-events-none border border-sidebar-border/80 bg-sidebar-accent/30"
+        >
+          <Avatar size="sm" className="rounded-md after:rounded-md">
+            <AvatarFallback className="rounded-md bg-sidebar-primary text-primary-foreground text-[10px] font-semibold">
+              {initials(label)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="grid flex-1 text-left text-sm leading-tight">
+            <span className="truncate font-medium text-foreground">{label}</span>
+            <span className="truncate text-xs text-muted-foreground">Workspace</span>
+          </div>
+        </SidebarMenuButton>
       </SidebarMenuItem>
     </SidebarMenu>
+  );
+}
+
+function ThemeMenu() {
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger>
+        <Sun className="dark:hidden" />
+        <Moon className="hidden dark:block" />
+        Theme
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent>
+        <DropdownMenuRadioGroup value={theme ?? 'light'} onValueChange={setTheme}>
+          <DropdownMenuRadioItem value="light">
+            <Sun />
+            Light
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="dark">
+            <Moon />
+            Dark
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
   );
 }
 
@@ -156,12 +247,12 @@ function UserMenu({
               className="border border-transparent hover:border-sidebar-border/80 data-[state=open]:border-sidebar-border/80 data-[state=open]:bg-sidebar-accent/50"
             >
               <Avatar size="sm">
-                <AvatarFallback className="bg-sidebar-primary/15 text-sidebar-primary text-xs font-semibold">
+                <AvatarFallback className="bg-sidebar-primary text-primary-foreground text-xs font-semibold">
                   {initials(displayName)}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{displayName}</span>
+                <span className="truncate font-medium text-foreground">{displayName}</span>
                 <span className="truncate text-xs capitalize text-muted-foreground">
                   {role}
                 </span>
@@ -178,18 +269,32 @@ function UserMenu({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar size="sm">
-                  <AvatarFallback className="bg-sidebar-primary/15 text-sidebar-primary text-xs font-semibold">
+                  <AvatarFallback className="bg-sidebar-primary text-primary-foreground text-xs font-semibold">
                     {initials(displayName)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left leading-tight">
-                  <span className="truncate font-medium">{displayName}</span>
+                  <span className="truncate font-medium text-foreground">{displayName}</span>
                   <span className="truncate text-xs capitalize text-muted-foreground">
                     {role}
                   </span>
                 </div>
               </div>
             </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/settings">
+                <Settings />
+                Settings
+              </Link>
+            </DropdownMenuItem>
+            <ThemeMenu />
+            <DropdownMenuItem asChild>
+              <Link href="/why">
+                <HelpCircle />
+                Help
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" onClick={onSignOut}>
               <LogOut />
@@ -229,7 +334,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider defaultOpen>
       <TooltipProvider delayDuration={0}>
-        <Sidebar collapsible="icon" className="border-sidebar-border/80">
+        <Sidebar collapsible="icon" className="border-border bg-sidebar text-foreground">
           <SidebarHeader className="gap-3 border-b border-sidebar-border/60 pb-3">
             <SidebarBrand />
             <WorkspaceSwitcher workspaceName={workspaceName} />
@@ -280,6 +385,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                         <span>Agents</span>
                       </Link>
                     </SidebarMenuButton>
+                    {approvalCount > 0 && (
+                      <SidebarMenuBadge className="bg-sidebar-primary text-primary-foreground peer-hover/menu-button:text-primary-foreground peer-data-active/menu-button:text-primary-foreground group-data-[collapsible=icon]:flex">
+                        {approvalCount}
+                      </SidebarMenuBadge>
+                    )}
                     {agentsOpen && (
                       <SidebarMenuSub>
                         {AGENT_NAV.map((item) => {
@@ -300,7 +410,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                                     approvalCount > 0 && (
                                       <Badge
                                         variant="default"
-                                        className="ml-auto h-5 min-w-5 justify-center rounded-full bg-sidebar-primary px-1.5 text-[10px] text-sidebar-primary-foreground"
+                                        className="ml-auto h-5 min-w-5 justify-center rounded-full bg-sidebar-primary px-1.5 text-[10px] text-primary-foreground hover:text-primary-foreground"
                                       >
                                         {approvalCount}
                                       </Badge>
@@ -369,9 +479,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Help">
-                  <HelpCircle />
-                  <span>Help</span>
+                <SidebarMenuButton asChild tooltip="Help" className={navButtonClass}>
+                  <Link href="/why">
+                    <HelpCircle />
+                    <span>Help</span>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -387,17 +499,16 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <SidebarRail />
         </Sidebar>
 
-        <SidebarInset className="min-w-0 overflow-x-hidden bg-[var(--bg)] bg-[image:var(--bg-mesh)]">
-          <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border/60 bg-background/70 px-4 backdrop-blur-sm md:hidden">
+        <SidebarInset className="min-w-0 overflow-x-hidden bg-background text-foreground">
+          <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background/70 px-4 backdrop-blur-sm md:hidden">
             <SidebarTrigger className="-ml-1" />
-            <BrandLogo href="/home" size="sm" showText />
+            <Separator orientation="vertical" className="mr-1 h-4" />
+            <PathBreadcrumbs pathname={pathname} />
           </header>
-          <header className="hidden h-12 shrink-0 items-center gap-2 border-b border-border/40 bg-background/50 px-4 backdrop-blur-sm md:flex">
+          <header className="hidden h-12 shrink-0 items-center gap-2 border-b border-border bg-background/50 px-4 backdrop-blur-sm md:flex">
             <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
             <Separator orientation="vertical" className="mr-1 h-4" />
-            <span className="min-w-0 truncate text-sm font-medium text-muted-foreground">
-              {workspaceName}
-            </span>
+            <PathBreadcrumbs pathname={pathname} />
           </header>
           <div className="page-content min-w-0">{children}</div>
         </SidebarInset>

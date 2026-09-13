@@ -4,18 +4,17 @@ import Link from 'next/link';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer';
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import type { MarketingNavItem } from '@/components/marketing/MarketingHeader';
 
-type NavLink = { href: string; label: string; isRoute?: boolean };
-
-const NAV_LINKS: NavLink[] = [
+const DEFAULT_NAV: MarketingNavItem[] = [
   { href: '/product', label: 'Product', isRoute: true },
   { href: '/why', label: 'Why AI CRM', isRoute: true },
   { href: '/#modules', label: 'Solutions' },
@@ -23,58 +22,53 @@ const NAV_LINKS: NavLink[] = [
   { href: '/pricing', label: 'Pricing', isRoute: true },
 ];
 
-export function MobileNav() {
+export function MobileNav({ nav = DEFAULT_NAV }: { nav?: MarketingNavItem[] }) {
   return (
-    <div className="mkt-mobile-nav">
-      <Drawer direction="right">
-        <DrawerTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="mkt-mobile-nav__toggle"
-            aria-label="Open menu"
-          >
+    <div className="md:hidden">
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label="Open menu">
             <Menu className="size-5" />
           </Button>
-        </DrawerTrigger>
-        <DrawerContent className="mkt-mobile-nav__panel">
-          <DrawerHeader>
-            <DrawerTitle>Menu</DrawerTitle>
-          </DrawerHeader>
+        </SheetTrigger>
+        <SheetContent side="right" className="w-72 border-border bg-background text-foreground sm:max-w-sm">
+          <SheetHeader>
+            <SheetTitle>Menu</SheetTitle>
+          </SheetHeader>
           <nav className="flex flex-col gap-1 px-4" aria-label="Mobile">
-            {NAV_LINKS.map((link) => (
-              <DrawerClose key={link.href} asChild>
+            {nav.map((link) => (
+              <SheetClose key={link.href} asChild>
                 {link.isRoute ? (
-                  <Button variant="ghost" className="justify-start" asChild>
-                    <Link href={link.href}>{link.label}</Link>
+                  <Button variant="ghost" className="justify-start text-foreground" asChild>
+                    <Link href={link.href} className="text-foreground">{link.label}</Link>
                   </Button>
                 ) : (
-                  <Button variant="ghost" className="justify-start" asChild>
-                    <a href={link.href}>{link.label}</a>
+                  <Button variant="ghost" className="justify-start text-foreground" asChild>
+                    <a href={link.href} className="text-foreground">{link.label}</a>
                   </Button>
                 )}
-              </DrawerClose>
+              </SheetClose>
             ))}
           </nav>
-          <DrawerFooter className="gap-2">
-            <DrawerClose asChild>
-              <Button variant="outline" asChild>
-                <Link href="/pricing#quote">Book demo</Link>
+          <SheetFooter className="gap-2">
+            <SheetClose asChild>
+              <Button variant="outline" className="text-foreground" asChild>
+                <Link href="/pricing#quote" className="text-foreground">Book demo</Link>
               </Button>
-            </DrawerClose>
-            <DrawerClose asChild>
-              <Button variant="outline" asChild>
-                <Link href="/sign-in">Sign in</Link>
+            </SheetClose>
+            <SheetClose asChild>
+              <Button variant="outline" className="text-foreground" asChild>
+                <Link href="/sign-in" className="text-foreground">Sign in</Link>
               </Button>
-            </DrawerClose>
-            <DrawerClose asChild>
-              <Button asChild>
-                <Link href="/sign-up">Start free</Link>
+            </SheetClose>
+            <SheetClose asChild>
+              <Button className="text-primary-foreground" asChild>
+                <Link href="/sign-up" className="text-primary-foreground">Start free</Link>
               </Button>
-            </DrawerClose>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+            </SheetClose>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

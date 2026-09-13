@@ -31,7 +31,6 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { avatarGradient } from '@/lib/colors';
 import {
   Tooltip,
   TooltipContent,
@@ -63,6 +62,7 @@ function HomeDashboardSkeleton() {
         <Skeleton className="h-4 w-56 max-w-full" />
         <Skeleton className="mt-5 h-px w-full" />
       </div>
+      <Skeleton className="h-16 w-full rounded-xl" />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i} className="overflow-hidden">
@@ -106,13 +106,9 @@ function StageProgressBar({ value, color }: { value: number; color: string }) {
 }
 
 function UserAvatar({ name }: { name: string }) {
-  const [from, to] = avatarGradient(name);
   return (
     <Avatar size="sm">
-      <AvatarFallback
-        className="text-[10px] font-semibold text-white"
-        style={{ background: `linear-gradient(135deg, ${from}, ${to})` }}
-      >
+      <AvatarFallback className="bg-secondary text-[10px] font-semibold text-foreground">
         {initials(name)}
       </AvatarFallback>
     </Avatar>
@@ -169,25 +165,20 @@ export default function DashboardHomePage() {
         />
 
         {forecast && forecast.kpis.length >= 3 && (
-          <section className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <TrendingUp className="size-4" />
-                </div>
-                <h2 className="text-base font-bold tracking-tight">Forecast</h2>
-                {forecast.stub && (
-                  <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
-                    Demo
-                  </Badge>
-                )}
+          <section className="flex flex-col gap-3 rounded-xl border border-border/70 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 shrink-0 items-center gap-2 sm:w-36">
+              <div className="flex size-7 items-center justify-center rounded-md bg-primary/10 text-primary">
+                <TrendingUp className="size-3.5" />
               </div>
-              <Button variant="ghost" size="sm" className="text-muted-foreground" asChild>
-                <Link href="/insights">Insights</Link>
-              </Button>
+              <h2 className="text-sm font-semibold tracking-tight">Forecast</h2>
+              {forecast.stub && (
+                <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
+                  Demo
+                </Badge>
+              )}
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              {forecast.kpis.slice(0, 3).map((kpi, index) => {
+            <div className="grid min-w-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-6">
+              {forecast.kpis.slice(0, 3).map((kpi) => {
                 const displayValue =
                   kpi.format === 'currency'
                     ? formatMoney(kpi.value)
@@ -196,26 +187,27 @@ export default function DashboardHomePage() {
                       : String(kpi.value);
                 const change =
                   kpi.changePct !== undefined
-                    ? `${kpi.changePct > 0 ? '+' : ''}${kpi.changePct}% vs prior period`
+                    ? `${kpi.changePct > 0 ? '+' : ''}${kpi.changePct}%`
                     : undefined;
                 const sub = kpi.sub ?? change;
-                const accents: Array<'purple' | 'blue' | 'green'> = ['purple', 'blue', 'green'];
-                const sparkline =
-                  kpi.id === 'winRate'
-                    ? forecast.winRateTrend.map((p) => p.winRate)
-                    : undefined;
                 return (
-                  <KpiCard
-                    key={kpi.id}
-                    label={kpi.label}
-                    value={displayValue}
-                    sub={sub}
-                    accent={accents[index % accents.length]}
-                    sparkline={sparkline}
-                  />
+                  <div key={kpi.id} className="min-w-0">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+                      {kpi.label}
+                    </p>
+                    <p className="truncate text-lg font-bold tabular-nums tracking-tight text-foreground">
+                      {displayValue}
+                    </p>
+                    {sub && (
+                      <p className="truncate text-xs text-[var(--text-secondary)]">{sub}</p>
+                    )}
+                  </div>
                 );
               })}
             </div>
+            <Button variant="ghost" size="sm" className="shrink-0 text-[var(--text-secondary)]" asChild>
+              <Link href="/insights">Insights</Link>
+            </Button>
           </section>
         )}
 
@@ -227,7 +219,7 @@ export default function DashboardHomePage() {
             progress={pipelinePct}
             accent="purple"
           />
-          <Link href="/approvals" className="block transition-transform hover:scale-[1.01]">
+          <Link href="/approvals" className="block text-card-foreground transition-transform hover:scale-[1.01]">
             <KpiCard
               label="Pending approvals"
               value={home.approvalCount}
@@ -251,12 +243,12 @@ export default function DashboardHomePage() {
         </div>
 
         {home.approvalCount > 0 && (
-          <Alert className="border-primary/20 bg-gradient-to-r from-primary/5 via-card to-card">
+          <Alert className="border-primary/20 bg-primary/10">
             <CheckSquare className="text-primary" />
             <AlertTitle>
               {home.approvalCount} approval{home.approvalCount > 1 ? 's' : ''} need your attention
             </AlertTitle>
-            <AlertDescription>Review and approve agent actions</AlertDescription>
+            <AlertDescription className="text-[var(--text-secondary)]">Review and approve agent actions</AlertDescription>
             <AlertAction>
               <Button size="sm" asChild>
                 <Link href="/approvals">Review</Link>
@@ -275,7 +267,7 @@ export default function DashboardHomePage() {
                 <h2 className="text-base font-bold tracking-tight">Focus deals</h2>
                 <Badge variant="secondary">{home.focusDeals.length}</Badge>
               </div>
-              <Button variant="ghost" size="sm" className="text-muted-foreground" asChild>
+              <Button variant="ghost" size="sm" className="text-[var(--text-secondary)]" asChild>
                 <Link href="/deals">See all</Link>
               </Button>
             </div>
@@ -287,8 +279,8 @@ export default function DashboardHomePage() {
                 ))}
               </div>
             ) : (
-              <Card className="border-dashed bg-muted/20">
-                <CardContent className="py-10 text-center text-sm text-muted-foreground">
+              <Card className="border-dashed bg-muted text-card-foreground">
+                <CardContent className="py-10 text-center text-sm text-[var(--text-secondary)]">
                   No focus deals right now. Check back after your pipeline updates.
                 </CardContent>
               </Card>
@@ -315,13 +307,13 @@ export default function DashboardHomePage() {
           </div>
 
           <aside className="flex min-w-0 w-full flex-col gap-5">
-            <Card className="overflow-hidden border-border/70 bg-gradient-to-b from-card to-muted/20">
+            <Card className="overflow-hidden border-border bg-card">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-sm font-bold">
                   <TrendingUp className="size-4 text-primary" />
                   Pipeline snapshot
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-[var(--text-secondary)]">
                   {home.pipelineSnapshot.dealCount} deals · {formatMoney(home.pipelineSnapshot.totalAmount)}
                 </CardDescription>
               </CardHeader>
@@ -361,7 +353,7 @@ export default function DashboardHomePage() {
                     <div className="space-y-1">
                       {home.recentActivity.map((a, index) => (
                         <div key={`${a.type}-${a.dealId}-${a.at}`}>
-                          <div className="flex gap-3 rounded-lg px-1 py-2.5 transition-colors hover:bg-muted/50">
+                          <div className="flex gap-3 rounded-lg px-1 py-2.5 transition-colors hover:bg-muted">
                             <UserAvatar name={a.title} />
                             <div className="min-w-0 flex-1 space-y-0.5">
                               <Link
@@ -370,11 +362,11 @@ export default function DashboardHomePage() {
                               >
                                 {a.title}
                               </Link>
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-xs text-[var(--text-secondary)]">
                                 {formatActivityType(a.type)} · {formatRelativeTime(a.at)}
                               </p>
                               {a.description && (
-                                <p className="line-clamp-2 text-xs text-muted-foreground/90">
+                                <p className="line-clamp-2 text-xs text-[var(--text-secondary)]">
                                   {a.description}
                                 </p>
                               )}
@@ -388,7 +380,7 @@ export default function DashboardHomePage() {
                     </div>
                   </ScrollArea>
                 ) : (
-                  <p className="px-4 pb-4 text-sm text-muted-foreground">No recent activity yet.</p>
+                  <p className="px-4 pb-4 text-sm text-[var(--text-secondary)]">No recent activity yet.</p>
                 )}
               </CardContent>
             </Card>

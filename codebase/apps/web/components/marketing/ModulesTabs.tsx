@@ -22,7 +22,7 @@ export function ModulesTabs() {
           <TabsTrigger
             key={mod.letter}
             value={mod.letter}
-            className="text-xs sm:text-sm data-active:bg-primary data-active:text-primary-foreground dark:data-active:bg-primary dark:data-active:text-primary-foreground"
+            className="text-xs sm:text-sm data-active:bg-primary data-active:!text-primary-foreground dark:data-active:bg-primary dark:data-active:!text-primary-foreground"
           >
             {TAB_LABELS[mod.letter] ?? mod.letter}
           </TabsTrigger>
@@ -30,20 +30,20 @@ export function ModulesTabs() {
       </TabsList>
       {FEATURE_MODULES.map((mod) => (
         <TabsContent key={mod.letter} value={mod.letter}>
-          <Card>
+          <Card className="bg-card">
             <CardHeader>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <FeatureIcon name={mod.icon} size={24} />
                 <div className="min-w-0">
                   <CardTitle>{mod.title}</CardTitle>
-                  <CardDescription>{MODULE_OUTCOMES[mod.letter]}</CardDescription>
+                  <CardDescription className="!text-foreground/80">{MODULE_OUTCOMES[mod.letter]}</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {mod.items.map((item) => (
-                  <li key={item} className="flex gap-2 text-sm text-muted-foreground">
+                  <li key={item} className="flex gap-2 text-sm text-foreground/80">
                     <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
                     {item}
                   </li>

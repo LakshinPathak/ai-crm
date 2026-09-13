@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
 import {
   Command,
   CommandGroup,
@@ -166,7 +167,7 @@ function DealLinkPicker({
       ) : call.dealTitle ? (
         <Link
           href={`/deals/${call.dealId}`}
-          className="text-xs font-medium text-primary hover:underline"
+          className="text-xs font-medium text-foreground hover:underline"
         >
           Open deal
         </Link>
@@ -279,23 +280,26 @@ export default function CallDetailPage() {
           </CardHeader>
           <CardContent>
             {call.hasFullTranscript ? (
-              <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-md bg-muted/50 p-4 text-sm leading-relaxed">
+              <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-md bg-muted p-4 text-sm leading-relaxed text-foreground">
                 {call.transcriptExcerpt}
               </pre>
             ) : (
-              <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-                <Phone size={28} strokeWidth={1.5} className="mb-2" />
-                <p className="text-sm">Transcript will appear after Gong sync completes.</p>
-              </div>
+              <EmptyState
+                icon={<Phone size={28} strokeWidth={1.5} />}
+                title="No transcript yet"
+                description="Transcript will appear after Gong sync completes."
+              />
             )}
           </CardContent>
         </Card>
       </div>
 
       {call.dealId && (
-        <Link href={`/deals/${call.dealId}`}>
-          <Button variant="outline">View linked deal</Button>
-        </Link>
+        <Button variant="outline" asChild className="text-foreground">
+          <Link href={`/deals/${call.dealId}`} className="text-foreground">
+            View linked deal
+          </Link>
+        </Button>
       )}
     </div>
   );

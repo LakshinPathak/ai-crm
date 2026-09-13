@@ -30,7 +30,7 @@ export function MarketingHeader({
   activeHref?: string;
 }) {
   return (
-    <header className="mkt-header px-4 sm:px-6">
+    <header className="mkt-header relative top-auto z-auto border-b border-border bg-background px-4 sm:px-6">
       <BrandLogo href="/" size="sm" />
       <NavigationMenu className="mkt-nav hidden max-w-none flex-1 justify-center md:flex" viewport={false}>
         <NavigationMenuList>
@@ -55,17 +55,19 @@ export function MarketingHeader({
         </NavigationMenuList>
       </NavigationMenu>
       <div className="mkt-header__ctas hidden md:flex">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/sign-in">Sign in</Link>
+        <Button variant="ghost" size="sm" asChild className="text-foreground">
+          <Link href="/sign-in" className="text-foreground">
+            Sign in
+          </Link>
         </Button>
-        <Button size="sm" asChild>
-          <Link href="/sign-up">
+        <Button size="sm" asChild className="text-primary-foreground">
+          <Link href="/sign-up" className="text-primary-foreground">
             Start free
             <ArrowRight className="size-3.5" />
           </Link>
         </Button>
       </div>
-      <MobileNav />
+      <MobileNav nav={nav} />
     </header>
   );
 }
